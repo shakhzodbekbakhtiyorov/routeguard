@@ -1,0 +1,257 @@
+[
+  {
+    "id": "POST /message",
+    "url": "/message",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for logging messages, and it requires a user to be logged in with an access level of at least 2.",
+        "rule": "Only logged-in users may call /message."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route writes data to a file in a directory specific to the user, indicating that it handles user-specific data.",
+        "rule": "The route writes data to a file in a directory specific to the user, ensuring that each user can only access and modify their own data."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: method POST",
+        "rule": "POST /message changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A filename provided by the user to store the message.",
+        "rule": "filename: The server must sanitize the filename to prevent directory traversal attacks."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "filename": "server_decides",
+        "text": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /grep_processes",
+    "url": "/grep_processes",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for searching processes on the server, which is a system-level operation. It should be restricted to administrators to prevent unauthorized access to system processes.",
+        "rule": "Only administrators may call /grep_processes."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The 'name' parameter is used to filter processes using the 'grep' command. It is directly included in the command string without proper sanitization.",
+        "rule": "name: The 'name' parameter must be sanitized to prevent command injection attacks."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "name": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /deserialized_descr",
+    "url": "/deserialized_descr",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "csrf",
+        "applies_because": "changes state: method POST",
+        "rule": "POST /deserialized_descr changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The value is a serialized object sent by the client, which is then deserialized by the server.",
+        "rule": "pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": true,
+      "values": {
+        "pickled": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /login",
+    "url": "/login",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The /login route reads data from the 'user' table to authenticate users, which involves checking the username and password.",
+        "rule": "The route reads data that belongs to any user account, as it authenticates users based on their username and password."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: method POST, writes the session",
+        "rule": "POST /login changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The password is provided by the user and is used to authenticate the user.",
+        "rule": "password: The server must verify the password against the stored hash to ensure the user is authenticated."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /login_and_redirect",
+    "url": "/login_and_redirect",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "This route reads data from the 'user' table to authenticate a user. The 'user' table stores user information including usernames and passwords.",
+        "rule": "The route reads data that belongs to one particular user account based on the username provided."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: writes the session",
+        "rule": "GET /login_and_redirect changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A URL provided by the user, used to redirect after login.",
+        "rule": "url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password": "content",
+        "url": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /status",
+    "url": "/status",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /ping",
+    "url": "/ping",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The search route reads data from the 'user' table, which contains usernames and access levels.",
+        "rule": "The route reads data that belongs to any user, not just the logged-in user."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "query": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /create_user",
+    "url": "/create_user",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for creating a new user, which should only be accessible to administrators.",
+        "rule": "Only administrators may call /create_user."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route creates a new user record, which belongs to a particular user account.",
+        "rule": "The route inserts a new row into the 'user' table with a username, password, and access level."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT user, method POST",
+        "rule": "POST /create_user changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A value that determines the user's access level, which is checked by the server.",
+        "rule": "access_level: The server must ensure that the access level is 0 for this action."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password": "content",
+        "access_level": "server_decides"
+      }
+    },
+    "error": null
+  }
+]

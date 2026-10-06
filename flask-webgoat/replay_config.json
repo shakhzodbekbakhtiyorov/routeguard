@@ -1,0 +1,14 @@
+{
+  "app": "app_factory:create_app",
+  "init": "app_factory:init_app",
+  "test_config": {"TESTING": true},
+  "db_path": "database.db",
+  "users_table": "user",
+  "username_column": "username",
+  "login": {"url": "/login", "method": "POST", "username_field": "username", "password_field": "password"},
+  "users": [
+    {"name": "admin", "username": "admin", "password": "admin",    "role": "admin"},
+    {"name": "bob",   "username": "bob",   "password": "bob123",   "role": "attacker"},
+    {"name": "alice", "username": "alice", "password": "alice123", "role": "victim"}
+  ]
+}

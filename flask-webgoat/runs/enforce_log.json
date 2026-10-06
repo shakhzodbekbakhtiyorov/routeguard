@@ -1,0 +1,287 @@
+[
+  {
+    "key": "POST /message | who_may_call | Only logged-in users may call /message.",
+    "status": "not_enforced",
+    "check": "The route is accessible via POST method without any authentication check.",
+    "answer": {
+      "code": "@bp.route(\"/message\", methods=[\"POST\"])",
+      "file": "flask_webgoat/actions.py",
+      "line": 11,
+      "reason": "The route is accessible via POST method without any authentication check.",
+      "status": "not_enforced",
+      "attack": "A user who is not logged in can still call the /message route by sending a POST request with the required parameters (filename and text). The server will not check if the user is logged in, and the request will be processed successfully, leading to potential security issues such as unauthorized file creation or data manipulation.",
+      "cwe": "CWE-284: Improper Access Control"
+    },
+    "prompt": "Route: POST /message  (function log_entry in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    11 | @bp.route(\"/message\", methods=[\"POST\"])\n    12 | def log_entry():\n    13 |     user_info = session.get(\"user_info\", None)\n    14 |     if user_info is None:\n    15 |         return jsonify({\"error\": \"no user_info found in session\"})\n    16 |     access_level = user_info[2]\n    17 |     if access_level > 2:\n    18 |         return jsonify({\"error\": \"access level < 2 is required for this action\"})\n    19 |     filename_param = request.form.get(\"filename\")\n    20 |     if filename_param is None:\n    21 |         return jsonify({\"error\": \"filename parameter is required\"})\n    22 |     text_param = request.form.get(\"text\")\n    23 |     if text_param is None:\n    24 |         return jsonify({\"error\": \"text parameter is required\"})\n    25 | \n    26 |     user_id = user_info[0]\n    27 |     user_dir = \"data/\" + str(user_id)\n    28 |     user_dir_path = Path(user_dir)\n    29 |     if not user_dir_path.exists():\n    30 |         user_dir_path.mkdir()\n    31 | \n    32 |     filename = filename_param + \".txt\"\n    33 |     path = Path(user_dir + \"/\" + filename)\n    34 |     with path.open(\"w\", encoding=\"utf-8\") as open_file:\n    35 |         open_file.write(text_param)\n    36 |     return jsonify({\"success\": True})\n\nRULE (who_may_call): Only logged-in users may call /message."
+  },
+  {
+    "key": "POST /message | whose_data | The route writes data to a file in a directory specific to the user, ensuring that each user can only access and modify their own data.",
+    "status": "not_enforced",
+    "check": "The code creates a directory for the user, but it does not check if the directory already exists before creating it. This could lead to an error if the directory already exists.",
+    "answer": {
+      "code": "user_dir_path.mkdir()",
+      "file": "flask_webgoat/actions.py",
+      "line": 29,
+      "reason": "The code creates a directory for the user, but it does not check if the directory already exists before creating it. This could lead to an error if the directory already exists.",
+      "status": "not_enforced",
+      "attack": "An attacker could exploit this by creating a directory for another user and then attempting to write to a file in that directory. The attacker would need to know the user ID of another user, but this could be obtained through other means. Once the directory is created, the attacker could write to a file in that directory, potentially overwriting or appending data to files that belong to other users. This could lead to data corruption or loss, or to the attacker gaining access to sensitive data.",
+      "cwe": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+    },
+    "prompt": "Route: POST /message  (function log_entry in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    11 | @bp.route(\"/message\", methods=[\"POST\"])\n    12 | def log_entry():\n    13 |     user_info = session.get(\"user_info\", None)\n    14 |     if user_info is None:\n    15 |         return jsonify({\"error\": \"no user_info found in session\"})\n    16 |     access_level = user_info[2]\n    17 |     if access_level > 2:\n    18 |         return jsonify({\"error\": \"access level < 2 is required for this action\"})\n    19 |     filename_param = request.form.get(\"filename\")\n    20 |     if filename_param is None:\n    21 |         return jsonify({\"error\": \"filename parameter is required\"})\n    22 |     text_param = request.form.get(\"text\")\n    23 |     if text_param is None:\n    24 |         return jsonify({\"error\": \"text parameter is required\"})\n    25 | \n    26 |     user_id = user_info[0]\n    27 |     user_dir = \"data/\" + str(user_id)\n    28 |     user_dir_path = Path(user_dir)\n    29 |     if not user_dir_path.exists():\n    30 |         user_dir_path.mkdir()\n    31 | \n    32 |     filename = filename_param + \".txt\"\n    33 |     path = Path(user_dir + \"/\" + filename)\n    34 |     with path.open(\"w\", encoding=\"utf-8\") as open_file:\n    35 |         open_file.write(text_param)\n    36 |     return jsonify({\"success\": True})\n\nRULE (whose_data): The route writes data to a file in a directory specific to the user, ensuring that each user can only access and modify their own data."
+  },
+  {
+    "key": "POST /message | csrf | POST /message changes state, so a request forged from another website must be rejected (CSRF token).",
+    "status": "not_enforced",
+    "check": "The route does not include any CSRF protection mechanism.",
+    "answer": {
+      "code": "",
+      "file": "flask_webgoat/actions.py",
+      "line": 12,
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "status": "not_enforced",
+      "attack": "An attacker can forge a POST request to /message from another website. They can provide any values for filename and text, and the server will process the request without any checks for a CSRF token. This allows the attacker to perform actions on behalf of the authenticated user, such as logging arbitrary messages.",
+      "cwe": "CWE-352: Cross-Site Request Forgery (CSRF)"
+    },
+    "prompt": "Route: POST /message  (function log_entry in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    11 | @bp.route(\"/message\", methods=[\"POST\"])\n    12 | def log_entry():\n    13 |     user_info = session.get(\"user_info\", None)\n    14 |     if user_info is None:\n    15 |         return jsonify({\"error\": \"no user_info found in session\"})\n    16 |     access_level = user_info[2]\n    17 |     if access_level > 2:\n    18 |         return jsonify({\"error\": \"access level < 2 is required for this action\"})\n    19 |     filename_param = request.form.get(\"filename\")\n    20 |     if filename_param is None:\n    21 |         return jsonify({\"error\": \"filename parameter is required\"})\n    22 |     text_param = request.form.get(\"text\")\n    23 |     if text_param is None:\n    24 |         return jsonify({\"error\": \"text parameter is required\"})\n    25 | \n    26 |     user_id = user_info[0]\n    27 |     user_dir = \"data/\" + str(user_id)\n    28 |     user_dir_path = Path(user_dir)\n    29 |     if not user_dir_path.exists():\n    30 |         user_dir_path.mkdir()\n    31 | \n    32 |     filename = filename_param + \".txt\"\n    33 |     path = Path(user_dir + \"/\" + filename)\n    34 |     with path.open(\"w\", encoding=\"utf-8\") as open_file:\n    35 |         open_file.write(text_param)\n    36 |     return jsonify({\"success\": True})\n\nRULE (csrf): POST /message changes state, so a request forged from another website must be rejected (CSRF token)."
+  },
+  {
+    "key": "POST /message | do_not_trust | filename: The server must sanitize the filename to prevent directory traversal attacks.",
+    "status": "not_enforced",
+    "check": "The filename is directly concatenated with the user-provided filename_param, which can lead to directory traversal attacks.",
+    "answer": {
+      "code": "filename = filename_param + \".txt\"",
+      "file": "flask_webgoat/actions.py",
+      "line": 32,
+      "reason": "The filename is directly concatenated with the user-provided filename_param, which can lead to directory traversal attacks.",
+      "status": "not_enforced",
+      "attack": "An attacker can exploit this by providing a filename like `../../etc/passwd.txt`. This would allow the attacker to read sensitive system files. The user is logged in, the method is POST, the URL is `/message`, and the values are `filename=../../etc/passwd.txt` and `text=any_text`. The server will write the text to `/data/user_id/../../etc/passwd.txt`, which could potentially lead to unauthorized access to system files.",
+      "cwe": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+    },
+    "prompt": "Route: POST /message  (function log_entry in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    11 | @bp.route(\"/message\", methods=[\"POST\"])\n    12 | def log_entry():\n    13 |     user_info = session.get(\"user_info\", None)\n    14 |     if user_info is None:\n    15 |         return jsonify({\"error\": \"no user_info found in session\"})\n    16 |     access_level = user_info[2]\n    17 |     if access_level > 2:\n    18 |         return jsonify({\"error\": \"access level < 2 is required for this action\"})\n    19 |     filename_param = request.form.get(\"filename\")\n    20 |     if filename_param is None:\n    21 |         return jsonify({\"error\": \"filename parameter is required\"})\n    22 |     text_param = request.form.get(\"text\")\n    23 |     if text_param is None:\n    24 |         return jsonify({\"error\": \"text parameter is required\"})\n    25 | \n    26 |     user_id = user_info[0]\n    27 |     user_dir = \"data/\" + str(user_id)\n    28 |     user_dir_path = Path(user_dir)\n    29 |     if not user_dir_path.exists():\n    30 |         user_dir_path.mkdir()\n    31 | \n    32 |     filename = filename_param + \".txt\"\n    33 |     path = Path(user_dir + \"/\" + filename)\n    34 |     with path.open(\"w\", encoding=\"utf-8\") as open_file:\n    35 |         open_file.write(text_param)\n    36 |     return jsonify({\"success\": True})\n\nRULE (do_not_trust): filename: The server must sanitize the filename to prevent directory traversal attacks.\nTHE VALUE THE RULE IS ABOUT:\nVALUE filename: request.form['filename']\n    19 |     filename_param = request.form.get(\"filename\")\n    20 |     if filename_param is None:\n    21 |         return jsonify({\"error\": \"filename parameter is required\"})\n        ...\n    32 |     filename = filename_param + \".txt\"\n    33 |     path = Path(user_dir + \"/\" + filename)\n"
+  },
+  {
+    "key": "GET /grep_processes | who_may_call | Only administrators may call /grep_processes.",
+    "status": "not_enforced",
+    "check": "The route is accessible to anyone who makes a GET request to /grep_processes.",
+    "answer": {
+      "code": "@bp.route(\"/grep_processes\")",
+      "file": "flask_webgoat/actions.py",
+      "line": 39,
+      "reason": "The route is accessible to anyone who makes a GET request to /grep_processes.",
+      "status": "not_enforced",
+      "attack": "An attacker can call /grep_processes without being logged in. Method: GET, URL: /grep_processes, Values: None, What happens: The attacker can execute arbitrary commands on the server by manipulating the 'name' parameter in the GET request. This can lead to privilege escalation or other security issues.",
+      "cwe": "CWE-94: Improper Control of Generation of Code ('Code Injection')"
+    },
+    "prompt": "Route: GET /grep_processes  (function grep_processes in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    39 | @bp.route(\"/grep_processes\")\n    40 | def grep_processes():\n    41 |     name = request.args.get(\"name\")\n    42 |     res = subprocess.run(\n    43 |         [\"ps aux | grep \" + name + \" | awk '{print $11}'\"],\n    44 |         shell=True,\n    45 |         capture_output=True,\n    46 |     )\n    47 |     if res.stdout is None:\n    48 |         return jsonify({\"error\": \"no stdout returned\"})\n    49 |     out = res.stdout.decode(\"utf-8\")\n    50 |     names = out.split(\"\\n\")\n    51 |     return jsonify({\"success\": True, \"names\": names})\n\nRULE (who_may_call): Only administrators may call /grep_processes."
+  },
+  {
+    "key": "GET /grep_processes | do_not_trust | name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+    "status": "not_enforced",
+    "check": "The 'name' parameter is directly concatenated into the command string without sanitization, making it vulnerable to command injection attacks.",
+    "answer": {
+      "code": "res = subprocess.run(['ps aux | grep ' + name + ' | awk \\'{print $11}\\''], shell=True, capture_output=True)",
+      "file": "flask_webgoat/actions.py",
+      "line": 42,
+      "reason": "The 'name' parameter is directly concatenated into the command string without sanitization, making it vulnerable to command injection attacks.",
+      "status": "not_enforced",
+      "attack": "An attacker can inject malicious commands into the 'name' parameter. For example, if the attacker sets 'name' to 'root; rm -rf /', the command executed will be 'ps aux | grep root; rm -rf / | awk \\'{print $11}\\''. This will result in the deletion of all files on the server, leading to a complete system compromise.",
+      "cwe": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+    },
+    "prompt": "Route: GET /grep_processes  (function grep_processes in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    39 | @bp.route(\"/grep_processes\")\n    40 | def grep_processes():\n    41 |     name = request.args.get(\"name\")\n    42 |     res = subprocess.run(\n    43 |         [\"ps aux | grep \" + name + \" | awk '{print $11}'\"],\n    44 |         shell=True,\n    45 |         capture_output=True,\n    46 |     )\n    47 |     if res.stdout is None:\n    48 |         return jsonify({\"error\": \"no stdout returned\"})\n    49 |     out = res.stdout.decode(\"utf-8\")\n    50 |     names = out.split(\"\\n\")\n    51 |     return jsonify({\"success\": True, \"names\": names})\n\nRULE (do_not_trust): name: The 'name' parameter must be sanitized to prevent command injection attacks.\nTHE VALUE THE RULE IS ABOUT:\nVALUE name: request.args['name']\n    41 |     name = request.args.get(\"name\")\n    42 |     res = subprocess.run(\n    43 |         [\"ps aux | grep \" + name + \" | awk '{print $11}'\"],\n        ...\n    47 |     if res.stdout is None:\n    48 |         return jsonify({\"error\": \"no stdout returned\"})\n    49 |     out = res.stdout.decode(\"utf-8\")\n"
+  },
+  {
+    "key": "POST /deserialized_descr | csrf | POST /deserialized_descr changes state, so a request forged from another website must be rejected (CSRF token).",
+    "status": "not_enforced",
+    "check": "The route does not include any CSRF protection mechanism.",
+    "answer": {
+      "code": "",
+      "file": "flask_webgoat/actions.py",
+      "line": 54,
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "status": "not_enforced",
+      "attack": "An attacker can forge a POST request to /deserialized_descr from another website. They can provide any pickled data they want, and the server will deserialize it without any validation. This could lead to arbitrary code execution or other security issues. The attacker does not need to be logged in; any user can perform this attack.",
+      "cwe": "CWE-352: Cross-Site Request Forgery (CSRF)"
+    },
+    "prompt": "Route: POST /deserialized_descr  (function deserialized_descr in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    54 | @bp.route(\"/deserialized_descr\", methods=[\"POST\"])\n    55 | def deserialized_descr():\n    56 |     pickled = request.form.get('pickled')\n    57 |     data = base64.urlsafe_b64decode(pickled)\n    58 |     deserialized = pickle.loads(data)\n    59 |     return jsonify({\"success\": True, \"description\": str(deserialized)})\n\nRULE (csrf): POST /deserialized_descr changes state, so a request forged from another website must be rejected (CSRF token)."
+  },
+  {
+    "key": "POST /deserialized_descr | do_not_trust | pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+    "status": "not_enforced",
+    "check": "The code uses the `pickle` module to deserialize data directly from the user input without any validation or sanitization.",
+    "answer": {
+      "code": "deserialized = pickle.loads(data)",
+      "file": "flask_webgoat/actions.py",
+      "line": 58,
+      "reason": "The code uses the `pickle` module to deserialize data directly from the user input without any validation or sanitization.",
+      "status": "not_enforced",
+      "attack": "An attacker could provide a maliciously crafted pickled object that, when deserialized, could execute arbitrary code on the server. For example, an attacker could send a pickled object that contains a `subprocess.Popen` call to execute a harmful command. The server would execute this command, potentially leading to a remote code execution vulnerability.",
+      "cwe": "CWE-502: Deserialization of Untrusted Data"
+    },
+    "prompt": "Route: POST /deserialized_descr  (function deserialized_descr in flask_webgoat/actions.py)\n\nCODE:\n--- ROUTE (flask_webgoat/actions.py) ---\n    54 | @bp.route(\"/deserialized_descr\", methods=[\"POST\"])\n    55 | def deserialized_descr():\n    56 |     pickled = request.form.get('pickled')\n    57 |     data = base64.urlsafe_b64decode(pickled)\n    58 |     deserialized = pickle.loads(data)\n    59 |     return jsonify({\"success\": True, \"description\": str(deserialized)})\n\nRULE (do_not_trust): pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.\nTHE VALUE THE RULE IS ABOUT:\nVALUE pickled: request.form['pickled']\n    56 |     pickled = request.form.get('pickled')\n    57 |     data = base64.urlsafe_b64decode(pickled)\n    58 |     deserialized = pickle.loads(data)\n"
+  },
+  {
+    "key": "POST /login | whose_data | The route reads data that belongs to any user account, as it authenticates users based on their username and password.",
+    "status": "not_enforced",
+    "check": "The query directly uses user-provided input (username and password) in the SQL query without any sanitization or parameterization, which can lead to SQL injection attacks.",
+    "answer": {
+      "code": "query = (\"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\" % (username, password))",
+      "file": "flask_webgoat/auth.py",
+      "line": 18,
+      "reason": "The query directly uses user-provided input (username and password) in the SQL query without any sanitization or parameterization, which can lead to SQL injection attacks.",
+      "status": "not_enforced",
+      "attack": "An attacker can provide a username and password that includes SQL code to manipulate the query. For example, if the attacker provides the username 'admin' and the password \"' OR '1'='1\", the query will become: SELECT id, username, access_level FROM user WHERE username = 'admin' AND password = '' OR '1'='1'. This will return all user records, potentially allowing the attacker to bypass authentication or gain unauthorized access to user data.",
+      "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+    },
+    "prompt": "Route: POST /login  (function login in flask_webgoat/auth.py)\n\nCODE:\n--- ROUTE (flask_webgoat/auth.py) ---\n     7 | @bp.route(\"/login\", methods=[\"POST\"])\n     8 | def login():\n     9 |     username = request.form.get(\"username\")\n    10 |     password = request.form.get(\"password\")\n    11 |     if username is None or password is None:\n    12 |         return (\n    13 |             jsonify({\"error\": \"username and password parameter have to be provided\"}),\n    14 |             400,\n    15 |         )\n    16 | \n    17 |     query = (\n    18 |         \"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\"\n    19 |         % (username, password)\n    20 |     )\n    21 |     result = query_db(query, [], True)\n    22 |     if result is None:\n    23 |         return jsonify({\"bad_login\": True}), 400\n    24 |     session[\"user_info\"] = (result[0], result[1], result[2])\n    25 |     return jsonify({\"success\": True})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (whose_data): The route reads data that belongs to any user account, as it authenticates users based on their username and password."
+  },
+  {
+    "key": "POST /login | csrf | POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "status": "not_enforced",
+    "check": "The code does not include a CSRF token check.",
+    "answer": {
+      "code": "",
+      "file": "flask_webgoat/auth.py",
+      "line": 19,
+      "reason": "The code does not include a CSRF token check.",
+      "status": "not_enforced",
+      "attack": "An attacker can forge a POST request to /login from another website. They can provide any username and password, and if the credentials are correct, they will be logged in. No CSRF token is required or checked, making it easy for attackers to perform unauthorized actions on behalf of users.",
+      "cwe": "CWE-352: Cross-Site Request Forgery (CSRF)"
+    },
+    "prompt": "Route: POST /login  (function login in flask_webgoat/auth.py)\n\nCODE:\n--- ROUTE (flask_webgoat/auth.py) ---\n     7 | @bp.route(\"/login\", methods=[\"POST\"])\n     8 | def login():\n     9 |     username = request.form.get(\"username\")\n    10 |     password = request.form.get(\"password\")\n    11 |     if username is None or password is None:\n    12 |         return (\n    13 |             jsonify({\"error\": \"username and password parameter have to be provided\"}),\n    14 |             400,\n    15 |         )\n    16 | \n    17 |     query = (\n    18 |         \"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\"\n    19 |         % (username, password)\n    20 |     )\n    21 |     result = query_db(query, [], True)\n    22 |     if result is None:\n    23 |         return jsonify({\"bad_login\": True}), 400\n    24 |     session[\"user_info\"] = (result[0], result[1], result[2])\n    25 |     return jsonify({\"success\": True})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (csrf): POST /login changes state, so a request forged from another website must be rejected (CSRF token)."
+  },
+  {
+    "key": "POST /login | do_not_trust | password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+    "status": "not_enforced",
+    "check": "The password is being directly inserted into the SQL query without any form of hashing or verification.",
+    "answer": {
+      "code": "query = (\"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\" % (username, password))",
+      "file": "flask_webgoat/auth.py",
+      "line": 18,
+      "reason": "The password is being directly inserted into the SQL query without any form of hashing or verification.",
+      "status": "not_enforced",
+      "attack": "An attacker can bypass the authentication by providing a username and a password that matches the SQL query syntax. For example, if the attacker provides the username 'admin' and the password 'admin' (or any other string that is not a valid password but matches the SQL syntax), the query will still execute successfully, and the attacker will be authenticated. This is because the password is being directly inserted into the SQL query without any form of hashing or verification.",
+      "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+    },
+    "prompt": "Route: POST /login  (function login in flask_webgoat/auth.py)\n\nCODE:\n--- ROUTE (flask_webgoat/auth.py) ---\n     7 | @bp.route(\"/login\", methods=[\"POST\"])\n     8 | def login():\n     9 |     username = request.form.get(\"username\")\n    10 |     password = request.form.get(\"password\")\n    11 |     if username is None or password is None:\n    12 |         return (\n    13 |             jsonify({\"error\": \"username and password parameter have to be provided\"}),\n    14 |             400,\n    15 |         )\n    16 | \n    17 |     query = (\n    18 |         \"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\"\n    19 |         % (username, password)\n    20 |     )\n    21 |     result = query_db(query, [], True)\n    22 |     if result is None:\n    23 |         return jsonify({\"bad_login\": True}), 400\n    24 |     session[\"user_info\"] = (result[0], result[1], result[2])\n    25 |     return jsonify({\"success\": True})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (do_not_trust): password: The server must verify the password against the stored hash to ensure the user is authenticated.\nTHE VALUE THE RULE IS ABOUT:\nVALUE password: request.form['password']\n    10 |     password = request.form.get(\"password\")\n    11 |     if username is None or password is None:\n    12 |         return (\n        ...\n    17 |     query = (\n    18 |         \"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\"\n    19 |         % (username, password)\n        ...\n    21 |     result = query_db(query, [], True)\n"
+  },
+  {
+    "key": "GET /login_and_redirect | whose_data | The route reads data that belongs to one particular user account based on the username provided.",
+    "status": "not_enforced",
+    "check": "The route does not check if the user is authorized to access the data of another user.",
+    "answer": {
+      "code": "",
+      "file": "flask_webgoat/auth.py",
+      "line": 44,
+      "reason": "The route does not check if the user is authorized to access the data of another user.",
+      "status": "not_enforced",
+      "attack": "An attacker can provide a different username in the 'username' parameter and attempt to access the data of another user. If the attacker's credentials are correct, they will be logged in as that user and their data will be accessible. This is a potential security risk as it allows unauthorized access to other users' data.",
+      "cwe": "CWE-284: Improper Access Control"
+    },
+    "prompt": "Route: GET /login_and_redirect  (function login_and_redirect in flask_webgoat/auth.py)\n\nCODE:\n--- ROUTE (flask_webgoat/auth.py) ---\n    28 | @bp.route(\"/login_and_redirect\")\n    29 | def login_and_redirect():\n    30 |     username = request.args.get(\"username\")\n    31 |     password = request.args.get(\"password\")\n    32 |     url = request.args.get(\"url\")\n    33 |     if username is None or password is None or url is None:\n    34 |         return (\n    35 |             jsonify(\n    36 |                 {\"error\": \"username, password, and url parameters have to be provided\"}\n    37 |             ),\n    38 |             400,\n    39 |         )\n    40 | \n    41 |     query = \"SELECT id, username, access_level FROM user WHERE username = ? AND password = ?\"\n    42 |     result = query_db(query, (username, password), True)\n    43 |     if result is None:\n    44 |         return redirect(url)\n    45 |     session[\"user_info\"] = (result[0], result[1], result[2])\n    46 |     return jsonify({\"success\": True})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (whose_data): The route reads data that belongs to one particular user account based on the username provided."
+  },
+  {
+    "key": "GET /login_and_redirect | csrf | GET /login_and_redirect changes state, so a request forged from another website must be rejected (CSRF token).",
+    "status": "not_enforced",
+    "check": "The route does not include any CSRF protection mechanism.",
+    "answer": {
+      "code": "",
+      "file": "flask_webgoat/auth.py",
+      "line": 29,
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "status": "not_enforced",
+      "attack": "An attacker can forge a request to /login_and_redirect from another website. They can provide any username, password, and URL, and the server will process the request as if it were legitimate. The attacker can log in as any user and redirect to any URL they choose, potentially compromising the security of the application. The lack of CSRF protection allows this attack to succeed.",
+      "cwe": "CWE-352: Cross-Site Request Forgery (CSRF)"
+    },
+    "prompt": "Route: GET /login_and_redirect  (function login_and_redirect in flask_webgoat/auth.py)\n\nCODE:\n--- ROUTE (flask_webgoat/auth.py) ---\n    28 | @bp.route(\"/login_and_redirect\")\n    29 | def login_and_redirect():\n    30 |     username = request.args.get(\"username\")\n    31 |     password = request.args.get(\"password\")\n    32 |     url = request.args.get(\"url\")\n    33 |     if username is None or password is None or url is None:\n    34 |         return (\n    35 |             jsonify(\n    36 |                 {\"error\": \"username, password, and url parameters have to be provided\"}\n    37 |             ),\n    38 |             400,\n    39 |         )\n    40 | \n    41 |     query = \"SELECT id, username, access_level FROM user WHERE username = ? AND password = ?\"\n    42 |     result = query_db(query, (username, password), True)\n    43 |     if result is None:\n    44 |         return redirect(url)\n    45 |     session[\"user_info\"] = (result[0], result[1], result[2])\n    46 |     return jsonify({\"success\": True})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (csrf): GET /login_and_redirect changes state, so a request forged from another website must be rejected (CSRF token)."
+  },
+  {
+    "key": "GET /login_and_redirect | do_not_trust | url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+    "status": "not_enforced",
+    "check": "The code does not validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+    "answer": {
+      "code": "url = request.args.get('url')",
+      "file": "flask_webgoat/auth.py",
+      "line": 32,
+      "reason": "The code does not validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+      "status": "not_enforced",
+      "attack": "An attacker can provide a malicious URL as the 'url' parameter. For example, the attacker could use a URL like 'http://malicious-site.com' to redirect the user to a malicious site. This would bypass the intended functionality of the login and redirect route.",
+      "cwe": "CWE-601: URL Redirection to Untrusted Site"
+    },
+    "prompt": "Route: GET /login_and_redirect  (function login_and_redirect in flask_webgoat/auth.py)\n\nCODE:\n--- ROUTE (flask_webgoat/auth.py) ---\n    28 | @bp.route(\"/login_and_redirect\")\n    29 | def login_and_redirect():\n    30 |     username = request.args.get(\"username\")\n    31 |     password = request.args.get(\"password\")\n    32 |     url = request.args.get(\"url\")\n    33 |     if username is None or password is None or url is None:\n    34 |         return (\n    35 |             jsonify(\n    36 |                 {\"error\": \"username, password, and url parameters have to be provided\"}\n    37 |             ),\n    38 |             400,\n    39 |         )\n    40 | \n    41 |     query = \"SELECT id, username, access_level FROM user WHERE username = ? AND password = ?\"\n    42 |     result = query_db(query, (username, password), True)\n    43 |     if result is None:\n    44 |         return redirect(url)\n    45 |     session[\"user_info\"] = (result[0], result[1], result[2])\n    46 |     return jsonify({\"success\": True})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (do_not_trust): url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.\nTHE VALUE THE RULE IS ABOUT:\nVALUE url: request.args['url']\n    32 |     url = request.args.get(\"url\")\n    33 |     if username is None or password is None or url is None:\n    34 |         return (\n        ...\n    44 |         return redirect(url)\n"
+  },
+  {
+    "key": "GET /search | whose_data | The route reads data that belongs to any user, not just the logged-in user.",
+    "status": "not_enforced",
+    "check": "The query does not filter results based on the logged-in user's username.",
+    "answer": {
+      "code": "query = \"SELECT username, access_level FROM user WHERE username LIKE ?;\"",
+      "file": "flask_webgoat/ui.py",
+      "line": 17,
+      "reason": "The query does not filter results based on the logged-in user's username.",
+      "status": "not_enforced",
+      "attack": "A user can search for any username by providing a different username in the query parameter. For example, if the logged-in user is 'admin', they can search for 'user1' by accessing /search?query=user1. This will return the username and access level of 'user1', which is not allowed for the logged-in user 'admin'.",
+      "cwe": "CWE-88: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+    },
+    "prompt": "Route: GET /search  (function search in flask_webgoat/ui.py)\n\nCODE:\n--- ROUTE (flask_webgoat/ui.py) ---\n     9 | @bp.route(\"/search\")\n    10 | def search():\n    11 |     query_param = request.args.get(\"query\")\n    12 |     if query_param is None:\n    13 |         message = \"please provide the query parameter\"\n    14 |         return render_template(\"error.html\", message=message)\n    15 | \n    16 |     try:\n    17 |         query = \"SELECT username, access_level FROM user WHERE username LIKE ?;\"\n    18 |         results = query_db(query, (query_param,))\n    19 |         return render_template(\n    20 |             \"search.html\", results=results, num_results=len(results), query=query_param\n    21 |         )\n    22 |     except sqlite3.Error as err:\n    23 |         message = \"Error while executing query \" + query_param + \": \" + err\n    24 |         return render_template(\"error.html\", message=message)\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\n--- TEMPLATE (flask_webgoat/templates/error.html) ---\n     1 | {% extends 'base.html' %}\n     2 | \n     3 | {% block header %}\n     4 |   <h1>{% block title %}Register{% endblock %}</h1>\n     5 | {% endblock %}\n     6 | \n     7 | {% block content %}\n     8 |   <div class=\"error\">\n     9 |       {{ message }}\n    10 |   </div>\n    11 | {% endblock %}\n\n--- TEMPLATE (flask_webgoat/templates/search.html) ---\n     1 | {% extends 'base.html' %}\n     2 | \n     3 | {% block header %}\n     4 |   <h1>{% block title %}Register{% endblock %}</h1>\n     5 | {% endblock %}\n     6 | \n     7 | {% block content %}\n     8 |   <div class=\"results\">\n     9 |       Found {{ num_results }} results for query {{ query }}.\n    10 |   {% for result in results %}\n    11 |     <div class=\"result\">{{ result }}</div>\n    12 |   {% endfor %}\n    13 |   </div>\n    14 | {% endblock %}\n\n--- TEMPLATE (flask_webgoat/templates/error.html) ---\n     1 | {% extends 'base.html' %}\n     2 | \n     3 | {% block header %}\n     4 |   <h1>{% block title %}Register{% endblock %}</h1>\n     5 | {% endblock %}\n     6 | \n     7 | {% block content %}\n     8 |   <div class=\"error\">\n     9 |       {{ message }}\n    10 |   </div>\n    11 | {% endblock %}\n\nRULE (whose_data): The route reads data that belongs to any user, not just the logged-in user."
+  },
+  {
+    "key": "POST /create_user | who_may_call | Only administrators may call /create_user.",
+    "status": "enforced",
+    "check": "found flask_webgoat/users.py:17",
+    "answer": {
+      "code": "access_level != 0",
+      "file": "flask_webgoat/users.py",
+      "line": 17,
+      "reason": "The code checks if the access level is not equal to 0, which means only users with an access level of 0 (administrators) can call this route.",
+      "status": "enforced",
+      "attack": "None. The rule is enforced by the code snippet provided. Only users with an access level of 0 can call the /create_user route, and any other user will receive an error message indicating that an access level of 0 is required for this action.",
+      "cwe": ""
+    },
+    "prompt": "Route: POST /create_user  (function create_user in flask_webgoat/users.py)\n\nCODE:\n--- ROUTE (flask_webgoat/users.py) ---\n    10 | @bp.route(\"/create_user\", methods=[\"POST\"])\n    11 | def create_user():\n    12 |     user_info = session.get(\"user_info\", None)\n    13 |     if user_info is None:\n    14 |         return jsonify({\"error\": \"no user_info found in session\"})\n    15 | \n    16 |     access_level = user_info[2]\n    17 |     if access_level != 0:\n    18 |         return jsonify({\"error\": \"access level of 0 is required for this action\"})\n    19 |     username = request.form.get(\"username\")\n    20 |     password = request.form.get(\"password\")\n    21 |     access_level = request.form.get(\"access_level\")\n    22 |     if username is None or password is None or access_level is None:\n    23 |         return (\n    24 |             jsonify(\n    25 |                 {\n    26 |                     \"error\": \"username, password and access_level parameters have to be provided\"\n    27 |                 }\n    28 |             ),\n    29 |             400,\n    30 |         )\n    31 |     if len(password) < 3:\n    32 |         return (\n    33 |             jsonify({\"error\": \"the password needs to be at least 3 characters long\"}),\n    34 |             402,\n    35 |         )\n    36 | \n    37 |     query = (\n    38 |         \"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\"\n    39 |         % (username, password, int(access_level))\n    40 |     )\n    41 | \n    42 |     try:\n    43 |         query_db(query, [], False, True)\n    44 |         return jsonify({\"success\": True})\n    45 |     except sqlite3.Error as err:\n    46 |         return jsonify({\"error\": \"could not create user:\" + err})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (who_may_call): Only administrators may call /create_user."
+  },
+  {
+    "key": "POST /create_user | whose_data | The route inserts a new row into the 'user' table with a username, password, and access level.",
+    "status": "not_enforced",
+    "check": "The code uses string formatting to construct the SQL query, which is vulnerable to SQL injection.",
+    "answer": {
+      "code": "query = (\"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\" % (username, password, int(access_level)))",
+      "file": "flask_webgoat/users.py",
+      "line": 37,
+      "reason": "The code uses string formatting to construct the SQL query, which is vulnerable to SQL injection.",
+      "status": "not_enforced",
+      "attack": "An attacker can provide a username, password, and access level that includes SQL code. For example, if the attacker provides the username 'admin', password 'admin' and access level '0; DROP TABLE user;', the SQL query will become 'INSERT INTO user (username, password, access_level) VALUES ('admin', 'admin', 0; DROP TABLE user;)', which will drop the 'user' table. The attacker is logged in as an admin, the method is POST, the URL is /create_user, and the values are username=admin, password=admin, access_level=0; DROP TABLE user;.",
+      "cwe": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+    },
+    "prompt": "Route: POST /create_user  (function create_user in flask_webgoat/users.py)\n\nCODE:\n--- ROUTE (flask_webgoat/users.py) ---\n    10 | @bp.route(\"/create_user\", methods=[\"POST\"])\n    11 | def create_user():\n    12 |     user_info = session.get(\"user_info\", None)\n    13 |     if user_info is None:\n    14 |         return jsonify({\"error\": \"no user_info found in session\"})\n    15 | \n    16 |     access_level = user_info[2]\n    17 |     if access_level != 0:\n    18 |         return jsonify({\"error\": \"access level of 0 is required for this action\"})\n    19 |     username = request.form.get(\"username\")\n    20 |     password = request.form.get(\"password\")\n    21 |     access_level = request.form.get(\"access_level\")\n    22 |     if username is None or password is None or access_level is None:\n    23 |         return (\n    24 |             jsonify(\n    25 |                 {\n    26 |                     \"error\": \"username, password and access_level parameters have to be provided\"\n    27 |                 }\n    28 |             ),\n    29 |             400,\n    30 |         )\n    31 |     if len(password) < 3:\n    32 |         return (\n    33 |             jsonify({\"error\": \"the password needs to be at least 3 characters long\"}),\n    34 |             402,\n    35 |         )\n    36 | \n    37 |     query = (\n    38 |         \"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\"\n    39 |         % (username, password, int(access_level))\n    40 |     )\n    41 | \n    42 |     try:\n    43 |         query_db(query, [], False, True)\n    44 |         return jsonify({\"success\": True})\n    45 |     except sqlite3.Error as err:\n    46 |         return jsonify({\"error\": \"could not create user:\" + err})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (whose_data): The route inserts a new row into the 'user' table with a username, password, and access level."
+  },
+  {
+    "key": "POST /create_user | csrf | POST /create_user changes state, so a request forged from another website must be rejected (CSRF token).",
+    "status": "not_enforced",
+    "check": "The rule (CSRF) is not enforced in the provided code.",
+    "answer": {
+      "code": "",
+      "file": "",
+      "line": 0,
+      "reason": "The rule (CSRF) is not enforced in the provided code.",
+      "status": "not_enforced",
+      "attack": "An attacker can forge a POST request to /create_user from another website. The request does not include a CSRF token, which is required to prevent CSRF attacks. The attacker can provide any username, password, and access level, and the request will be processed without any checks on the CSRF token. This can lead to unauthorized creation of user accounts.",
+      "cwe": "CWE-352: Cross-Site Request Forgery (CSRF)"
+    },
+    "prompt": "Route: POST /create_user  (function create_user in flask_webgoat/users.py)\n\nCODE:\n--- ROUTE (flask_webgoat/users.py) ---\n    10 | @bp.route(\"/create_user\", methods=[\"POST\"])\n    11 | def create_user():\n    12 |     user_info = session.get(\"user_info\", None)\n    13 |     if user_info is None:\n    14 |         return jsonify({\"error\": \"no user_info found in session\"})\n    15 | \n    16 |     access_level = user_info[2]\n    17 |     if access_level != 0:\n    18 |         return jsonify({\"error\": \"access level of 0 is required for this action\"})\n    19 |     username = request.form.get(\"username\")\n    20 |     password = request.form.get(\"password\")\n    21 |     access_level = request.form.get(\"access_level\")\n    22 |     if username is None or password is None or access_level is None:\n    23 |         return (\n    24 |             jsonify(\n    25 |                 {\n    26 |                     \"error\": \"username, password and access_level parameters have to be provided\"\n    27 |                 }\n    28 |             ),\n    29 |             400,\n    30 |         )\n    31 |     if len(password) < 3:\n    32 |         return (\n    33 |             jsonify({\"error\": \"the password needs to be at least 3 characters long\"}),\n    34 |             402,\n    35 |         )\n    36 | \n    37 |     query = (\n    38 |         \"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\"\n    39 |         % (username, password, int(access_level))\n    40 |     )\n    41 | \n    42 |     try:\n    43 |         query_db(query, [], False, True)\n    44 |         return jsonify({\"success\": True})\n    45 |     except sqlite3.Error as err:\n    46 |         return jsonify({\"error\": \"could not create user:\" + err})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (csrf): POST /create_user changes state, so a request forged from another website must be rejected (CSRF token)."
+  },
+  {
+    "key": "POST /create_user | do_not_trust | access_level: The server must ensure that the access level is 0 for this action.",
+    "status": "enforced",
+    "check": "found flask_webgoat/users.py:17",
+    "answer": {
+      "code": "if access_level != 0:",
+      "file": "flask_webgoat/users.py",
+      "line": 17,
+      "reason": "The code checks if the access level is not equal to 0 and returns an error if it is not.",
+      "status": "enforced",
+      "attack": "None. The rule is enforced by the code snippet provided. If the access level is not 0, the server will return an error and not allow the user to create a new account with a non-zero access level.",
+      "cwe": ""
+    },
+    "prompt": "Route: POST /create_user  (function create_user in flask_webgoat/users.py)\n\nCODE:\n--- ROUTE (flask_webgoat/users.py) ---\n    10 | @bp.route(\"/create_user\", methods=[\"POST\"])\n    11 | def create_user():\n    12 |     user_info = session.get(\"user_info\", None)\n    13 |     if user_info is None:\n    14 |         return jsonify({\"error\": \"no user_info found in session\"})\n    15 | \n    16 |     access_level = user_info[2]\n    17 |     if access_level != 0:\n    18 |         return jsonify({\"error\": \"access level of 0 is required for this action\"})\n    19 |     username = request.form.get(\"username\")\n    20 |     password = request.form.get(\"password\")\n    21 |     access_level = request.form.get(\"access_level\")\n    22 |     if username is None or password is None or access_level is None:\n    23 |         return (\n    24 |             jsonify(\n    25 |                 {\n    26 |                     \"error\": \"username, password and access_level parameters have to be provided\"\n    27 |                 }\n    28 |             ),\n    29 |             400,\n    30 |         )\n    31 |     if len(password) < 3:\n    32 |         return (\n    33 |             jsonify({\"error\": \"the password needs to be at least 3 characters long\"}),\n    34 |             402,\n    35 |         )\n    36 | \n    37 |     query = (\n    38 |         \"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\"\n    39 |         % (username, password, int(access_level))\n    40 |     )\n    41 | \n    42 |     try:\n    43 |         query_db(query, [], False, True)\n    44 |         return jsonify({\"success\": True})\n    45 |     except sqlite3.Error as err:\n    46 |         return jsonify({\"error\": \"could not create user:\" + err})\n\n--- CONSTANT DB_FILENAME (flask_webgoat/__init__.py) ---\n     7 | DB_FILENAME = \"database.db\"\n\n--- CALLED query_db (flask_webgoat/__init__.py) ---\n    10 | def query_db(query, args=(), one=False, commit=False):\n    11 |     with sqlite3.connect(DB_FILENAME) as conn:\n    12 |         conn.set_trace_callback(print)\n    13 |         cur = conn.cursor().execute(query, args)\n    14 |         if commit:\n    15 |             conn.commit()\n    16 |         return cur.fetchone() if one else cur.fetchall()\n\nRULE (do_not_trust): access_level: The server must ensure that the access level is 0 for this action.\nTHE VALUE THE RULE IS ABOUT:\nVALUE access_level: request.form['access_level']\n    17 |     if access_level != 0:\n    18 |         return jsonify({\"error\": \"access level of 0 is required for this action\"})\n        ...\n    21 |     access_level = request.form.get(\"access_level\")\n    22 |     if username is None or password is None or access_level is None:\n    23 |         return (\n        ...\n    37 |     query = (\n    38 |         \"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\"\n    39 |         % (username, password, int(access_level))\n        ...\n"
+  }
+]

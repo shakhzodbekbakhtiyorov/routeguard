@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Community Workshops{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 0;
+           background: #f5f5f5; color: #222; }
+    nav { background: #2c3e50; color: #fff; padding: 0.8rem 1.5rem;
+          display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    nav a { color: #ecf0f1; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .brand { font-weight: 700; font-size: 1.1rem; }
+    nav .spacer { flex: 1; }
+    .container { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
+    .flash { background: #d4edda; border: 1px solid #c3e6cb; padding: 0.6rem 1rem;
+             border-radius: 4px; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem;
+             border-bottom: 1px solid #ddd; }
+    th { background: #ecf0f1; }
+    a { color: #2980b9; }
+    form label { display: block; margin-top: 0.75rem; font-weight: 600; }
+    form input, form textarea, form select {
+      width: 100%; padding: 0.4rem; margin-top: 0.25rem;
+      border: 1px solid #ccc; border-radius: 3px; }
+    form textarea { resize: vertical; min-height: 60px; }
+    .btn { display: inline-block; padding: 0.5rem 1.2rem; border: none;
+           border-radius: 4px; cursor: pointer; font-size: 0.95rem;
+           text-decoration: none; color: #fff; background: #2980b9; }
+    .btn:hover { background: #2471a3; }
+    .btn-danger { background: #c0392b; }
+    .btn-danger:hover { background: #a93226; }
+    .card { background: #fff; border: 1px solid #ddd; border-radius: 6px;
+            padding: 1.25rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('workshops.listing') }}" class="brand">Community Workshops</a>
+    <a href="{{ url_for('workshops.listing') }}">Browse</a>
+    {% if g.account %}
+      <a href="{{ url_for('bookings.my_bookings') }}">My Bookings</a>
+      <a href="{{ url_for('members.view_profile') }}">Profile</a>
+      {% if g.account['role'] in ('staff', 'admin') %}
+        <a href="{{ url_for('workshops.manage') }}">Manage</a>
+      {% endif %}
+      {% if g.account['role'] == 'admin' %}
+        <a href="{{ url_for('members.admin_list') }}">Members</a>
+      {% endif %}
+      <span class="spacer"></span>
+      <span>{{ g.account['display_name'] }}</span>
+      <a href="{{ url_for('auth.logout') }}">Sign out</a>
+    {% else %}
+      <span class="spacer"></span>
+      <a href="{{ url_for('auth.login_page') }}">Sign in</a>
+    {% endif %}
+  </nav>
+  <div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% for msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

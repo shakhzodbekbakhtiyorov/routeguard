@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Workshops{% endblock %}
+{% block content %}
+<h1>Upcoming Workshops</h1>
+{% if workshops %}
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Date</th>
+      <th>Price</th>
+      <th>Organiser</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for w in workshops %}
+    <tr>
+      <td>{{ w['title'] }}</td>
+      <td>{{ w['scheduled_at'] }}</td>
+      <td>&pound;{{ "%.2f"|format(w['price_per_seat']) }}</td>
+      <td>{{ w['organiser'] }}</td>
+      <td><a href="{{ url_for('workshops.detail', wid=w['id']) }}">Details</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No workshops scheduled yet.</p>
+{% endif %}
+{% endblock %}

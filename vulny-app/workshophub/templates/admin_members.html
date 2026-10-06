@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Manage Members{% endblock %}
+{% block content %}
+<h1>All Members</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Display Name</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Credit</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in members %}
+    <tr>
+      <td>{{ m['username'] }}</td>
+      <td>{{ m['display_name'] }}</td>
+      <td>{{ m['email'] }}</td>
+      <td>{{ m['role'] }}</td>
+      <td>&pound;{{ "%.2f"|format(m['credit_balance']) }}</td>
+      <td><a href="{{ url_for('members.admin_detail', mid=m['id']) }}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

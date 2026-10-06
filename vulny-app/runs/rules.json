@@ -1,0 +1,653 @@
+[
+  {
+    "id": "GET /login",
+    "url": "/login",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /login",
+    "url": "/login",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The login route reads data from the 'accounts' table to verify the user's credentials.",
+        "rule": "The route reads data that belongs to one particular user account based on the username provided."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: method POST, session.clear(), writes the session",
+        "rule": "POST /login changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A CSRF token to prevent cross-site request forgery attacks.",
+        "rule": "_csrf: The server must validate the CSRF token to ensure the request is legitimate."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password": "content",
+        "_csrf": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The logout route is for any signed-in user to end their session.",
+        "rule": "Only logged-in users may call /logout."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: session.clear()",
+        "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET /bookings/",
+    "url": "/bookings/",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for viewing bookings made by the logged-in user, so only logged-in users should be allowed to call it.",
+        "rule": "Only logged-in users may call /bookings/."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves bookings that belong to the logged-in user, as indicated by the WHERE clause in the SQL query that filters by `r.owner_id = ?`.",
+        "rule": "The route reads data that belongs to the logged-in user."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /bookings/<int:rid>",
+    "url": "/bookings/<int:rid>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for viewing a booking detail, which is a user-specific resource. It should be accessible only to the user who owns the booking or an administrator.",
+        "rule": "Only logged-in users may call /bookings/<int:rid>."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'reservations' table, which includes the 'owner_id' column indicating who owns the booking. This ensures that only the owner or an administrator can access their booking details.",
+        "rule": "The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "rid": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /bookings/<int:rid>/cancel",
+    "url": "/bookings/<int:rid>/cancel",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for canceling a booking, which is a user-specific action. Only logged-in users should be able to cancel their own bookings.",
+        "rule": "Only logged-in users may call /bookings/<int:rid>/cancel."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates a booking record in the 'reservations' table, which includes the 'owner_id' column indicating who owns the booking.",
+        "rule": "Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: UPDATE reservations, method POST",
+        "rule": "POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "rid": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /bookings/<int:rid>/note",
+    "url": "/bookings/<int:rid>/note",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for adding a note to a booking, which is a user-specific action. Only the owner of the booking should be able to add a note.",
+        "rule": "Only logged-in users may call /bookings/<int:rid>/note."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route adds a note to a reservation, which is linked to a specific user through the reservation's owner_id.",
+        "rule": "The reservation_id in the notes table must match the reservation_id in the reservations table where the owner_id matches the logged-in user's id."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT notes, method POST",
+        "rule": "POST /bookings/<int:rid>/note changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The CSRF token is sent in the form data to prevent cross-site request forgery attacks.",
+        "rule": "_csrf: The server must validate the CSRF token to ensure the request is legitimate."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "rid": "selects_record",
+        "_csrf": "server_decides",
+        "body": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /bookings/<int:rid>/receipt",
+    "url": "/bookings/<int:rid>/receipt",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for generating a receipt for a booking, which is a user-specific action.",
+        "rule": "Only logged-in users may call /bookings/<int:rid>/receipt."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves data for a specific booking, which is linked to a user's account through the 'owner_id' field in the 'reservations' table.",
+        "rule": "The route should only allow access to the receipt of bookings made by the logged-in user."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "rid": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /profile",
+    "url": "/profile",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for viewing a user's profile, which is a user-specific resource. Therefore, only logged-in users should be allowed to access it.",
+        "rule": "Only logged-in users may call /profile."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route displays and allows editing of the current user's profile, which is a record belonging to the logged-in user.",
+        "rule": "The route reads and allows changes to a record where the 'id' column matches the 'account_id' in the session."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /profile",
+    "url": "/profile",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for updating a user's profile, which is a user-specific action. Therefore, only logged-in users should be allowed to call this route.",
+        "rule": "Only logged-in users may call /profile."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates the profile of the currently logged-in user, which means it modifies data that belongs to one particular user account.",
+        "rule": "The route updates the 'accounts' table where the 'id' column matches the 'id' of the currently logged-in user."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: UPDATE accounts, method POST",
+        "rule": "POST /profile changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A numeric value the user can choose, used to update the account's credit balance.",
+        "rule": "credit_balance: The server must validate and sanitize the credit balance to prevent unauthorized changes."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "display_name": "content",
+        "email": "content",
+        "role": "content",
+        "credit_balance": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /admin/members",
+    "url": "/admin/members",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for managing members, which is an administrative task. Only administrators should be able to access this route.",
+        "rule": "Only administrators may call /admin/members."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /admin/members/<int:mid>",
+    "url": "/admin/members/<int:mid>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for administrators to view details of other members.",
+        "rule": "Only administrators may call /admin/members/<int:mid>."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "This route reads data from the 'accounts' table, which stores information about each member.",
+        "rule": "Only administrators should be able to access and view details of any member."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "mid": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /admin/members/<int:mid>/update",
+    "url": "/admin/members/<int:mid>/update",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for updating member details, which is an administrative function. Only administrators should be allowed to perform this action.",
+        "rule": "Only administrators may call /admin/members/<int:mid>/update."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "This route updates a record in the 'accounts' table, which stores user data. The route specifically updates the display name, email, role, and credit balance of a member, which belongs to a particular user account.",
+        "rule": "The route updates a record in the 'accounts' table where the 'id' column matches the 'mid' parameter in the URL."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: UPDATE accounts, method POST",
+        "rule": "POST /admin/members/<int:mid>/update changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A token to prevent cross-site request forgery.",
+        "rule": "_csrf: The server must validate the CSRF token to ensure the request is legitimate."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A value the server must decide, used to update a member's role.",
+        "rule": "role: The server must validate the role to ensure it is a valid and safe value."
+      },
+      {
+        "type": "limits",
+        "applies_because": "A number that must stay within bounds, used to update a member's credit balance.",
+        "rule": "credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "mid": "selects_record",
+        "_csrf": "server_decides",
+        "display_name": "content",
+        "email": "content",
+        "role": "server_decides",
+        "credit_balance": "needs_limits"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /workshops/",
+    "url": "/workshops/",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /workshops/<int:wid>",
+    "url": "/workshops/<int:wid>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "wid": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /workshops/create",
+    "url": "/workshops/create",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for creating a new workshop, which is a staff-only function.",
+        "rule": "Only administrators may call /workshops/create."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /workshops/create",
+    "url": "/workshops/create",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for creating workshops, which is a staff-only function.",
+        "rule": "Only administrators may call /workshops/create."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route creates a new workshop record, which belongs to the user who created it.",
+        "rule": "The 'created_by' column in the 'workshops' table stores the user ID of the account that created the row."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT workshops, method POST",
+        "rule": "POST /workshops/create changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A CSRF token used to prevent cross-site request forgery attacks.",
+        "rule": "_csrf: The server must validate the CSRF token to ensure the request is legitimate."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The capacity of the workshop, which must be a number greater than 0.",
+        "rule": "capacity: The server must ensure that the capacity is a positive integer."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The price per seat of the workshop, which must be a non-negative number.",
+        "rule": "price_per_seat: The server must ensure that the price per seat is a non-negative number."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "_csrf": "server_decides",
+        "title": "content",
+        "description": "content",
+        "capacity": "needs_limits",
+        "price_per_seat": "needs_limits",
+        "scheduled_at": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /workshops/<int:wid>/edit",
+    "url": "/workshops/<int:wid>/edit",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for editing a workshop, which is a staff-only function.",
+        "rule": "Only administrators may call /workshops/<int:wid>/edit."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'workshops' table, which includes a 'created_by' column indicating who owns the workshop.",
+        "rule": "Only the staff member who created the workshop can edit it."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "wid": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /workshops/<int:wid>/edit",
+    "url": "/workshops/<int:wid>/edit",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for editing workshop details, which requires administrative or staff privileges.",
+        "rule": "Only administrators may call /workshops/<int:wid>/edit."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates a workshop record, which belongs to a specific user (the workshop's creator).",
+        "rule": "The workshop record belongs to the user with the ID stored in the 'created_by' column."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: UPDATE workshops, method POST",
+        "rule": "POST /workshops/<int:wid>/edit changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The CSRF token is a form field used to prevent cross-site request forgery attacks.",
+        "rule": "_csrf: The server must generate and validate the CSRF token to ensure the request is legitimate."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The capacity is a number that the user can set for the workshop.",
+        "rule": "capacity: The server must validate and sanitize the capacity to ensure it is a non-negative integer."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The price per seat is a number that the user can set for the workshop.",
+        "rule": "price_per_seat: The server must validate and sanitize the price per seat to ensure it is a non-negative floating-point number."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "wid": "selects_record",
+        "_csrf": "server_decides",
+        "title": "content",
+        "description": "content",
+        "capacity": "needs_limits",
+        "price_per_seat": "needs_limits",
+        "scheduled_at": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /workshops/manage",
+    "url": "/workshops/manage",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for managing workshops, which requires authentication. Only logged-in users should be able to access it.",
+        "rule": "Only logged-in users may call /workshops/manage."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves data from the 'workshops' and 'reservations' tables, which are owned by the 'accounts' table through foreign keys. This data is specific to the logged-in user.",
+        "rule": "The 'created_by' column in the 'workshops' table links each workshop to its creator, who is a user in the 'accounts' table."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /workshops/<int:wid>/book",
+    "url": "/workshops/<int:wid>/book",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for booking a workshop, which is a user-specific action. Only logged-in users should be able to book workshops.",
+        "rule": "Only logged-in users may call /workshops/<int:wid>/book."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route creates a reservation for a workshop, which is associated with a specific user (the owner_id in the reservations table).",
+        "rule": "The reservations table stores records that belong to one particular user account, identified by the owner_id column."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT reservations, method POST",
+        "rule": "POST /workshops/<int:wid>/book changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The number of seats is a form input that determines how many seats to book.",
+        "rule": "seats: The server must ensure that the number of seats is a non-negative integer and does not exceed the available capacity of the workshop."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The total cost is a form input that calculates the total cost of the booking.",
+        "rule": "total_cost: The server must calculate the total cost based on the number of seats and the workshop's price per seat."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "wid": "selects_record",
+        "seats": "needs_limits",
+        "total_cost": "server_decides"
+      }
+    },
+    "error": null
+  }
+]

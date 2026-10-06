@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My orders</h1>
+<table>
+  <tr><th>#</th><th>Total</th><th>Status</th><th></th></tr>
+  {% for o in orders %}
+  <tr><td>{{ o['id'] }}</td><td>{{ o['total'] }} UZS</td><td>{{ o['status'] }}</td>
+      <td><a href="{{ url_for('orders.order_detail', order_id=o['id']) }}">View</a></td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

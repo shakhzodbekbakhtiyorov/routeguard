@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<h1>My Profile</h1>
+<div class="card" style="max-width:450px;">
+  <form method="post" action="{{ url_for('members.update_profile') }}">
+    <label>Display Name
+      <input type="text" name="display_name"
+             value="{{ account['display_name'] }}" required>
+    </label>
+    <label>Email
+      <input type="email" name="email"
+             value="{{ account['email'] or '' }}">
+    </label>
+    <p style="margin-top:1rem; color:#666;">
+      <strong>Role:</strong> {{ account['role'] }}<br>
+      <strong>Credit:</strong> &pound;{{ "%.2f"|format(account['credit_balance']) }}
+    </p>
+    <button class="btn" type="submit">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

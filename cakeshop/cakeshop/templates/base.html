@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Cake Shop{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #2b2b2b; }
+    nav { display: flex; gap: 1rem; border-bottom: 1px solid #ddd; padding-bottom: .75rem; margin-bottom: 1.5rem; }
+    nav .right { margin-left: auto; }
+    .card { border: 1px solid #eee; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .flash { background: #fff4d6; padding: .5rem 1rem; border-radius: 6px; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border-bottom: 1px solid #eee; padding: .4rem; text-align: left; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('shop.index') }}">Cakes</a>
+    <a href="{{ url_for('shop.view_cart') }}">Cart</a>
+    {% if g.user %}
+      <a href="{{ url_for('orders.my_orders') }}">My orders</a>
+      <a href="{{ url_for('account.account') }}">Account</a>
+      <span class="right">{{ g.user['username'] }} · <a href="{{ url_for('auth.logout') }}">Log out</a></span>
+    {% else %}
+      <span class="right"><a href="{{ url_for('auth.login') }}">Log in</a> · <a href="{{ url_for('auth.register') }}">Register</a></span>
+    {% endif %}
+  </nav>
+  {% for message in get_flashed_messages() %}<p class="flash">{{ message }}</p>{% endfor %}
+  {% block content %}{% endblock %}
+</body>
+</html>

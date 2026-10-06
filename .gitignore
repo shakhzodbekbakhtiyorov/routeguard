@@ -1,0 +1,52 @@
+# local environments (rebuild with the commands in README.md)
+agentenv/
+appenv/
+.venv/
+
+# generated
+__pycache__/
+*.pyc
+.DS_Store
+*.db
+*.sqlite
+instance/
+flask-webgoat/data/
+
+# LaTeX build files (the report PDF itself is kept)
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+
+# Third-party test app: its code is downloaded by scripts/get_test_apps.sh and not stored here.
+# Only my own files for it are kept: answer key, replay glue and results.
+/flask-webgoat/*
+!/flask-webgoat/README.md
+!/flask-webgoat/app_factory.py
+!/flask-webgoat/replay_config.json
+!/flask-webgoat/labels/
+!/flask-webgoat/findings.json
+!/flask-webgoat/raw/
+!/flask-webgoat/runs/
+
+# temporary files some file systems leave behind
+.fuse_hidden*
+
+# vulny-app: intermediate copies of runs (the final outputs are in vulny-app/runs/)
+/vulny-app/runs_attempt1/
+/vulny-app/runs/blind/
+/vulny-app/runs/replay_fixed/
+
+# Prototype, not part of the documented pipeline (kept locally, not committed):
+#   - agent_v2/: a generic-spec refactor of the agent-mode experiment (agent/investigate.py)
+/agent/agent_v2/
+/*/runs/merged+investigate*
+/*/runs/replay2*
+
+# rerun.sh tag copies and scratch: the reported outputs live in runs/*.json at the top level
+/*/runs/final/
+/cakeshop/runs/t0/
+/*/runs/s[0-9]*/

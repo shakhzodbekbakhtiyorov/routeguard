@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Manage Workshops{% endblock %}
+{% block content %}
+<h1>Workshop Management</h1>
+
+<p><a href="{{ url_for('workshops.create_form') }}" class="btn">New Workshop</a></p>
+
+<h2>All Workshops</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Date</th>
+      <th>Capacity</th>
+      <th>Price</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for w in workshops %}
+    <tr>
+      <td>{{ w['title'] }}</td>
+      <td>{{ w['scheduled_at'] }}</td>
+      <td>{{ w['capacity'] }}</td>
+      <td>&pound;{{ "%.2f"|format(w['price_per_seat']) }}</td>
+      <td><a href="{{ url_for('workshops.edit_form', wid=w['id']) }}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>All Reservations</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Workshop</th>
+      <th>Member</th>
+      <th>Seats</th>
+      <th>Total</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in reservations %}
+    <tr>
+      <td>{{ r['id'] }}</td>
+      <td>{{ r['workshop_title'] }}</td>
+      <td>{{ r['member_name'] }}</td>
+      <td>{{ r['seats'] }}</td>
+      <td>&pound;{{ "%.2f"|format(r['total_cost']) }}</td>
+      <td>{{ r['status'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

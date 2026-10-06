@@ -1,0 +1,88 @@
+{
+  "note": "Hand check of the findings the automatic scorer does not credit (tools/score.py --hand applies it). Each entry: a finding (matched by tool, file, line, and route or package when needed) and the verdict after reading the code and the replay log: a bug id from ground_truth.json, 'real' (a real problem the answer key does not list), or 'false_alarm'. Findings not listed keep the automatic verdict.",
+  "findings": [
+    {
+      "tool": "pip-audit",
+      "package": "flask",
+      "verdict": "real",
+      "why": "published advisory for the pinned version"
+    },
+    {
+      "tool": "pip-audit",
+      "package": "werkzeug",
+      "verdict": "real",
+      "why": "published advisory for the pinned version"
+    },
+    {
+      "tool": "pip-audit",
+      "package": "click",
+      "verdict": "real",
+      "why": "published advisory for the pinned version"
+    },
+    {
+      "tool": "semgrep",
+      "file": "workshophub/workshops.py",
+      "line": 62,
+      "verdict": "false_alarm",
+      "why": "float() on a staff-only form; not a security problem here"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/auth.py",
+      "line": 27,
+      "route": "GET /logout",
+      "verdict": "false_alarm",
+      "why": "forged logout; replay itself left it for a human, and logging someone out is not counted as a security problem here"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/auth.py",
+      "line": 27,
+      "route": "POST /bookings/<int:rid>/cancel",
+      "verdict": "real",
+      "why": "the cancel form has no CSRF check either (confirmed by replay); the answer key missed it"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/bookings.py",
+      "line": 56,
+      "verdict": "V08",
+      "why": "bob cancelled alice's booking (confirmed by replay); reported on the route's def line, more than 2 lines from the label anchor"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/members.py",
+      "line": 89,
+      "verdict": "false_alarm",
+      "why": "range warning on the admin-only member update form"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/workshops.py",
+      "line": 62,
+      "verdict": "false_alarm",
+      "why": "range warning on the staff-only workshop create form"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/workshops.py",
+      "line": 110,
+      "verdict": "false_alarm",
+      "why": "range warning on the staff-only workshop edit form"
+    },
+    {
+      "tool": "rule-check",
+      "file": "workshophub/workshops.py",
+      "line": 111,
+      "verdict": "false_alarm",
+      "why": "range warning on the staff-only workshop edit form"
+    },
+    {
+      "tool": "replay",
+      "file": "workshophub/bookings.py",
+      "line": 98,
+      "verdict": "V02",
+      "why": "a second finding on the receipt route: bob read alice's receipt (confirmed by replay)"
+    }
+  ]
+}

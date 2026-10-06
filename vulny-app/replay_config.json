@@ -1,0 +1,21 @@
+{
+  "app": "workshophub:create_app",
+  "init": "workshophub.db:init_db",
+  "test_config": {"TESTING": true},
+  "db_config_key": "DATABASE",
+  "users_table": "accounts",
+  "username_column": "username",
+  "writable_dir_keys": [],
+  "file_base_keys": [],
+  "login": {
+    "url": "/login",
+    "method": "POST",
+    "username_field": "username",
+    "password_field": "password"
+  },
+  "users": [
+    {"name": "admin", "username": "admin", "password": "admin123", "role": "admin"},
+    {"name": "bob", "username": "bob", "password": "bob123", "role": "attacker"},
+    {"name": "alice", "username": "alice", "password": "alice123", "role": "victim"}
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "app": "cakeshop",
+  "description": "Ground truth for the deliberately vulnerable cake-shop app. Keep this folder out of the agent's view during evaluation.",
+  "line_resolution": "Line numbers are not stored. Each entry has an 'anchor' (an exact, unique substring of one line); run tools/check_labels.py to resolve anchors to current line numbers.",
+  "vulnerabilities": [
+    {
+      "id": "V01", "title": "SQL injection in product search", "cwe": "CWE-89", "category": "pattern",
+      "file": "cakeshop/db.py", "anchor": "WHERE name LIKE '%{term}%'",
+      "source": "cakeshop/shop.py: request.args['q'] in search()", "cross_file": true,
+      "notes": "User input is built into the query in db.py, two files away from where it enters. Tests cross-file data-flow tracing."
+    },
+    {
+      "id": "V02", "title": "Server-side template injection in cake-message preview", "cwe": "CWE-1336", "category": "pattern",
+      "file": "cakeshop/shop.py", "anchor": "return render_template_string(template)",
+      "source": "request.args['text']", "cross_file": false,
+      "notes": "User text is concatenated into the template source itself. Leads to code execution in Jinja2."
+    },
+    {
+      "id": "V03", "title": "Path traversal in cake image endpoint", "cwe": "CWE-22", "category": "pattern",
+      "file": "cakeshop/shop.py", "anchor": "return send_file(os.path.join(current_app.config[\"IMAGE_DIR\"], filename))",
+      "source": "request.args['name']", "cross_file": false,
+      "notes": "'../' sequences escape IMAGE_DIR and read any file the process can read, including source code with the secret key."
+    },
+    {
+      "id": "V04", "title": "Insecure deserialization of cart cookie", "cwe": "CWE-502", "category": "pattern",
+      "file": "cakeshop/shop.py", "anchor": "return pickle.loads(base64.b64decode(raw))",
+      "source": "request.cookies['cart']", "cross_file": false,
+      "notes": "Attacker controls the cookie, and unpickling it runs arbitrary code."
+    },
+    {
+      "id": "V05", "title": "Client-controlled price at checkout", "cwe": "CWE-602", "category": "logic",
+      "file": "cakeshop/shop.py", "anchor": "price = int(request.form[\"price\"])",
+      "source": "hidden form field 'price'", "cross_file": false,
+      "notes": "Price should come from the products table. Any user can buy a cake for 1 UZS."
+    },
+    {
+      "id": "V06", "title": "Unvalidated quantity allows zero or negative orders", "cwe": "CWE-1284", "category": "logic",
+      "file": "cakeshop/shop.py", "anchor": "quantity = int(request.form.get(\"quantity\", 1))",
+      "source": "form field 'quantity'", "cross_file": false,
+      "notes": "The min=1 attribute exists only in the HTML. A negative quantity produces a negative total."
+    },
+    {
+      "id": "V07", "title": "Stored XSS in product reviews", "cwe": "CWE-79", "category": "pattern",
+      "file": "cakeshop/templates/product.html", "anchor": "{{ r['body']|safe }}",
+      "source": "cakeshop/shop.py: request.form['body'] in add_review()", "cross_file": true,
+      "notes": "The |safe filter disables Jinja2 autoescaping for user-written review text."
+    },
+    {
+      "id": "V08", "title": "IDOR: any logged-in user can view any order", "cwe": "CWE-639", "category": "logic",
+      "file": "cakeshop/orders.py", "anchor": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+      "source": "URL parameter order_id", "cross_file": false,
+      "notes": "The query is parameterized (no SQLi), but there is no ownership check. Leaks other customers' cake messages and delivery notes. Compare with invoice(), which does check ownership."
+    },
+    {
+      "id": "V09", "title": "OS command injection in invoice generation", "cwe": "CWE-78", "category": "pattern",
+      "file": "cakeshop/orders.py", "anchor": "os.system(f\"echo",
+      "source": "request.args['format']", "cross_file": false,
+      "notes": "The 'format' parameter ends up in a shell command. Requires login and an own order, which an attacker can create."
+    },
+    {
+      "id": "V10", "title": "Missing authorization on admin order list", "cwe": "CWE-862", "category": "logic",
+      "file": "cakeshop/admin.py", "anchor": "def all_orders():",
+      "source": "n/a (missing control)", "cross_file": true,
+      "notes": "The other admin routes use @admin_required (defined in auth.py); this one has no decorator at all. Anyone, even logged out, sees all customers' names, emails and addresses."
+    },
+    {
+      "id": "V11", "title": "Mass assignment lets users make themselves admin", "cwe": "CWE-915", "category": "logic",
+      "file": "cakeshop/account.py", "anchor": "USER_COLUMNS = {\"username\", \"email\", \"address\", \"is_admin\"}",
+      "alt_anchors": ["if key in USER_COLUMNS:"],
+      "source": "any extra form field posted to /account", "cross_file": false,
+      "notes": "The form only shows email and address, but the server accepts is_admin. Subtle: the f-string UPDATE nearby is NOT SQL injection (see D06); the bug is what the allow-list contains."
+    },
+    {
+      "id": "V12", "title": "Open redirect after login", "cwe": "CWE-601", "category": "pattern",
+      "file": "cakeshop/auth.py", "anchor": "return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))",
+      "source": "request.args['next']", "cross_file": false,
+      "notes": "A phishing link can send a customer to an external site right after a real login."
+    },
+    {
+      "id": "V13", "title": "Hardcoded, guessable session secret key", "cwe": "CWE-798", "category": "config",
+      "file": "cakeshop/__init__.py", "anchor": "SECRET_KEY=\"cakeshop-secret-2024\",",
+      "source": "n/a", "cross_file": false,
+      "notes": "Anyone who knows or guesses the key can forge Flask session cookies, e.g. session['user_id'] = 1 (admin)."
+    },
+    {
+      "id": "V14", "title": "Flask debug mode enabled", "cwe": "CWE-489", "category": "config",
+      "file": "run.py", "anchor": "app.run(host=\"127.0.0.1\", port=5000, debug=True)",
+      "source": "n/a", "cross_file": false,
+      "notes": "The Werkzeug debugger allows code execution if reachable. Bound to localhost here, so severity depends on deployment context."
+    },
+    {
+      "id": "V15", "title": "Passwords hashed with unsalted MD5", "cwe": "CWE-916", "category": "pattern",
+      "file": "cakeshop/security.py", "anchor": "return hashlib.md5(password.encode()).hexdigest()",
+      "source": "n/a", "cross_file": false,
+      "notes": "Fast, unsalted hash. Combined with V01, leaked hashes crack instantly."
+    },
+    {
+      "id": "V16", "title": "Vulnerable Flask version", "cwe": "CWE-1395", "category": "dependency",
+      "file": "requirements.txt", "anchor": "Flask==2.2.4",
+      "source": "n/a", "cross_file": false,
+      "notes": "Expected to be reported by pip-audit (e.g. CVE-2023-30861)."
+    },
+    {
+      "id": "V17", "title": "Vulnerable Werkzeug version", "cwe": "CWE-1395", "category": "dependency",
+      "file": "requirements.txt", "anchor": "Werkzeug==2.3.7",
+      "source": "n/a", "cross_file": false,
+      "notes": "Expected to be reported by pip-audit (e.g. CVE-2024-34069, debugger-related, which interacts with V14)."
+    },
+    {
+      "id": "V18", "title": "Vulnerable Jinja2 version", "cwe": "CWE-1395", "category": "dependency",
+      "file": "requirements.txt", "anchor": "Jinja2==3.1.2",
+      "source": "n/a", "cross_file": false,
+      "notes": "Expected to be reported by pip-audit (several 2024 Jinja2 CVEs)."
+    },
+    {
+      "id": "V19", "title": "No CSRF protection on any state-changing form", "cwe": "CWE-352", "category": "logic",
+      "file": null, "anchor": null,
+      "source": "all POST routes", "cross_file": true,
+      "notes": "App-wide missing control with no single line to point at. Count as found if the report flags missing CSRF protection anywhere."
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D01", "title": "f-string SQL with an allow-listed table name", "looks_like": "CWE-89",
+      "file": "cakeshop/db.py", "anchor": "execute(f\"SELECT COUNT(*) FROM {table}\")",
+      "why_safe": "count_rows() rejects any table not in ALLOWED_TABLES, and callers pass constants."
+    },
+    {
+      "id": "D02", "title": "subprocess with a fixed argument list", "looks_like": "CWE-78",
+      "file": "cakeshop/orders.py", "anchor": "subprocess.run([\"date\", \"+%Y-%m-%d\"]",
+      "why_safe": "No shell, no user input in the arguments."
+    },
+    {
+      "id": "D03", "title": "render_template_string with a constant template", "looks_like": "CWE-1336",
+      "file": "cakeshop/shop.py", "anchor": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+      "why_safe": "User input is passed as a context variable and autoescaped, not concatenated into the template source."
+    },
+    {
+      "id": "D04", "title": "File serving with secure_filename and send_from_directory", "looks_like": "CWE-22",
+      "file": "cakeshop/shop.py", "anchor": "filename = secure_filename(request.args.get(\"name\", \"\"))",
+      "why_safe": "secure_filename strips path components, and send_from_directory refuses paths outside the directory."
+    },
+    {
+      "id": "D05", "title": "Admin stats route", "looks_like": "CWE-862",
+      "file": "cakeshop/admin.py", "anchor": "def stats():",
+      "why_safe": "Protected by @admin_required, defined in auth.py. Verifying this needs a cross-file lookup."
+    },
+    {
+      "id": "D06", "title": "f-string UPDATE with an allow-listed column name", "looks_like": "CWE-89",
+      "file": "cakeshop/account.py", "anchor": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\"",
+      "why_safe": "Column names are checked against USER_COLUMNS and values are parameterized, so it is not SQL injection. (The allow-list content is a separate bug, V11.)"
+    },
+    {
+      "id": "D07", "title": "Invoice lookup with ownership check", "looks_like": "CWE-639",
+      "file": "cakeshop/orders.py", "anchor": "\"SELECT * FROM orders WHERE id = ? AND user_id = ?\"",
+      "why_safe": "The query is restricted to the current user's orders."
+    },
+    {
+      "id": "D08", "title": "Search term reflected in results page", "looks_like": "CWE-79",
+      "file": "cakeshop/templates/search.html", "anchor": "Results for “{{ q }}”",
+      "why_safe": "Jinja2 autoescaping is on for .html templates and no |safe is used."
+    }
+  ]
+}

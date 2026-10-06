@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My account</h1>
+<form method="post">
+  <label>Email <input name="email" value="{{ g.user['email'] or '' }}"></label><br>
+  <label>Delivery address <input name="address" value="{{ g.user['address'] or '' }}"></label><br>
+  <button>Save</button>
+</form>
+{% endblock %}

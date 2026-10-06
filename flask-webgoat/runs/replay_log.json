@@ -1,0 +1,222 @@
+[
+  {
+    "route": "POST /message",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /message.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "anon not blocked (200) but saw no one's private data",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/message",
+      "need": "logged_in_user",
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /message",
+    "rule_type": "whose_data",
+    "rule": "The route writes data to a file in a directory specific to the user, ensuring that each user can only access and modify their own data.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /message",
+    "rule_type": "csrf",
+    "rule": "POST /message changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the forged POST changed nothing (200)",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/message",
+      "result": "200",
+      "changed": []
+    }
+  },
+  {
+    "route": "POST /message",
+    "rule_type": "do_not_trust",
+    "rule": "filename: The server must sanitize the filename to prevent directory traversal attacks.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the value reaches a sink this replay does not model; keep for a human",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/message",
+      "value": "filename",
+      "type": "do_not_trust"
+    }
+  },
+  {
+    "route": "GET /grep_processes",
+    "rule_type": "who_may_call",
+    "rule": "Only administrators may call /grep_processes.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "bob not blocked (200) but saw no one's private data",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/grep_processes",
+      "need": "admin",
+      "result": "200"
+    }
+  },
+  {
+    "route": "GET /grep_processes",
+    "rule_type": "do_not_trust",
+    "rule": "name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a shell metacharacter payload ran a command (wrote a marker file) \u2014 command injection",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/grep_processes",
+      "value": "name",
+      "type": "do_not_trust",
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /deserialized_descr",
+    "rule_type": "csrf",
+    "rule": "POST /deserialized_descr changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "error",
+    "why": "Error: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4",
+    "request": {}
+  },
+  {
+    "route": "POST /deserialized_descr",
+    "rule_type": "do_not_trust",
+    "rule": "pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the value reaches a sink this replay does not model; keep for a human",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/deserialized_descr",
+      "value": "pickled",
+      "type": "do_not_trust"
+    }
+  },
+  {
+    "route": "POST /login",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to any user account, as it authenticates users based on their username and password.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /login",
+    "rule_type": "csrf",
+    "rule": "POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the forged POST only rewrote the session cookie (200): a real change (log in/out) or bookkeeping (a flash message, a token); keep for a human",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/login",
+      "result": "200",
+      "changed": []
+    }
+  },
+  {
+    "route": "POST /login",
+    "rule_type": "do_not_trust",
+    "rule": "password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the value reaches a sink this replay does not model; keep for a human",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/login",
+      "value": "password",
+      "type": "do_not_trust"
+    }
+  },
+  {
+    "route": "GET /login_and_redirect",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to one particular user account based on the username provided.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "GET /login_and_redirect",
+    "rule_type": "csrf",
+    "rule": "GET /login_and_redirect changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the forged GET changed nothing (302 -> x)",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/login_and_redirect",
+      "result": "302 -> x",
+      "changed": []
+    }
+  },
+  {
+    "route": "GET /login_and_redirect",
+    "rule_type": "do_not_trust",
+    "rule": "url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the value reaches a sink this replay does not model; keep for a human",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/login_and_redirect",
+      "value": "url",
+      "type": "do_not_trust"
+    }
+  },
+  {
+    "route": "GET /search",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to any user, not just the logged-in user.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /create_user",
+    "rule_type": "whose_data",
+    "rule": "The route inserts a new row into the 'user' table with a username, password, and access level.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /create_user",
+    "rule_type": "csrf",
+    "rule": "POST /create_user changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the forged POST changed nothing (200)",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/create_user",
+      "result": "200",
+      "changed": []
+    }
+  }
+]

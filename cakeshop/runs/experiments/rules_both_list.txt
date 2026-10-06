@@ -1,0 +1,225 @@
+/account   [do_not_trust, limits, must_not_change, who_may_call, whose_data]   MISSING: csrf
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is decorated with @login_required, which ensures that only logged-in users can access it.
+   - whose_data       The route reads and changes a record that belongs to the current user.
+                      because: The route updates the user's data based on the current user's ID.
+   - must_not_change  Users must not be able to set or change their own 'is_admin' status through this route.
+                      because: The route updates the user's data, but does not allow changing the 'is_admin' field.
+   - do_not_trust     Values sent by the client that the server must decide, look up or check itself include the fields in USER_COLUMNS.
+                      because: The route updates the user's data based on user input, which the server must validate.
+   - limits           Values for the fields in USER_COLUMNS must be within allowed bounds or choices.
+                      because: The route updates the user's data, and some fields may have specific limits or choices.
+
+/admin/orders   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is accessible to anyone, but it only shows data if the user is logged in.
+   - whose_data       The route displays data that belongs to any user.
+                      because: The route displays data from the 'orders' and 'users' tables.
+   - must_not_change  No fields can be changed through this route.  EXTRA
+                      because: The route only reads data and does not allow any changes.
+   - do_not_trust     No client inputs are trusted and must be validated or checked by the server.  EXTRA
+                      because: The route does not accept any input from the client.
+   - limits           No specific limits are applied to the data handled by this route.  EXTRA
+                      because: The route does not have any specific limits on the data it handles.
+   - csrf             This route does not require CSRF protection.  EXTRA
+                      because: The route does not change any data.
+
+/admin/stats   [csrf, do_not_trust, limits, who_may_call]
+   - who_may_call     Only admin users may call this route.
+                      because: The route is protected by the @admin_required decorator, which ensures only logged-in users with admin privileges can access it.
+   - do_not_trust     The server must verify the table name against a predefined set of allowed tables.
+                      because: The route does not accept any user input, but it uses a dynamic table name from the ALLOWED_TABLES constant, which the server must check.
+   - limits           The table name must be one of the following: 'products', 'orders', 'users', 'reviews'.
+                      because: The route uses a dynamic table name from the ALLOWED_TABLES constant, which the server must check against a fixed set of allowed values.
+   - csrf             This route does not change any data, so it does not require CSRF protection.  EXTRA
+                      because: The route does not change any data, so it does not need to be protected against CSRF attacks.
+
+/admin/orders/<int:order_id>/status   [csrf, do_not_trust, limits, who_may_call]
+   - who_may_call     Only logged-in admin users may call this route.
+                      because: The route is protected by the @admin_required decorator, which ensures only logged-in admin users can access it.
+   - limits           The status must be one of the following: 'new', 'baking', 'out_for_delivery', 'delivered', 'cancelled'.
+                      because: The route checks if the provided status is in the set of allowed statuses (ORDER_STATUSES).
+   - do_not_trust     The server must validate the status to ensure it is one of the allowed values.
+                      because: The status is directly taken from the request form and not validated further.
+   - csrf             A CSRF token must be included in the request to prevent cross-site request forgery.
+                      because: The route changes data, but there is no CSRF protection mechanism in place.
+
+/register   [csrf, do_not_trust, limits, must_not_change, who_may_call]
+   - who_may_call     Anyone may call this route.
+                      because: The route is publicly accessible and does not require authentication.
+   - must_not_change  The 'is_admin' field must not be set or changed through this route.
+                      because: The route inserts a new user record, and the user should not be able to set their own role or another user's id.
+   - do_not_trust     The 'username', 'password', 'email', and 'address' fields must be validated and sanitized by the server.
+                      because: The route inserts user-provided data into the database, which the server must verify or sanitize.
+   - limits           The 'username' field must be between 4 and 20 characters in length.
+                      because: The route inserts user-provided data into the database, which may have length or format constraints.
+   - csrf             CSRF protection must be implemented to prevent cross-site request forgery.
+                      because: The route changes data, and CSRF protection is not implemented.
+
+/login   [csrf, do_not_trust, limits, who_may_call]
+   - who_may_call     Anyone may call this route.
+                      because: The route is publicly accessible and does not require authentication.
+   - do_not_trust     The server must verify the username and password provided by the client.
+                      because: The route accepts user-provided input for username and password.
+   - limits           The username and password must not be empty.
+                      because: The route expects a username and password to be provided.
+   - csrf             CSRF protection must be implemented to prevent cross-site request forgery.
+                      because: The route changes data (logs in a user), but CSRF protection is not implemented.
+
+/logout   [csrf, who_may_call]
+   - who_may_call     Anyone may call this route.
+                      because: The route does not have any decorators or checks to restrict access, allowing anyone to call it.
+   - csrf             A CSRF token must be included in the request to prevent cross-site request forgery.
+                      because: The route changes data (clears the session), so a request forged from another website must be rejected.
+
+/orders   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.
+   - whose_data       The route reads data that belongs to the current user.
+                      because: The route retrieves orders for the current user from the database using the user_id from the session.
+   - must_not_change  No fields can be changed through this route.  EXTRA
+                      because: The route only retrieves data and does not allow any changes to the database.
+   - do_not_trust     No client-provided values are used or trusted by this route.  EXTRA
+                      because: The route does not accept any input from the client and only uses data from the database and session.
+   - limits           No specific limits are enforced on the data processed by this route.  EXTRA
+                      because: The route does not have any specific limits on the input or output.
+   - csrf             This route does not require CSRF protection as it does not change any data.  EXTRA
+                      because: The route does not change any data in the database.
+
+/orders/<int:order_id>   [do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.
+   - whose_data       The route reads data that belongs to the user who placed the order.
+                      because: The route retrieves an order by its ID, which is a foreign key to the user's ID, and displays it.
+   - must_not_change  Users must not be able to change any fields through this route.  EXTRA
+                      because: The route only retrieves data and does not allow any changes to the order.
+   - do_not_trust     The server must decide, look up, or check the order ID itself.  EXTRA
+                      because: The route uses the order ID provided by the client, which it must validate and check.
+   - limits           The order ID must be a valid integer.
+                      because: The route expects an integer order ID, which should be within a reasonable range.
+
+/orders/<int:order_id>/invoice   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.
+   - whose_data       The route reads a record that belongs to the current logged-in user.
+                      because: The route fetches an order based on the order_id and the user_id of the current logged-in user.
+   - must_not_change  Users must not be able to set or change any fields of the order record through this route.  EXTRA
+                      because: The route does not allow changing any fields of the order record.
+   - do_not_trust     The server must decide, look up, or check the format parameter sent by the client.
+                      because: The route uses the format parameter from the request.args, which the server must decide, look up, or check itself.
+   - limits           The format parameter should be limited to specific values.
+                      because: The route uses the format parameter, which should be limited to specific values (e.g., 'txt', 'pdf').
+   - csrf             A request forged from another website must be rejected.  EXTRA
+                      because: The route changes data (generates an invoice file), so a request forged from another website must be rejected.
+
+/   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Anyone may call this route.  EXTRA
+                      because: The route is publicly accessible with no authentication required.
+   - whose_data       The route reads data that belongs to no specific user.  EXTRA
+                      because: The route reads data from the 'products' table, which does not belong to any specific user.
+   - must_not_change  No fields may be changed through this route.  EXTRA
+                      because: The route only reads data and does not allow any changes to the database.
+   - do_not_trust     No values sent by the client that the server must decide, look up, or check itself.  EXTRA
+                      because: The route does not accept any user input that it must decide, look up, or check itself.
+   - limits           No specific limits on the values processed by this route.  EXTRA
+                      because: The route does not have any specific limits on the values it processes.
+   - csrf             This route does not need CSRF protection.  EXTRA
+                      because: The route does not change any data, so it does not need CSRF protection.
+
+/search   [do_not_trust, limits, who_may_call]
+   - who_may_call     Anyone can call this route.  EXTRA
+                      because: The route does not have any authentication or authorization checks.
+   - do_not_trust     The search term must be sanitized or use parameterized queries to prevent SQL injection.
+                      because: The search term is directly used in the SQL query without any sanitization or parameterized queries.
+   - limits           The search term should have a maximum length to prevent denial of service attacks.
+                      because: The search term is not limited in length.
+
+/product/<int:product_id>   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Anyone may call this route.  EXTRA
+                      because: The route does not have any decorators, so it is accessible to anyone.
+   - whose_data       The route reads data that belongs to the product with the given 'product_id'.  EXTRA
+                      because: The route reads data from the 'products' and 'reviews' tables based on the 'product_id' parameter.
+   - must_not_change  No fields may be changed through this route.  EXTRA
+                      because: The route only reads data and does not allow any changes to the database.
+   - do_not_trust     No values sent by the client that the server must decide, look up, or check itself.  EXTRA
+                      because: The route does not accept any user input that it must decide, look up, or check itself.
+   - limits           No specific limits on the values accepted by this route.
+                      because: The route does not have any specific limits on the values it accepts.
+   - csrf             This route does not need CSRF protection.  EXTRA
+                      because: The route does not change any data, so it does not need CSRF protection.
+
+/product/<int:product_id>/review   [do_not_trust, limits, must_not_change, who_may_call, whose_data]   MISSING: csrf
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.
+   - whose_data       The route reads or changes a record that belongs to a user.  EXTRA
+                      because: The route inserts a new record into the 'reviews' table, which belongs to a user.
+   - must_not_change  Users must not be able to set or change the 'product_id' or 'username' fields through this route.
+                      because: The route inserts a new record into the 'reviews' table, and the 'product_id' and 'username' fields are set by the server based on the request and the current user.
+   - do_not_trust     Values sent by the client that the server must decide, look up or check itself (for example, the 'body' field).
+                      because: The route inserts a new record into the 'reviews' table, and the 'body' field is provided by the client.
+   - limits           The 'body' field must not exceed a certain length.
+                      because: The route inserts a new record into the 'reviews' table, and the 'body' field has a limit on its length.
+
+/image   [do_not_trust, limits]
+   - do_not_trust     The filename parameter must be validated to prevent directory traversal attacks.
+                      because: The route reads a filename from the client's input without validation.
+   - limits           The filename parameter must have a maximum length to prevent excessive resource consumption.
+                      because: The route does not limit the length of the filename parameter.
+
+/thumbnail   [do_not_trust, limits]
+   - do_not_trust     The filename parameter must be validated to prevent directory traversal attacks.
+                      because: The route reads a filename from the client's input without validation.
+   - limits           The filename parameter must have a maximum length to prevent excessive resource consumption.
+                      because: The route does not limit the length of the filename parameter.
+
+/greeting   [do_not_trust, who_may_call]
+   - who_may_call     Anyone can call this route.  EXTRA
+                      because: The route does not have any authentication or authorization checks.
+   - do_not_trust     The server must decide, look up, or check the 'name' value itself.
+                      because: The route uses a value from the client (request.args.get('name')) without any validation or sanitization.
+
+/cake-message/preview   [do_not_trust, who_may_call]
+   - who_may_call     Anyone may call this route.  EXTRA
+                      because: The route does not have any decorators or checks to restrict access, allowing anyone to call it.
+   - do_not_trust     The server must decide, look up, or check the `text` value itself.
+                      because: The route uses user-provided input (`text`) directly in the response without any validation or sanitization.
+
+/cart   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Anyone can call this route.  EXTRA
+                      because: The route does not have any decorators or checks to restrict access based on user roles or authentication status.
+   - whose_data       The route reads data that belongs to the user who set the 'cart' cookie.  EXTRA
+                      because: The route reads data from the 'cart' cookie, which is not tied to any specific user.
+   - must_not_change  No fields can be changed through this route.  EXTRA
+                      because: The route only reads data and does not allow any changes to the database.
+   - do_not_trust     Values sent by the client that the server must decide, look up or check itself.
+                      because: The route reads data from the 'cart' cookie, which is not validated or sanitized.
+   - limits           There are no limits on the number of items or the quantity of each item in the cart.
+                      because: The route does not have any checks on the number of items in the cart or the quantity of each item.
+   - csrf             This route does not need CSRF protection.  EXTRA
+                      because: The route does not change any data in the database.
+
+/cart/add   [csrf, do_not_trust, limits, must_not_change, who_may_call, whose_data]
+   - who_may_call     Anyone may call this route.  EXTRA
+                      because: The route does not have any decorators or checks to restrict access, so anyone can call it.
+   - whose_data       Only the user who is logged in may modify their own cart data.  EXTRA
+                      because: The route modifies the cart data, which belongs to the user who is logged in.
+   - must_not_change  Users must not be able to set or change the product_id or quantity through this route.  EXTRA
+                      because: The route does not allow changing the product_id or quantity directly through the request form.
+   - do_not_trust     The server must validate and sanitize the product_id before using it.
+                      because: The route uses the product_id directly from the request form without any validation or sanitization.
+   - limits           The product_id and quantity must be within a valid range.
+                      because: The route does not have any limits on the product_id or quantity.
+   - csrf             A request forged from another website must be rejected.
+                      because: The route changes data, but there is no CSRF protection.
+
+/checkout   [do_not_trust, limits, must_not_change, who_may_call, whose_data]   MISSING: csrf
+   - who_may_call     Only logged-in users may call this route.
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.
+   - whose_data       The route reads or changes a record that belongs to the current user.
+                      because: The route inserts data into the 'orders' table, which belongs to the user making the request.
+   - must_not_change  The user must not be able to set or change their own role or another user's ID.
+                      because: The route inserts data into the 'orders' table, and the 'user_id' field is set to the current user's ID, which should not be changed by the user.
+   - do_not_trust     Values sent by the client that the server must decide, look up or check itself (e.g., product_id, quantity, price).
+                      because: The route inserts data into the 'orders' table, and the 'product_id', 'quantity', and 'price' fields are directly taken from the user's input without further validation.
+   - limits           Values that need bounds or a fixed set of allowed values (e.g., quantity).
+                      because: The route inserts data into the 'orders' table, and the 'quantity' field is directly taken from the user's input without any bounds checking.

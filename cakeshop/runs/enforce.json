@@ -1,0 +1,439 @@
+[
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/account.py",
+    "line": 13,
+    "snippet": "def account():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET/POST /account",
+      "rule": "GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The code does not include a CSRF token check for the POST request to /account.",
+      "attack": "An attacker can forge a POST request to /account from another website. If the attacker knows the user's session ID, they can update the user's profile without their knowledge. The request would look like this:\n\n- Who is logged in: Any user with a valid session ID\n- Method: POST\n- URL: /account\n- Values: {\"email\": \"attacker@example.com\", \"address\": \"attacker address\"}\n- What happens: The user's email and address will be updated to the attacker's values without their consent."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "must_not_change",
+    "title": "Rule not enforced: is_admin: The server must not allow the client to set the is_admin field through this route.",
+    "file": "cakeshop/account.py",
+    "line": 17,
+    "snippet": "if key in USER_COLUMNS:",
+    "cwe": [
+      "CWE-915"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET/POST /account",
+      "rule": "is_admin: The server must not allow the client to set the is_admin field through this route.",
+      "verdict": "not_enforced",
+      "reason": "The code checks if the key is in USER_COLUMNS, but it does not exclude 'is_admin'.",
+      "attack": "A user who is logged in can set the 'is_admin' field to '1' by submitting a POST request to /account with the form data {'is_admin': '1'}. This will update the user's 'is_admin' field to 1, granting them admin privileges without their knowledge or consent."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only administrators may call /admin/orders.",
+    "file": "cakeshop/admin.py",
+    "line": 12,
+    "snippet": "def all_orders():",
+    "cwe": [
+      "CWE-862"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "GET /admin/orders",
+      "rule": "Only administrators may call /admin/orders.",
+      "verdict": "uncertain",
+      "reason": "the copied line is not in the code",
+      "attack": "None. The rule is enforced by checking if the user is an administrator before allowing access to the route. If a non-administrator tries to access the route, they will not be allowed to do so."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The 'orders' table stores records that belong to specific user accounts, identified by the 'user_id' column.",
+    "file": "cakeshop/admin.py",
+    "line": 12,
+    "snippet": "def all_orders():",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /admin/orders",
+      "rule": "The 'orders' table stores records that belong to specific user accounts, identified by the 'user_id' column.",
+      "verdict": "not_enforced",
+      "reason": "The route does not check if the logged-in user is an admin before displaying orders.",
+      "attack": "An attacker who is not logged in as an admin can access the /admin/orders route and view all orders, including those that belong to other users. The attacker is not logged in, method is GET, URL is /admin/orders, values are none, what happens is the attacker sees all orders, not just their own."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/admin.py",
+    "line": 29,
+    "snippet": "def set_status(order_id):",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /admin/orders/<int:order_id>/status",
+      "rule": "POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to change the status of an order. They do not need to be logged in as an admin. They can simply send a request with the correct URL and parameters. The request will be accepted and the order status will be changed, even if the request is forged from another website. This is because the route does not include a CSRF token check."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: status: The value must be one of the statuses defined in ORDER_STATUSES.",
+    "file": "cakeshop/admin.py",
+    "line": 30,
+    "snippet": "status = request.form.get(\"status\", \"\")",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /admin/orders/<int:order_id>/status",
+      "rule": "status: The value must be one of the statuses defined in ORDER_STATUSES.",
+      "verdict": "not_enforced",
+      "reason": "The code retrieves the status from the form data without any validation.",
+      "attack": "An attacker can send a POST request to /admin/orders/<int:order_id>/status with a status value that is not in ORDER_STATUSES. For example, sending a request with status='pending' would bypass the validation and update the order status to 'pending', which is not a valid status according to the rule. The attacker is logged in, the method is POST, the URL is /admin/orders/<int:order_id>/status, the values are {'status': 'pending'}, and what happens is that the order status is updated to 'pending' without any error message."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/auth.py",
+    "line": 42,
+    "snippet": "def register():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET/POST /register",
+      "rule": "GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route /register does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to /register from another website. The request can include any username and password, as there is no CSRF token to validate the request. The attacker can create an account with any username and password they choose, potentially compromising the application's security. The request would look like this:\n\n- Method: POST\n- URL: http://example.com/register\n- Values: username=attacker, password=attackerpassword\n- Result: The attacker's account is created with the username 'attacker' and password 'attackerpassword'.\n\nThis request does not require any authentication, so it can be made by anyone with access to the attacker's website."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/auth.py",
+    "line": 64,
+    "snippet": "def login():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET/POST /login",
+      "rule": "GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route /login does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to /login from another website. The request can be crafted with the correct username and password, and the server will accept it because it does not check for a CSRF token. The attacker can then log in as the user without their knowledge or consent. This is a classic CSRF attack on a login page."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.",
+    "file": "cakeshop/auth.py",
+    "line": 72,
+    "snippet": "return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))",
+    "cwe": [
+      "CWE-601"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET/POST /login",
+      "rule": "next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.",
+      "verdict": "not_enforced",
+      "reason": "The code does not validate the 'next' URL parameter to ensure it is safe and does not redirect to an unsafe location.",
+      "attack": "An attacker can exploit this vulnerability by providing a malicious 'next' URL parameter. For example, if the attacker is logged in and visits /login?next=http://maliciouswebsite.com, they will be redirected to the malicious website instead of the intended page. This could lead to phishing attacks or other security issues."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /logout.",
+    "file": "cakeshop/auth.py",
+    "line": 78,
+    "snippet": "def logout():",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /logout",
+      "rule": "Only logged-in users may call /logout.",
+      "verdict": "not_enforced",
+      "reason": "The code checks if a user is logged in before processing any request, but it does not enforce the rule that only logged-in users may call /logout.",
+      "attack": "A user who is not logged in can still call the /logout route. They are logged in as 'None', and the session is cleared, but no check is made to ensure they are logged in before allowing the logout. The request is made with the method GET, URL /logout, and no values. The result is that the session is cleared, but the user is not logged in, and no error is raised."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/auth.py",
+    "line": 78,
+    "snippet": "def logout():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /logout",
+      "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The /logout route does not include a CSRF token check, which is required to prevent CSRF attacks.",
+      "attack": "An attacker can forge a GET request to /logout from another website. If the user is logged in, the session will be cleared, and the user will be logged out. This can be exploited to log out users without their consent, leading to unauthorized access issues. The attacker does not need to know the user's credentials or any other information; they only need to know the user is logged in and can make a GET request to the /logout endpoint. The request can be made using any web browser or automated tool."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: Only the user whose 'id' matches the 'user_id' in the 'orders' table should be able to access this route.",
+    "file": "cakeshop/orders.py",
+    "line": 23,
+    "snippet": "def order_detail(order_id):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /orders/<int:order_id>",
+      "rule": "Only the user whose 'id' matches the 'user_id' in the 'orders' table should be able to access this route.",
+      "verdict": "not_enforced",
+      "reason": "The @login_required decorator checks if a user is logged in, but it does not verify that the logged-in user is the owner of the order.",
+      "attack": "A user who is logged in as another user can access the order detail of that other user by visiting the URL /orders/<order_id> where <order_id> is an order that belongs to the other user. The attack does not require any special permissions or credentials, as the @login_required decorator only checks for a logged-in user, not for the user's ownership of the order. The response will be the order detail of the other user, which is a violation of the rule whose_data."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route should only allow access to the invoice if the 'user_id' in the 'orders' table matches the 'id' of the currently logged-in user.",
+    "file": "cakeshop/auth.py",
+    "line": 14,
+    "snippet": "if g.user is None:",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /orders/<int:order_id>/invoice",
+      "rule": "The route should only allow access to the invoice if the 'user_id' in the 'orders' table matches the 'id' of the currently logged-in user.",
+      "verdict": "not_enforced",
+      "reason": "The route does not check if the user is logged in before accessing the invoice.",
+      "attack": "An attacker can access the invoice for any order by sending a GET request to /orders/<int:order_id>/invoice with the correct order_id. The attacker is not logged in, but the route does not check for this, allowing unauthorized access. The method is GET, the URL is /orders/<int:order_id>/invoice, and the values are the correct order_id. The attacker will receive the invoice for the specified order without being logged in."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: format: The server must validate and sanitize the format to prevent malicious file format injection.",
+    "file": "cakeshop/orders.py",
+    "line": 43,
+    "snippet": "fmt = request.args.get(\"format\", \"txt\")",
+    "cwe": [
+      "CWE-78"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /orders/<int:order_id>/invoice",
+      "rule": "format: The server must validate and sanitize the format to prevent malicious file format injection.",
+      "verdict": "not_enforced",
+      "reason": "The code does not validate or sanitize the 'format' parameter, allowing for potential malicious file format injection.",
+      "attack": "A malicious user could inject a file format like '.php' or '.html' into the 'format' parameter. For example, accessing the URL with `GET /orders/123/invoice?format=.php` would result in a file named `order_123.php` being created, which could potentially be executed by the server if improperly handled. This could lead to code execution vulnerabilities or other security issues."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/shop.py",
+    "line": 52,
+    "snippet": "def add_review(product_id):",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /product/<int:product_id>/review",
+      "rule": "POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to /product/<int:product_id>/review from another website. If the attacker knows the product_id, they can submit a review without being logged in or with a different username. The request would look like this: POST /product/123/review HTTP/1.1 Host: example.com Content-Type: application/x-www-form-urlencoded body=This+is+a+fake+review. The server would insert the review into the database without verifying the request's origin, allowing the attacker to bypass the login requirement and submit a review as if they were a logged-in user."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks.",
+    "file": "cakeshop/shop.py",
+    "line": 64,
+    "snippet": "filename = request.args.get(\"name\", \"\")",
+    "cwe": [
+      "CWE-22"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /image",
+      "rule": "name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks.",
+      "verdict": "not_enforced",
+      "reason": "The code does not validate or sanitize the 'name' parameter, which can lead to directory traversal attacks.",
+      "attack": "An attacker can exploit this vulnerability by providing a malicious 'name' parameter that includes directory traversal sequences (e.g., '../'). For example, if the 'IMAGE_DIR' is '/var/www/images', an attacker could provide 'name=../../etc/passwd' to read the contents of the '/etc/passwd' file. This could lead to unauthorized access to sensitive information."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /cart.",
+    "file": "cakeshop/shop.py",
+    "line": 99,
+    "snippet": "def view_cart():",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "GET /cart",
+      "rule": "Only logged-in users may call /cart.",
+      "verdict": "uncertain",
+      "reason": "@before_app_request is not a decorator of this route",
+      "attack": "None. The rule is enforced by the code provided. Only logged-in users can access the /cart route, as the `load_logged_in_user` function checks for a valid `user_id` in the session and fetches the corresponding user from the database. If no `user_id` is found, `g.user` is set to `None`, preventing access to the route."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /cart/add.",
+    "file": "cakeshop/shop.py",
+    "line": 111,
+    "snippet": "def add_to_cart():",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "Only logged-in users may call /cart/add.",
+      "verdict": "uncertain",
+      "reason": "@before_app_request is not a decorator of this route",
+      "attack": "None. The rule is enforced by the `load_logged_in_user` function, which checks if a user is logged in before allowing access to the `/cart/add` route. If a user is not logged in, they will not be able to access the route, and the request will be denied."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/shop.py",
+    "line": 111,
+    "snippet": "def add_to_cart():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "attack": "An attacker can forge a POST request to /cart/add from another website. If the attacker knows the user's session ID, they can add items to the cart without the user's knowledge. The request would be a POST to /cart/add with the necessary form data (product_id). The attack would succeed because there is no CSRF token to validate the request's origin."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities.",
+    "file": "cakeshop/shop.py",
+    "line": 91,
+    "snippet": "return pickle.loads(base64.b64decode(raw))",
+    "cwe": [
+      "CWE-113"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities.",
+      "verdict": "not_enforced",
+      "reason": "The code uses pickle to deserialize data from the cookie, which is not safe and can lead to deserialization vulnerabilities.",
+      "attack": "An attacker can craft a malicious payload for the 'cart' cookie using pickle serialization. For example, they could serialize a malicious object that executes arbitrary code when deserialized. If this payload is then sent to the server, it could lead to remote code execution. The attacker is logged in, the method is POST, the URL is /cart/add, and the values are the maliciously serialized payload. The server will deserialize this payload, leading to the execution of arbitrary code on the server."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /checkout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/shop.py",
+    "line": 122,
+    "snippet": "def checkout():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "POST /checkout changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to /checkout from another website. They can specify any product_id, quantity, and price, and the request will be processed as if it were a legitimate user. The attacker does not need to be logged in to perform this attack. The request method is POST, the URL is /checkout, and the values are product_id=1, quantity=10, price=100. The request will be processed, and an order will be created in the database with the specified values. The attacker can manipulate the order details to their advantage, such as purchasing a large quantity of a product at a lower price than intended."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: quantity: quantity must be a positive integer.",
+    "file": "cakeshop/shop.py",
+    "line": 124,
+    "snippet": "quantity = int(request.form.get(\"quantity\", 1))",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "quantity: quantity must be a positive integer.",
+      "verdict": "not_enforced",
+      "reason": "The code allows 'quantity' to be 0 or negative by defaulting to 1 if not provided.",
+      "attack": "A user can bypass the rule by sending a POST request to /checkout with 'quantity' set to 0 or a negative number. For example, a request with method POST, URL /checkout, values {'product_id': 1, 'quantity': -1, 'price': 10}, and no other fields. The code will insert an order with a negative quantity into the database, which violates the rule that 'quantity' must be a positive integer."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: price: price must be a positive integer.",
+    "file": "cakeshop/shop.py",
+    "line": 125,
+    "snippet": "price = int(request.form[\"price\"])",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "price: price must be a positive integer.",
+      "verdict": "not_enforced",
+      "reason": "The code converts the 'price' value to an integer, but it does not check if the value is positive.",
+      "attack": "A malicious user could submit a POST request to /checkout with a negative or zero value for 'price'. For example, sending a request with 'price=-10' would result in a negative total, which could be used to exploit the system. The user is logged in, the method is POST, the URL is /checkout, and the values are {'product_id': 1, 'quantity': 1, 'price': -10, 'message': '', 'note': ''}. The system would insert this order into the database with a negative total, potentially leading to financial losses or other security issues."
+    }
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "note": "Hand check of the findings the automatic scorer does not credit (tools/score.py --hand applies it). Each entry: a finding (matched by tool, file, line, and route or package when needed) and the verdict after reading the code and the replay log: a bug id from ground_truth.json, 'real' (a real problem the answer key does not list), or 'false_alarm'. Findings not listed keep the automatic verdict.",
+  "findings": [
+    {
+      "tool": "semgrep",
+      "file": "cakeshop/shop.py",
+      "line": 95,
+      "verdict": "false_alarm",
+      "why": "pickle.dumps of the server's own cart; the vulnerable pickle.loads is V04 on line 91, reported separately"
+    },
+    {
+      "tool": "semgrep",
+      "file": "cakeshop/shop.py",
+      "line": 116,
+      "verdict": "false_alarm",
+      "why": "cart cookie set without Secure/HttpOnly flags: a hardening issue, not one of the planted bugs; not counted, to stay conservative"
+    }
+  ]
+}

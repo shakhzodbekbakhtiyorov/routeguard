@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ workshop['title'] }}{% endblock %}
+{% block content %}
+<h1>{{ workshop['title'] }}</h1>
+<div class="card">
+  <p>{{ workshop['description'] }}</p>
+  <p><strong>Date:</strong> {{ workshop['scheduled_at'] }}</p>
+  <p><strong>Organiser:</strong> {{ workshop['organiser'] }}</p>
+  <p><strong>Price per seat:</strong> &pound;{{ "%.2f"|format(workshop['price_per_seat']) }}</p>
+  <p><strong>Seats remaining:</strong> {{ remaining }}</p>
+</div>
+
+{% if g.account and remaining > 0 %}
+<div class="card">
+  <h2>Book Seats</h2>
+  <form method="post" action="{{ url_for('workshops.book', wid=workshop['id']) }}">
+    <label>Number of seats
+      <input type="number" name="seats" value="1" min="1" max="{{ remaining }}">
+    </label>
+    <input type="hidden" name="total_cost"
+           value="{{ workshop['price_per_seat'] }}"
+           id="total-cost-field">
+    <p id="cost-preview">
+      Total: &pound;<span id="cost-amount">{{ "%.2f"|format(workshop['price_per_seat']) }}</span>
+    </p>
+    <button class="btn" type="submit">Confirm Booking</button>
+  </form>
+  <script>
+    (function() {
+      var price = {{ workshop['price_per_seat'] }};
+      var seatsInput = document.querySelector('[name="seats"]');
+      var costField = document.getElementById('total-cost-field');
+      var costDisplay = document.getElementById('cost-amount');
+      seatsInput.addEventListener('input', function() {
+        var n = parseInt(this.value) || 1;
+        var total = (n * price).toFixed(2);
+        costField.value = total;
+        costDisplay.textContent = total;
+      });
+    })();
+  </script>
+</div>
+{% elif not g.account %}
+<p><a href="{{ url_for('auth.login_page') }}">Sign in</a> to book a seat.</p>
+{% else %}
+<p>This workshop is fully booked.</p>
+{% endif %}
+{% endblock %}

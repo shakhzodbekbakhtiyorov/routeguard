@@ -1,0 +1,39 @@
+{
+  "label": "enforce, code only",
+  "strict": true,
+  "n_findings": 10,
+  "n_vuln": 19,
+  "detected": 6,
+  "recall": 0.316,
+  "cwe_exact": 6,
+  "cwe_related": 6,
+  "tp_findings": 7,
+  "precision": 0.7,
+  "code_precision": 0.7,
+  "decoys_flagged": [],
+  "decoy_findings": 0,
+  "other": 3,
+  "missed": [
+    "V01",
+    "V02",
+    "V04",
+    "V05",
+    "V07",
+    "V08",
+    "V11",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18"
+  ],
+  "detected_ids": [
+    "V03",
+    "V06",
+    "V09",
+    "V10",
+    "V12",
+    "V19"
+  ]
+}

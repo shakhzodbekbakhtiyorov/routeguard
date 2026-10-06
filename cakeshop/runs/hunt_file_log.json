@@ -1,0 +1,510 @@
+[
+  {
+    "where": "cakeshop/__init__.py:1-29",
+    "prompt": "File: cakeshop/__init__.py (lines 1-29 of 29)\n\n   1 | import os\n   2 | \n   3 | from flask import Flask\n   4 | \n   5 | from . import db\n   6 | \n   7 | \n   8 | def create_app(test_config=None):\n   9 |     app = Flask(__name__, instance_relative_config=True)\n  10 |     app.config.update(\n  11 |         SECRET_KEY=\"cakeshop-secret-2024\",\n  12 |         DATABASE=os.path.join(app.instance_path, \"cakeshop.sqlite\"),\n  13 |         IMAGE_DIR=os.path.join(app.root_path, \"static\", \"cakes\"),\n  14 |         INVOICE_DIR=os.path.join(app.instance_path, \"invoices\"),\n  15 |     )\n  16 |     if test_config:\n  17 |         app.config.update(test_config)\n  18 | \n  19 |     os.makedirs(app.instance_path, exist_ok=True)\n  20 |     os.makedirs(app.config[\"INVOICE_DIR\"], exist_ok=True)\n  21 | \n  22 |     db.init_app(app)\n  23 | \n  24 |     from . import account, admin, auth, orders, shop\n  25 | \n  26 |     for blueprint in (auth.bp, shop.bp, orders.bp, admin.bp, account.bp):\n  27 |         app.register_blueprint(blueprint)\n  28 | \n  29 |     return app",
+    "answer": {
+      "findings": [
+        {
+          "code": "SECRET_KEY = \"cakeshop-secret-2024\"",
+          "line": 11,
+          "source": "none",
+          "why": "The secret key is hardcoded, making the application vulnerable to session hijacking and other attacks that rely on the secret key.",
+          "title": "Hardcoded Secret Key",
+          "cwe": "CWE-312",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 24.4
+  },
+  {
+    "where": "cakeshop/account.py:1-22",
+    "prompt": "File: cakeshop/account.py (lines 1-22 of 22)\n\n   1 | from flask import Blueprint, flash, g, redirect, render_template, request, url_for\n   2 | \n   3 | from .auth import login_required\n   4 | from .db import get_db\n   5 | \n   6 | bp = Blueprint(\"account\", __name__)\n   7 | \n   8 | USER_COLUMNS = {\"username\", \"email\", \"address\", \"is_admin\"}\n   9 | \n  10 | \n  11 | @bp.route(\"/account\", methods=[\"GET\", \"POST\"])\n  12 | @login_required\n  13 | def account():\n  14 |     if request.method == \"POST\":\n  15 |         db = get_db()\n  16 |         for key, value in request.form.items():\n  17 |             if key in USER_COLUMNS:\n  18 |                 db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))\n  19 |         db.commit()\n  20 |         flash(\"Profile updated.\")\n  21 |         return redirect(url_for(\"account.account\"))\n  22 |     return render_template(\"account.html\")",
+    "answer": {
+      "findings": [
+        {
+          "code": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+          "line": 18,
+          "source": "request.form.items()",
+          "why": "SQL injection vulnerability. An attacker can inject malicious SQL code through the form data.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 13.3
+  },
+  {
+    "where": "cakeshop/admin.py:1-36",
+    "prompt": "File: cakeshop/admin.py (lines 1-36 of 36)\n\n   1 | from flask import Blueprint, abort, redirect, render_template, request, url_for\n   2 | \n   3 | from .auth import admin_required\n   4 | from .db import ALLOWED_TABLES, count_rows, get_db\n   5 | \n   6 | bp = Blueprint(\"admin\", __name__, url_prefix=\"/admin\")\n   7 | \n   8 | ORDER_STATUSES = {\"new\", \"baking\", \"out_for_delivery\", \"delivered\", \"cancelled\"}\n   9 | \n  10 | \n  11 | @bp.route(\"/orders\")\n  12 | def all_orders():\n  13 |     rows = get_db().execute(\n  14 |         \"SELECT orders.*, users.username, users.email, users.address \"\n  15 |         \"FROM orders JOIN users ON users.id = orders.user_id ORDER BY orders.id DESC\"\n  16 |     ).fetchall()\n  17 |     return render_template(\"admin_orders.html\", orders=rows)\n  18 | \n  19 | \n  20 | @bp.route(\"/stats\")\n  21 | @admin_required\n  22 | def stats():\n  23 |     counts = {table: count_rows(table) for table in sorted(ALLOWED_TABLES)}\n  24 |     return render_template(\"admin_stats.html\", counts=counts)\n  25 | \n  26 | \n  27 | @bp.route(\"/orders/<int:order_id>/status\", methods=[\"POST\"])\n  28 | @admin_required\n  29 | def set_status(order_id):\n  30 |     status = request.form.get(\"status\", \"\")\n  31 |     if status not in ORDER_STATUSES:\n  32 |         abort(400)\n  33 |     db = get_db()\n  34 |     db.execute(\"UPDATE orders SET status = ? WHERE id = ?\", (status, order_id))\n  35 |     db.commit()\n  36 |     return redirect(url_for(\"admin.all_orders\"))",
+    "answer": {
+      "findings": [
+        {
+          "code": "status = request.form.get('status', '')",
+          "line": 30,
+          "source": "request.form",
+          "why": "The status value is directly used in an SQL query without proper validation or sanitization, which could lead to SQL injection if an attacker provides malicious input.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 17.0
+  },
+  {
+    "where": "cakeshop/auth.py:1-80",
+    "prompt": "File: cakeshop/auth.py (lines 1-80 of 80)\n\n   1 | import functools\n   2 | \n   3 | from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for\n   4 | \n   5 | from .db import get_db\n   6 | from .security import check_password, hash_password\n   7 | \n   8 | bp = Blueprint(\"auth\", __name__)\n   9 | \n  10 | \n  11 | def login_required(view):\n  12 |     @functools.wraps(view)\n  13 |     def wrapped(*args, **kwargs):\n  14 |         if g.user is None:\n  15 |             return redirect(url_for(\"auth.login\", next=request.path))\n  16 |         return view(*args, **kwargs)\n  17 | \n  18 |     return wrapped\n  19 | \n  20 | \n  21 | def admin_required(view):\n  22 |     @functools.wraps(view)\n  23 |     @login_required\n  24 |     def wrapped(*args, **kwargs):\n  25 |         if not g.user[\"is_admin\"]:\n  26 |             abort(403)\n  27 |         return view(*args, **kwargs)\n  28 | \n  29 |     return wrapped\n  30 | \n  31 | \n  32 | @bp.before_app_request\n  33 | def load_logged_in_user():\n  34 |     user_id = session.get(\"user_id\")\n  35 |     if user_id is None:\n  36 |         g.user = None\n  37 |     else:\n  38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n  39 | \n  40 | \n  41 | @bp.route(\"/register\", methods=[\"GET\", \"POST\"])\n  42 | def register():\n  43 |     if request.method == \"POST\":\n  44 |         username = request.form[\"username\"].strip()\n  45 |         password = request.form[\"password\"]\n  46 |         if not username or not password:\n  47 |             flash(\"Username and password are required.\")\n  48 |         else:\n  49 |             db = get_db()\n  50 |             try:\n  51 |                 db.execute(\n  52 |                     \"INSERT INTO users (username, password_hash, email, address) VALUES (?, ?, ?, ?)\",\n  53 |                     (username, hash_password(password), request.form.get(\"email\"), request.form.get(\"address\")),\n  54 |                 )\n  55 |                 db.commit()\n  56 |             except db.IntegrityError:\n  57 |                 flash(\"That username is taken.\")\n  58 |             else:\n  59 |                 return redirect(url_for(\"auth.login\"))\n  60 |     return render_template(\"register.html\")\n  61 | \n  62 | \n  63 | @bp.route(\"/login\", methods=[\"GET\", \"POST\"])\n  64 | def login():\n  65 |     if request.method == \"POST\":\n  66 |         user = get_db().execute(\n  67 |             \"SELECT * FROM users WHERE username = ?\", (request.form[\"username\"],)\n  68 |         ).fetchone()\n  69 |         if user is not None and check_password(user[\"password_hash\"], request.form[\"password\"]):\n  70 |             session.clear()\n  71 |             session[\"user_id\"] = user[\"id\"]\n  72 |             return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))\n  73 |         flash(\"Wrong username or password.\")\n  74 |     return render_template(\"login.html\")\n  75 | \n  76 | \n  77 | @bp.route(\"/logout\")\n  78 | def logout():\n  79 |     session.clear()\n  80 |     return redirect(url_for(\"shop.index\"))",
+    "answer": {
+      "findings": [
+        {
+          "code": "username = request.form['username'].strip()",
+          "line": 44,
+          "source": "request.form['username']",
+          "why": "The username is not validated or sanitized before being used in the SQL query. An attacker could inject SQL code through the username field.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        },
+        {
+          "code": "password = request.form['password']",
+          "line": 45,
+          "source": "request.form['password']",
+          "why": "The password is not validated or sanitized before being used in the SQL query. An attacker could inject SQL code through the password field.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        },
+        {
+          "code": "user = get_db().execute('SELECT * FROM users WHERE username = ?', (request.form['username'],)).fetchone()",
+          "line": 66,
+          "source": "request.form['username']",
+          "why": "The username is not validated or sanitized before being used in the SQL query. An attacker could inject SQL code through the username field.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        },
+        {
+          "code": "session['user_id'] = user['id']",
+          "line": 70,
+          "source": "user['id']",
+          "why": "The user ID is not validated or sanitized before being stored in the session. An attacker could potentially manipulate the session data.",
+          "title": "Session Manipulation",
+          "cwe": "CWE-22",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 56.2
+  },
+  {
+    "where": "cakeshop/db.py:1-118",
+    "prompt": "File: cakeshop/db.py (lines 1-118 of 118)\n\n   1 | import sqlite3\n   2 | \n   3 | import click\n   4 | from flask import current_app, g\n   5 | \n   6 | from .security import hash_password\n   7 | \n   8 | ALLOWED_TABLES = {\"products\", \"orders\", \"users\", \"reviews\"}\n   9 | \n  10 | SCHEMA = \"\"\"\n  11 | DROP TABLE IF EXISTS users;\n  12 | DROP TABLE IF EXISTS products;\n  13 | DROP TABLE IF EXISTS orders;\n  14 | DROP TABLE IF EXISTS reviews;\n  15 | \n  16 | CREATE TABLE users (\n  17 |     id INTEGER PRIMARY KEY AUTOINCREMENT,\n  18 |     username TEXT UNIQUE NOT NULL,\n  19 |     password_hash TEXT NOT NULL,\n  20 |     email TEXT,\n  21 |     address TEXT,\n  22 |     is_admin INTEGER NOT NULL DEFAULT 0\n  23 | );\n  24 | \n  25 | CREATE TABLE products (\n  26 |     id INTEGER PRIMARY KEY AUTOINCREMENT,\n  27 |     name TEXT NOT NULL,\n  28 |     price INTEGER NOT NULL,\n  29 |     image TEXT\n  30 | );\n  31 | \n  32 | CREATE TABLE orders (\n  33 |     id INTEGER PRIMARY KEY AUTOINCREMENT,\n  34 |     user_id INTEGER NOT NULL,\n  35 |     product_id INTEGER NOT NULL,\n  36 |     quantity INTEGER NOT NULL,\n  37 |     total INTEGER NOT NULL,\n  38 |     message TEXT,\n  39 |     note TEXT,\n  40 |     status TEXT NOT NULL DEFAULT 'new'\n  41 | );\n  42 | \n  43 | CREATE TABLE reviews (\n  44 |     id INTEGER PRIMARY KEY AUTOINCREMENT,\n  45 |     product_id INTEGER NOT NULL,\n  46 |     username TEXT NOT NULL,\n  47 |     body TEXT NOT NULL\n  48 | );\n  49 | \"\"\"\n  50 | \n  51 | SEED_USERS = [\n  52 |     (\"admin\", \"admin123\", \"admin@cakeshop.local\", \"Head office\", 1),\n  53 |     (\"alice\", \"alice123\", \"alice@example.com\", \"Chilonzor 12, Tashkent\", 0),\n  54 |     (\"bob\", \"bob123\", \"bob@example.com\", \"Yunusobod 4, Tashkent\", 0),\n  55 | ]\n  56 | \n  57 | SEED_PRODUCTS = [\n  58 |     (\"Napoleon\", 180000, \"napoleon.svg\"),\n  59 |     (\"Medovik\", 165000, \"medovik.svg\"),\n  60 |     (\"Red Velvet\", 210000, \"red_velvet.svg\"),\n  61 |     (\"Chocolate Truffle\", 230000, \"chocolate.svg\"),\n  62 | ]\n  63 | \n  64 | SEED_ORDERS = [\n  65 |     (2, 1, 1, 180000, \"Happy birthday, Mom!\", \"Leave at the door\"),\n  66 |     (3, 3, 2, 420000, \"Congrats on the new job\", \"Call before delivery\"),\n  67 | ]\n  68 | \n  69 | \n  70 | def get_db():\n  71 |     if \"db\" not in g:\n  72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n  73 |         g.db.row_factory = sqlite3.Row\n  74 |     return g.db\n  75 | \n  76 | \n  77 | def close_db(e=None):\n  78 |     db = g.pop(\"db\", None)\n  79 |     if db is not None:\n  80 |         db.close()\n  81 | \n  82 | \n  83 | def init_db():\n  84 |     db = get_db()\n  85 |     db.executescript(SCHEMA)\n  86 |     db.executemany(\n  87 |         \"INSERT INTO users (username, password_hash, email, address, is_admin) VALUES (?, ?, ?, ?, ?)\",\n  88 |         [(u, hash_password(p), e, a, adm) for u, p, e, a, adm in SEED_USERS],\n  89 |     )\n  90 |     db.executemany(\"INSERT INTO products (name, price, image) VALUES (?, ?, ?)\", SEED_PRODUCTS)\n  91 |     db.executemany(\n  92 |         \"INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)\",\n  93 |         SEED_ORDERS,\n  94 |     )\n  95 |     db.commit()\n  96 | \n  97 | \n  98 | @click.command(\"init-db\")\n  99 | def init_db_command():\n 100 |     init_db()\n 101 |     click.echo(\"Database initialised with demo data.\")\n 102 | \n 103 | \n 104 | def init_app(app):\n 105 |     app.teardown_appcontext(close_db)\n 106 |     app.cli.add_command(init_db_command)\n 107 | \n 108 | \n 109 | def search_products(term):\n 110 |     db = get_db()\n 111 |     query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"\n 112 |     return db.execute(query).fetchall()\n 113 | \n 114 | \n 115 | def count_rows(table):\n 116 |     if table not in ALLOWED_TABLES:\n 117 |         raise ValueError(f\"unknown table: {table}\")\n 118 |     return get_db().execute(f\"SELECT COUNT(*) FROM {table}\").fetchone()[0]",
+    "answer": {
+      "findings": [
+        {
+          "code": "query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+          "line": 111,
+          "source": "term",
+          "why": "This SQL query is vulnerable to SQL injection because the `term` parameter is not properly sanitized. An attacker could inject malicious SQL code to manipulate the query and potentially access or modify data they should not.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 31.0
+  },
+  {
+    "where": "cakeshop/orders.py:1-46",
+    "prompt": "File: cakeshop/orders.py (lines 1-46 of 46)\n\n   1 | import os\n   2 | import subprocess\n   3 | \n   4 | from flask import Blueprint, abort, current_app, g, render_template, request, send_file\n   5 | \n   6 | from .auth import login_required\n   7 | from .db import get_db\n   8 | \n   9 | bp = Blueprint(\"orders\", __name__)\n  10 | \n  11 | \n  12 | @bp.route(\"/orders\")\n  13 | @login_required\n  14 | def my_orders():\n  15 |     rows = get_db().execute(\n  16 |         \"SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC\", (g.user[\"id\"],)\n  17 |     ).fetchall()\n  18 |     return render_template(\"orders.html\", orders=rows)\n  19 | \n  20 | \n  21 | @bp.route(\"/orders/<int:order_id>\")\n  22 | @login_required\n  23 | def order_detail(order_id):\n  24 |     order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()\n  25 |     if order is None:\n  26 |         abort(404)\n  27 |     return render_template(\"order.html\", order=order)\n  28 | \n  29 | \n  30 | def invoice_date():\n  31 |     result = subprocess.run([\"date\", \"+%Y-%m-%d\"], capture_output=True, text=True, check=False)\n  32 |     return result.stdout.strip()\n  33 | \n  34 | \n  35 | @bp.route(\"/orders/<int:order_id>/invoice\")\n  36 | @login_required\n  37 | def invoice(order_id):\n  38 |     order = get_db().execute(\n  39 |         \"SELECT * FROM orders WHERE id = ? AND user_id = ?\", (order_id, g.user[\"id\"])\n  40 |     ).fetchone()\n  41 |     if order is None:\n  42 |         abort(404)\n  43 |     fmt = request.args.get(\"format\", \"txt\")\n  44 |     path = os.path.join(current_app.config[\"INVOICE_DIR\"], f\"order_{order_id}.{fmt}\")\n  45 |     os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")\n  46 |     return send_file(path)",
+    "answer": {
+      "findings": [
+        {
+          "code": "os.system(f'echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path})",
+          "line": 45,
+          "source": "order_id, order['total'], invoice_date()",
+          "why": "This command is vulnerable to command injection. An attacker could inject malicious commands into the `order_id`, `order['total']`, or `invoice_date()` values.",
+          "title": "Command Injection",
+          "cwe": "CWE-78",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 19.0
+  },
+  {
+    "where": "cakeshop/security.py:1-9",
+    "prompt": "File: cakeshop/security.py (lines 1-9 of 9)\n\n   1 | import hashlib\n   2 | \n   3 | \n   4 | def hash_password(password):\n   5 |     return hashlib.md5(password.encode()).hexdigest()\n   6 | \n   7 | \n   8 | def check_password(stored_hash, password):\n   9 |     return hash_password(password) == stored_hash",
+    "answer": {
+      "findings": [
+        {
+          "code": "return hashlib.md5(password.encode()).hexdigest()",
+          "line": 5,
+          "source": "password",
+          "why": "MD5 is a weak hash function and should not be used for password hashing. It can be easily cracked.",
+          "title": "Weak Cryptography",
+          "cwe": "CWE-327",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 9.6
+  },
+  {
+    "where": "cakeshop/shop.py:1-140",
+    "prompt": "File: cakeshop/shop.py (lines 1-140 of 140)\n\n   1 | import base64\n   2 | import os\n   3 | import pickle\n   4 | \n   5 | from flask import (\n   6 |     Blueprint,\n   7 |     abort,\n   8 |     current_app,\n   9 |     g,\n  10 |     make_response,\n  11 |     redirect,\n  12 |     render_template,\n  13 |     render_template_string,\n  14 |     request,\n  15 |     send_file,\n  16 |     send_from_directory,\n  17 |     url_for,\n  18 | )\n  19 | from werkzeug.utils import secure_filename\n  20 | \n  21 | from .auth import login_required\n  22 | from .db import get_db, search_products\n  23 | \n  24 | bp = Blueprint(\"shop\", __name__)\n  25 | \n  26 | \n  27 | @bp.route(\"/\")\n  28 | def index():\n  29 |     products = get_db().execute(\"SELECT * FROM products\").fetchall()\n  30 |     return render_template(\"index.html\", products=products)\n  31 | \n  32 | \n  33 | @bp.route(\"/search\")\n  34 | def search():\n  35 |     q = request.args.get(\"q\", \"\")\n  36 |     results = search_products(q)\n  37 |     return render_template(\"search.html\", q=q, results=results)\n  38 | \n  39 | \n  40 | @bp.route(\"/product/<int:product_id>\")\n  41 | def product(product_id):\n  42 |     db = get_db()\n  43 |     item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()\n  44 |     if item is None:\n  45 |         abort(404)\n  46 |     reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()\n  47 |     return render_template(\"product.html\", product=item, reviews=reviews)\n  48 | \n  49 | \n  50 | @bp.route(\"/product/<int:product_id>/review\", methods=[\"POST\"])\n  51 | @login_required\n  52 | def add_review(product_id):\n  53 |     db = get_db()\n  54 |     db.execute(\n  55 |         \"INSERT INTO reviews (product_id, username, body) VALUES (?, ?, ?)\",\n  56 |         (product_id, g.user[\"username\"], request.form[\"body\"]),\n  57 |     )\n  58 |     db.commit()\n  59 |     return redirect(url_for(\"shop.product\", product_id=product_id))\n  60 | \n  61 | \n  62 | @bp.route(\"/image\")\n  63 | def cake_image():\n  64 |     filename = request.args.get(\"name\", \"\")\n  65 |     return send_file(os.path.join(current_app.config[\"IMAGE_DIR\"], filename))\n  66 | \n  67 | \n  68 | @bp.route(\"/thumbnail\")\n  69 | def cake_thumbnail():\n  70 |     filename = secure_filename(request.args.get(\"name\", \"\"))\n  71 |     return send_from_directory(current_app.config[\"IMAGE_DIR\"], filename)\n  72 | \n  73 | \n  74 | @bp.route(\"/greeting\")\n  75 | def greeting():\n  76 |     name = request.args.get(\"name\", \"friend\")\n  77 |     return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)\n  78 | \n  79 | \n  80 | @bp.route(\"/cake-message/preview\")\n  81 | def preview_message():\n  82 |     text = request.args.get(\"text\", \"\")\n  83 |     template = \"<div class='cake-top'>\" + text + \"</div>\"\n  84 |     return render_template_string(template)\n  85 | \n  86 | \n  87 | def _load_cart():\n  88 |     raw = request.cookies.get(\"cart\")\n  89 |     if not raw:\n  90 |         return {}\n  91 |     return pickle.loads(base64.b64decode(raw))\n  92 | \n  93 | \n  94 | def _dump_cart(cart):\n  95 |     return base64.b64encode(pickle.dumps(cart)).decode()\n  96 | \n  97 | \n  98 | @bp.route(\"/cart\")\n  99 | def view_cart():\n 100 |     cart = _load_cart()\n 101 |     db = get_db()\n 102 |     items = []\n 103 |     for product_id, qty in cart.items():\n 104 |         row = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()\n 105 |         if row is not None:\n 106 |             items.append({\"product\": row, \"quantity\": qty})\n 107 |     return render_template(\"cart.html\", items=items)\n 108 | \n 109 | \n 110 | @bp.route(\"/cart/add\", methods=[\"POST\"])\n 111 | def add_to_cart():\n 112 |     cart = _load_cart()\n 113 |     product_id = int(request.form[\"product_id\"])\n 114 |     cart[product_id] = cart.get(product_id, 0) + 1\n 115 |     resp = make_response(redirect(url_for(\"shop.view_cart\")))\n 116 |     resp.set_cookie(\"cart\", _dump_cart(cart))\n 117 |     return resp\n 118 | \n 119 | \n 120 | @bp.route(\"/checkout\", methods=[\"POST\"])\n 121 | @login_required\n 122 | def checkout():\n 123 |     product_id = int(request.form[\"product_id\"])\n 124 |     quantity = int(request.form.get(\"quantity\", 1))\n 125 |     price = int(request.form[\"price\"])\n 126 |     total = price * quantity\n 127 |     db = get_db()\n 128 |     cur = db.execute(\n 129 |         \"INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)\",\n 130 |         (\n 131 |             g.user[\"id\"],\n 132 |             product_id,\n 133 |             quantity,\n 134 |             total,\n 135 |             request.form.get(\"message\", \"\"),\n 136 |             request.form.get(\"note\", \"\"),\n 137 |         ),\n 138 |     )\n 139 |     db.commit()\n 140 |     return redirect(url_for(\"orders.order_detail\", order_id=cur.lastrowid))",
+    "answer": {
+      "findings": [
+        {
+          "code": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+          "line": 83,
+          "source": "request.args.get(\"text\", \"\")",
+          "why": "This code is vulnerable to Cross-Site Scripting (XSS) because it directly includes user-controlled input (`text`) in an HTML template without proper sanitization.",
+          "title": "Cross-Site Scripting",
+          "cwe": "CWE-79",
+          "severity": "HIGH"
+        },
+        {
+          "code": "cart = pickle.loads(base64.b64decode(raw))",
+          "line": 88,
+          "source": "request.cookies.get(\"cart\")",
+          "why": "This code is vulnerable to Deserialization of Untrusted Data (CWE-502) because it deserializes data from a user-controlled cookie (`cart`). If an attacker crafts a malicious serialized object, it could lead to arbitrary code execution.",
+          "title": "Deserialization of Untrusted Data",
+          "cwe": "CWE-502",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 39.7
+  },
+  {
+    "where": "cakeshop/templates/account.html:1-9",
+    "prompt": "File: cakeshop/templates/account.html (lines 1-9 of 9)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>My account</h1>\n   4 | <form method=\"post\">\n   5 |   <label>Email <input name=\"email\" value=\"{{ g.user['email'] or '' }}\"></label><br>\n   6 |   <label>Delivery address <input name=\"address\" value=\"{{ g.user['address'] or '' }}\"></label><br>\n   7 |   <button>Save</button>\n   8 | </form>\n   9 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "{{ g.user['email'] or '' }}",
+          "line": 5,
+          "source": "g.user['email']",
+          "why": "This could lead to cross-site scripting (XSS) if an attacker can inject malicious content into the user's email.",
+          "title": "Cross-site Scripting",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ g.user['address'] or '' }}",
+          "line": 6,
+          "source": "g.user['address']",
+          "why": "This could lead to cross-site scripting (XSS) if an attacker can inject malicious content into the user's delivery address.",
+          "title": "Cross-site Scripting",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 19.5
+  },
+  {
+    "where": "cakeshop/templates/admin_orders.html:1-11",
+    "prompt": "File: cakeshop/templates/admin_orders.html (lines 1-11 of 11)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>All orders</h1>\n   4 | <table>\n   5 |   <tr><th>#</th><th>Customer</th><th>Address</th><th>Total</th><th>Status</th></tr>\n   6 |   {% for o in orders %}\n   7 |   <tr><td>{{ o['id'] }}</td><td>{{ o['username'] }} ({{ o['email'] }})</td><td>{{ o['address'] }}</td>\n   8 |       <td>{{ o['total'] }} UZS</td><td>{{ o['status'] }}</td></tr>\n   9 |   {% endfor %}\n  10 | </table>\n  11 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "{{ o['username'] }} ({{ o['email'] }})",
+          "line": 7,
+          "source": "o['username'] and o['email']",
+          "why": "This could lead to cross-site scripting (XSS) if an attacker can inject malicious content into the username or email fields.",
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 13.0
+  },
+  {
+    "where": "cakeshop/templates/admin_stats.html:1-7",
+    "prompt": "File: cakeshop/templates/admin_stats.html (lines 1-7 of 7)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Stats</h1>\n   4 | <ul>\n   5 |   {% for table, n in counts.items() %}<li>{{ table }}: {{ n }}</li>{% endfor %}\n   6 | </ul>\n   7 | {% endblock %}",
+    "answer": {
+      "findings": []
+    },
+    "seconds": 2.1
+  },
+  {
+    "where": "cakeshop/templates/base.html:1-31",
+    "prompt": "File: cakeshop/templates/base.html (lines 1-31 of 31)\n\n   1 | <!doctype html>\n   2 | <html lang=\"en\">\n   3 | <head>\n   4 |   <meta charset=\"utf-8\">\n   5 |   <title>{% block title %}Cake Shop{% endblock %}</title>\n   6 |   <style>\n   7 |     body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #2b2b2b; }\n   8 |     nav { display: flex; gap: 1rem; border-bottom: 1px solid #ddd; padding-bottom: .75rem; margin-bottom: 1.5rem; }\n   9 |     nav .right { margin-left: auto; }\n  10 |     .card { border: 1px solid #eee; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }\n  11 |     .flash { background: #fff4d6; padding: .5rem 1rem; border-radius: 6px; }\n  12 |     table { border-collapse: collapse; width: 100%; }\n  13 |     td, th { border-bottom: 1px solid #eee; padding: .4rem; text-align: left; }\n  14 |   </style>\n  15 | </head>\n  16 | <body>\n  17 |   <nav>\n  18 |     <a href=\"{{ url_for('shop.index') }}\">Cakes</a>\n  19 |     <a href=\"{{ url_for('shop.view_cart') }}\">Cart</a>\n  20 |     {% if g.user %}\n  21 |       <a href=\"{{ url_for('orders.my_orders') }}\">My orders</a>\n  22 |       <a href=\"{{ url_for('account.account') }}\">Account</a>\n  23 |       <span class=\"right\">{{ g.user['username'] }} \u00b7 <a href=\"{{ url_for('auth.logout') }}\">Log out</a></span>\n  24 |     {% else %}\n  25 |       <span class=\"right\"><a href=\"{{ url_for('auth.login') }}\">Log in</a> \u00b7 <a href=\"{{ url_for('auth.register') }}\">Register</a></span>\n  26 |     {% endif %}\n  27 |   </nav>\n  28 |   {% for message in get_flashed_messages() %}<p class=\"flash\">{{ message }}</p>{% endfor %}\n  29 |   {% block content %}{% endblock %}\n  30 | </body>\n  31 | </html>",
+    "answer": {
+      "findings": []
+    },
+    "seconds": 7.3
+  },
+  {
+    "where": "cakeshop/templates/cart.html:1-9",
+    "prompt": "File: cakeshop/templates/cart.html (lines 1-9 of 9)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Cart</h1>\n   4 | {% for item in items %}\n   5 | <div class=\"card\">{{ item.product['name'] }} \u00d7 {{ item.quantity }}</div>\n   6 | {% else %}\n   7 | <p>Your cart is empty.</p>\n   8 | {% endfor %}\n   9 | {% endblock %}",
+    "answer": {
+      "findings": []
+    },
+    "seconds": 2.1
+  },
+  {
+    "where": "cakeshop/templates/index.html:1-11",
+    "prompt": "File: cakeshop/templates/index.html (lines 1-11 of 11)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Our cakes</h1>\n   4 | <form action=\"{{ url_for('shop.search') }}\"><input name=\"q\" placeholder=\"Search cakes\"> <button>Search</button></form>\n   5 | {% for p in products %}\n   6 | <div class=\"card\">\n   7 |   <img src=\"{{ url_for('shop.cake_image', name=p['image']) }}\" width=\"80\" alt=\"\">\n   8 |   <a href=\"{{ url_for('shop.product', product_id=p['id']) }}\"><strong>{{ p['name'] }}</strong></a> \u2014 {{ p['price'] }} UZS\n   9 | </div>\n  10 | {% endfor %}\n  11 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "{{ url_for('shop.search', q=request.args.get('q')) }}",
+          "line": 4,
+          "source": "request.args.get('q')",
+          "why": "The search query parameter is directly used in the URL without any validation or sanitization, which could lead to SQL injection or other types of attacks.",
+          "title": "SQL Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH"
+        },
+        {
+          "code": "{{ url_for('shop.cake_image', name=p['image']) }}",
+          "line": 7,
+          "source": "p['image']",
+          "why": "The image name is directly used in the URL without any validation or sanitization, which could lead to path traversal attacks.",
+          "title": "Path Traversal",
+          "cwe": "CWE-22",
+          "severity": "HIGH"
+        },
+        {
+          "code": "{{ url_for('shop.product', product_id=p['id']) }}",
+          "line": 8,
+          "source": "p['id']",
+          "why": "The product ID is directly used in the URL without any validation or sanitization, which could lead to broken access control or other types of attacks.",
+          "title": "Broken Access Control",
+          "cwe": "CWE-264",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 30.8
+  },
+  {
+    "where": "cakeshop/templates/login.html:1-9",
+    "prompt": "File: cakeshop/templates/login.html (lines 1-9 of 9)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Log in</h1>\n   4 | <form method=\"post\">\n   5 |   <label>Username <input name=\"username\"></label><br>\n   6 |   <label>Password <input name=\"password\" type=\"password\"></label><br>\n   7 |   <button>Log in</button>\n   8 | </form>\n   9 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "<label>Username <input name=\"username\"></label><br>",
+          "line": 5,
+          "source": "none",
+          "why": "The username field is vulnerable to cross-site scripting (XSS) because it does not escape user input before rendering it in the HTML.",
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "<label>Password <input name=\"password\" type=\"password\"></label><br>",
+          "line": 6,
+          "source": "none",
+          "why": "The password field is vulnerable to cross-site scripting (XSS) because it does not escape user input before rendering it in the HTML.",
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 23.8
+  },
+  {
+    "where": "cakeshop/templates/order.html:1-10",
+    "prompt": "File: cakeshop/templates/order.html (lines 1-10 of 10)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Order #{{ order['id'] }}</h1>\n   4 | <p>Quantity: {{ order['quantity'] }}</p>\n   5 | <p>Total: {{ order['total'] }} UZS</p>\n   6 | <p>Message on the cake: {{ order['message'] }}</p>\n   7 | <p>Delivery note: {{ order['note'] }}</p>\n   8 | <p>Status: {{ order['status'] }}</p>\n   9 | <p><a href=\"{{ url_for('orders.invoice', order_id=order['id']) }}\">Download invoice</a></p>\n  10 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "{{ order['message'] }}",
+          "line": 6,
+          "source": "order['message']",
+          "why": "An attacker could inject malicious content into the message, which could be executed in the browser of users viewing the order.",
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ order['note'] }}",
+          "line": 7,
+          "source": "order['note']",
+          "why": "An attacker could inject malicious content into the delivery note, which could be executed in the browser of users viewing the order.",
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 37.0
+  },
+  {
+    "where": "cakeshop/templates/orders.html:1-11",
+    "prompt": "File: cakeshop/templates/orders.html (lines 1-11 of 11)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>My orders</h1>\n   4 | <table>\n   5 |   <tr><th>#</th><th>Total</th><th>Status</th><th></th></tr>\n   6 |   {% for o in orders %}\n   7 |   <tr><td>{{ o['id'] }}</td><td>{{ o['total'] }} UZS</td><td>{{ o['status'] }}</td>\n   8 |       <td><a href=\"{{ url_for('orders.order_detail', order_id=o['id']) }}\">View</a></td></tr>\n   9 |   {% endfor %}\n  10 | </table>\n  11 | {% endblock %}",
+    "answer": {
+      "findings": []
+    },
+    "seconds": 3.8
+  },
+  {
+    "where": "cakeshop/templates/product.html:1-35",
+    "prompt": "File: cakeshop/templates/product.html (lines 1-35 of 35)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>{{ product['name'] }}</h1>\n   4 | <img src=\"{{ url_for('shop.cake_thumbnail', name=product['image']) }}\" width=\"160\" alt=\"\">\n   5 | <p>{{ product['price'] }} UZS</p>\n   6 | \n   7 | <form method=\"post\" action=\"{{ url_for('shop.add_to_cart') }}\">\n   8 |   <input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">\n   9 |   <button>Add to cart</button>\n  10 | </form>\n  11 | \n  12 | {% if g.user %}\n  13 | <h2>Order now</h2>\n  14 | <form method=\"post\" action=\"{{ url_for('shop.checkout') }}\">\n  15 |   <input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">\n  16 |   <input type=\"hidden\" name=\"price\" value=\"{{ product['price'] }}\">\n  17 |   <label>Quantity <input name=\"quantity\" type=\"number\" value=\"1\" min=\"1\"></label><br>\n  18 |   <label>Message on the cake <input name=\"message\"></label><br>\n  19 |   <label>Delivery note <input name=\"note\"></label><br>\n  20 |   <button>Place order</button>\n  21 | </form>\n  22 | {% endif %}\n  23 | \n  24 | <h2>Reviews</h2>\n  25 | {% for r in reviews %}\n  26 | <div class=\"card\"><strong>{{ r['username'] }}</strong>: {{ r['body']|safe }}</div>\n  27 | {% else %}\n  28 | <p>No reviews yet.</p>\n  29 | {% endfor %}\n  30 | {% if g.user %}\n  31 | <form method=\"post\" action=\"{{ url_for('shop.add_review', product_id=product['id']) }}\">\n  32 |   <textarea name=\"body\"></textarea><br><button>Post review</button>\n  33 | </form>\n  34 | {% endif %}\n  35 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "{{ product['name'] }}",
+          "line": 3,
+          "source": "product['name']",
+          "why": "An attacker could inject malicious HTML or script into the product name, which would be rendered on the page.",
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ product['image'] }}",
+          "line": 4,
+          "source": "product['image']",
+          "why": "An attacker could manipulate the product image URL to point to a malicious file, potentially leading to a path traversal attack or serving malicious content.",
+          "title": "Path Traversal",
+          "cwe": "CWE-22",
+          "severity": "HIGH"
+        },
+        {
+          "code": "{{ product['price'] }}",
+          "line": 5,
+          "source": "product['price']",
+          "why": "An attacker could inject malicious content into the product price, which could be used to perform a reflected XSS attack or manipulate the price displayed to users.",
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ product['id'] }}",
+          "line": 8,
+          "source": "product['id']",
+          "why": "An attacker could manipulate the product ID to perform a request forgery (CSRF) attack or access unauthorized data.",
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": "CWE-352",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ product['id'] }}",
+          "line": 15,
+          "source": "product['id']",
+          "why": "An attacker could manipulate the product ID to perform a request forgery (CSRF) attack or access unauthorized data.",
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": "CWE-352",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ product['price'] }}",
+          "line": 16,
+          "source": "product['price']",
+          "why": "An attacker could manipulate the product price to perform a request forgery (CSRF) attack or manipulate the price displayed to users.",
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": "CWE-352",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "{{ product['id'] }}",
+          "line": 31,
+          "source": "product['id']",
+          "why": "An attacker could manipulate the product ID to perform a request forgery (CSRF) attack or access unauthorized data.",
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": "CWE-352",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 113.7
+  },
+  {
+    "where": "cakeshop/templates/register.html:1-11",
+    "prompt": "File: cakeshop/templates/register.html (lines 1-11 of 11)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Register</h1>\n   4 | <form method=\"post\">\n   5 |   <label>Username <input name=\"username\"></label><br>\n   6 |   <label>Password <input name=\"password\" type=\"password\"></label><br>\n   7 |   <label>Email <input name=\"email\"></label><br>\n   8 |   <label>Delivery address <input name=\"address\"></label><br>\n   9 |   <button>Create account</button>\n  10 | </form>\n  11 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "<label>Username <input name=\"username\"></label><br>",
+          "line": 5,
+          "source": "none",
+          "why": "The username input is not validated or sanitized, allowing an attacker to inject malicious data.",
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": "CWE-89",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "<label>Password <input name=\"password\" type=\"password\"></label><br>",
+          "line": 6,
+          "source": "none",
+          "why": "The password input is not validated or sanitized, allowing an attacker to inject malicious data.",
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": "CWE-89",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "<label>Email <input name=\"email\"></label><br>",
+          "line": 7,
+          "source": "none",
+          "why": "The email input is not validated or sanitized, allowing an attacker to inject malicious data.",
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": "CWE-89",
+          "severity": "MEDIUM"
+        },
+        {
+          "code": "<label>Delivery address <input name=\"address\"></label><br>",
+          "line": 8,
+          "source": "none",
+          "why": "The delivery address input is not validated or sanitized, allowing an attacker to inject malicious data.",
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": "CWE-89",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 73.5
+  },
+  {
+    "where": "cakeshop/templates/search.html:1-9",
+    "prompt": "File: cakeshop/templates/search.html (lines 1-9 of 9)\n\n   1 | {% extends \"base.html\" %}\n   2 | {% block content %}\n   3 | <h1>Results for \u201c{{ q }}\u201d</h1>\n   4 | {% for p in results %}\n   5 | <div class=\"card\"><a href=\"{{ url_for('shop.product', product_id=p['id']) }}\">{{ p['name'] }}</a> \u2014 {{ p['price'] }} UZS</div>\n   6 | {% else %}\n   7 | <p>No cakes found.</p>\n   8 | {% endfor %}\n   9 | {% endblock %}",
+    "answer": {
+      "findings": [
+        {
+          "code": "{{ q }}",
+          "line": 3,
+          "source": "none",
+          "why": "The search query `q` is directly rendered in the HTML without any sanitization or escaping, which could lead to Cross-Site Scripting (XSS) if an attacker injects malicious script into the search query.",
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM"
+        }
+      ]
+    },
+    "seconds": 14.7
+  },
+  {
+    "where": "run.py:1-6",
+    "prompt": "File: run.py (lines 1-6 of 6)\n\n   1 | from cakeshop import create_app\n   2 | \n   3 | app = create_app()\n   4 | \n   5 | if __name__ == \"__main__\":\n   6 |     app.run(host=\"127.0.0.1\", port=5000, debug=True)",
+    "answer": {
+      "findings": [
+        {
+          "code": "app.run(host=\"127.0.0.1\", port=5000, debug=True)",
+          "line": 6,
+          "source": "none",
+          "why": "Running the application with debug mode enabled on a non-localhost address can expose the application to remote attackers.",
+          "title": "Insecure Debug Mode",
+          "cwe": "CWE-949",
+          "severity": "HIGH"
+        }
+      ]
+    },
+    "seconds": 11.7
+  },
+  {
+    "where": "requirements.txt:1-3",
+    "prompt": "File: requirements.txt (lines 1-3 of 3)\n\n   1 | Flask==2.2.4\n   2 | Werkzeug==2.3.7\n   3 | Jinja2==3.1.2",
+    "answer": {
+      "findings": []
+    },
+    "seconds": 1.7
+  }
+]

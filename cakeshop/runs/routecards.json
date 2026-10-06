@@ -1,0 +1,1457 @@
+[
+  {
+    "id": "GET/POST /account",
+    "url": "/account",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "function": "account",
+    "file": "cakeshop/account.py",
+    "lines": [
+      11,
+      22
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "login_required",
+        "checks": [
+          {
+            "line": 14,
+            "if": "g.user is None",
+            "then": "return redirect(url_for('auth.login', next=request.path))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "*",
+        "line": 16,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "g.user['id']",
+        "line": 18,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 18,
+        "text": "UPDATE users SET {key} = ? WHERE id = ?",
+        "verb": "UPDATE",
+        "table": "users",
+        "joins": [],
+        "writes": [
+          "{key}"
+        ],
+        "via": null,
+        "file": "cakeshop/account.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [
+      "USER_COLUMNS"
+    ],
+    "templates": [
+      "cakeshop/templates/account.html"
+    ],
+    "tables": {
+      "users": [
+        "id",
+        "username",
+        "password_hash",
+        "email",
+        "address",
+        "is_admin"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /admin/orders",
+    "url": "/admin/orders",
+    "methods": [
+      "GET"
+    ],
+    "function": "all_orders",
+    "file": "cakeshop/admin.py",
+    "lines": [
+      11,
+      17
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 14,
+        "text": "SELECT orders.*, users.username, users.email, users.address FROM orders JOIN users ON users.id = orders.user_id ORDER BY orders.id DESC",
+        "verb": "SELECT",
+        "table": "orders",
+        "joins": [
+          "users"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/admin.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/admin_orders.html"
+    ],
+    "tables": {
+      "orders": [
+        "id",
+        "user_id",
+        "product_id",
+        "quantity",
+        "total",
+        "message",
+        "note",
+        "status"
+      ],
+      "users": [
+        "id",
+        "username",
+        "password_hash",
+        "email",
+        "address",
+        "is_admin"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /admin/stats",
+    "url": "/admin/stats",
+    "methods": [
+      "GET"
+    ],
+    "function": "stats",
+    "file": "cakeshop/admin.py",
+    "lines": [
+      20,
+      24
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "admin_required",
+        "checks": [
+          {
+            "line": 25,
+            "if": "not g.user['is_admin']",
+            "then": "abort(403)"
+          }
+        ],
+        "uses": [
+          "login_required"
+        ]
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 118,
+        "text": "SELECT COUNT(*) FROM {table}",
+        "verb": "SELECT",
+        "table": "{table}",
+        "joins": [],
+        "writes": [],
+        "via": "count_rows",
+        "file": "cakeshop/db.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "count_rows",
+        "where": "cakeshop/db.py:115"
+      },
+      {
+        "name": "count_rows > get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [
+      "ALLOWED_TABLES"
+    ],
+    "templates": [
+      "cakeshop/templates/admin_stats.html"
+    ],
+    "tables": {
+      "{table}": null
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "POST /admin/orders/<int:order_id>/status",
+    "url": "/admin/orders/<int:order_id>/status",
+    "methods": [
+      "POST"
+    ],
+    "function": "set_status",
+    "file": "cakeshop/admin.py",
+    "lines": [
+      27,
+      36
+    ],
+    "url_params": [
+      {
+        "name": "order_id",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "admin_required",
+        "checks": [
+          {
+            "line": 25,
+            "if": "not g.user['is_admin']",
+            "then": "abort(403)"
+          }
+        ],
+        "uses": [
+          "login_required"
+        ]
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "status",
+        "line": 30,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 34,
+        "text": "UPDATE orders SET status = ? WHERE id = ?",
+        "verb": "UPDATE",
+        "table": "orders",
+        "joins": [],
+        "writes": [
+          "status"
+        ],
+        "via": null,
+        "file": "cakeshop/admin.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [
+      "ORDER_STATUSES"
+    ],
+    "templates": [],
+    "tables": {
+      "orders": [
+        "id",
+        "user_id",
+        "product_id",
+        "quantity",
+        "total",
+        "message",
+        "note",
+        "status"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET/POST /register",
+    "url": "/register",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "function": "register",
+    "file": "cakeshop/auth.py",
+    "lines": [
+      41,
+      60
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "username",
+        "line": 44,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "password",
+        "line": 45,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "email",
+        "line": 53,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "address",
+        "line": 53,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 52,
+        "text": "INSERT INTO users (username, password_hash, email, address) VALUES (?, ?, ?, ?)",
+        "verb": "INSERT",
+        "table": "users",
+        "joins": [],
+        "writes": [
+          "username",
+          "password_hash",
+          "email",
+          "address"
+        ],
+        "via": null,
+        "file": "cakeshop/auth.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      },
+      {
+        "name": "hash_password",
+        "where": "cakeshop/security.py:4"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/register.html"
+    ],
+    "tables": {
+      "users": [
+        "id",
+        "username",
+        "password_hash",
+        "email",
+        "address",
+        "is_admin"
+      ]
+    },
+    "related_tables": [
+      "reviews"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET/POST /login",
+    "url": "/login",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "function": "login",
+    "file": "cakeshop/auth.py",
+    "lines": [
+      63,
+      74
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "username",
+        "line": 67,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "password",
+        "line": 69,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "args",
+        "key": "next",
+        "line": 72,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "session['user_id']",
+        "line": 71,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 67,
+        "text": "SELECT * FROM users WHERE username = ?",
+        "verb": "SELECT",
+        "table": "users",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/auth.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "check_password",
+        "where": "cakeshop/security.py:8"
+      },
+      {
+        "name": "check_password > hash_password",
+        "where": "cakeshop/security.py:4"
+      },
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/login.html"
+    ],
+    "tables": {
+      "users": [
+        "id",
+        "username",
+        "password_hash",
+        "email",
+        "address",
+        "is_admin"
+      ]
+    },
+    "related_tables": [
+      "reviews"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "methods": [
+      "GET"
+    ],
+    "function": "logout",
+    "file": "cakeshop/auth.py",
+    "lines": [
+      77,
+      80
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /orders",
+    "url": "/orders",
+    "methods": [
+      "GET"
+    ],
+    "function": "my_orders",
+    "file": "cakeshop/orders.py",
+    "lines": [
+      12,
+      18
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "login_required",
+        "checks": [
+          {
+            "line": 14,
+            "if": "g.user is None",
+            "then": "return redirect(url_for('auth.login', next=request.path))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [
+      {
+        "use": "g.user['id']",
+        "line": 16,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 16,
+        "text": "SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC",
+        "verb": "SELECT",
+        "table": "orders",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/orders.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/orders.html"
+    ],
+    "tables": {
+      "orders": [
+        "id",
+        "user_id",
+        "product_id",
+        "quantity",
+        "total",
+        "message",
+        "note",
+        "status"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /orders/<int:order_id>",
+    "url": "/orders/<int:order_id>",
+    "methods": [
+      "GET"
+    ],
+    "function": "order_detail",
+    "file": "cakeshop/orders.py",
+    "lines": [
+      21,
+      27
+    ],
+    "url_params": [
+      {
+        "name": "order_id",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "login_required",
+        "checks": [
+          {
+            "line": 14,
+            "if": "g.user is None",
+            "then": "return redirect(url_for('auth.login', next=request.path))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 24,
+        "text": "SELECT * FROM orders WHERE id = ?",
+        "verb": "SELECT",
+        "table": "orders",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/orders.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/order.html"
+    ],
+    "tables": {
+      "orders": [
+        "id",
+        "user_id",
+        "product_id",
+        "quantity",
+        "total",
+        "message",
+        "note",
+        "status"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /orders/<int:order_id>/invoice",
+    "url": "/orders/<int:order_id>/invoice",
+    "methods": [
+      "GET"
+    ],
+    "function": "invoice",
+    "file": "cakeshop/orders.py",
+    "lines": [
+      35,
+      46
+    ],
+    "url_params": [
+      {
+        "name": "order_id",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "login_required",
+        "checks": [
+          {
+            "line": 14,
+            "if": "g.user is None",
+            "then": "return redirect(url_for('auth.login', next=request.path))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "format",
+        "line": 43,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "g.user['id']",
+        "line": 39,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 39,
+        "text": "SELECT * FROM orders WHERE id = ? AND user_id = ?",
+        "verb": "SELECT",
+        "table": "orders",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/orders.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      },
+      {
+        "name": "invoice_date",
+        "where": "cakeshop/orders.py:30"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "orders": [
+        "id",
+        "user_id",
+        "product_id",
+        "quantity",
+        "total",
+        "message",
+        "note",
+        "status"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /",
+    "url": "/",
+    "methods": [
+      "GET"
+    ],
+    "function": "index",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      27,
+      30
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 29,
+        "text": "SELECT * FROM products",
+        "verb": "SELECT",
+        "table": "products",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/shop.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/index.html"
+    ],
+    "tables": {
+      "products": [
+        "id",
+        "name",
+        "price",
+        "image"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "methods": [
+      "GET"
+    ],
+    "function": "search",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      33,
+      37
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "q",
+        "line": 35,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 111,
+        "text": "SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'",
+        "verb": "SELECT",
+        "table": "products",
+        "joins": [],
+        "writes": [],
+        "via": "search_products",
+        "file": "cakeshop/db.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "search_products",
+        "where": "cakeshop/db.py:109"
+      },
+      {
+        "name": "search_products > get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/search.html"
+    ],
+    "tables": {
+      "products": [
+        "id",
+        "name",
+        "price",
+        "image"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /product/<int:product_id>",
+    "url": "/product/<int:product_id>",
+    "methods": [
+      "GET"
+    ],
+    "function": "product",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      40,
+      47
+    ],
+    "url_params": [
+      {
+        "name": "product_id",
+        "type": "int"
+      }
+    ],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 43,
+        "text": "SELECT * FROM products WHERE id = ?",
+        "verb": "SELECT",
+        "table": "products",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/shop.py"
+      },
+      {
+        "line": 46,
+        "text": "SELECT * FROM reviews WHERE product_id = ?",
+        "verb": "SELECT",
+        "table": "reviews",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/shop.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/product.html"
+    ],
+    "tables": {
+      "products": [
+        "id",
+        "name",
+        "price",
+        "image"
+      ],
+      "reviews": [
+        "id",
+        "product_id",
+        "username",
+        "body"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "POST /product/<int:product_id>/review",
+    "url": "/product/<int:product_id>/review",
+    "methods": [
+      "POST"
+    ],
+    "function": "add_review",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      50,
+      59
+    ],
+    "url_params": [
+      {
+        "name": "product_id",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "login_required",
+        "checks": [
+          {
+            "line": 14,
+            "if": "g.user is None",
+            "then": "return redirect(url_for('auth.login', next=request.path))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "body",
+        "line": 56,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "g.user['username']",
+        "line": 56,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 55,
+        "text": "INSERT INTO reviews (product_id, username, body) VALUES (?, ?, ?)",
+        "verb": "INSERT",
+        "table": "reviews",
+        "joins": [],
+        "writes": [
+          "product_id",
+          "username",
+          "body"
+        ],
+        "via": null,
+        "file": "cakeshop/shop.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "reviews": [
+        "id",
+        "product_id",
+        "username",
+        "body"
+      ]
+    },
+    "related_tables": [
+      "users",
+      "orders"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /image",
+    "url": "/image",
+    "methods": [
+      "GET"
+    ],
+    "function": "cake_image",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      62,
+      65
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "name",
+        "line": 64,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [
+      "products"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /thumbnail",
+    "url": "/thumbnail",
+    "methods": [
+      "GET"
+    ],
+    "function": "cake_thumbnail",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      68,
+      71
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "name",
+        "line": 70,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [
+      "products"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /greeting",
+    "url": "/greeting",
+    "methods": [
+      "GET"
+    ],
+    "function": "greeting",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      74,
+      77
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "name",
+        "line": 76,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [
+      "products"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /cake-message/preview",
+    "url": "/cake-message/preview",
+    "methods": [
+      "GET"
+    ],
+    "function": "preview_message",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      80,
+      84
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "text",
+        "line": 82,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "GET /cart",
+    "url": "/cart",
+    "methods": [
+      "GET"
+    ],
+    "function": "view_cart",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      98,
+      107
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "cookies",
+        "key": "cart",
+        "line": 88,
+        "as": null,
+        "via": "_load_cart"
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 104,
+        "text": "SELECT * FROM products WHERE id = ?",
+        "verb": "SELECT",
+        "table": "products",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "cakeshop/shop.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "_load_cart",
+        "where": "cakeshop/shop.py:87"
+      },
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "cakeshop/templates/cart.html"
+    ],
+    "tables": {
+      "products": [
+        "id",
+        "name",
+        "price",
+        "image"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "POST /cart/add",
+    "url": "/cart/add",
+    "methods": [
+      "POST"
+    ],
+    "function": "add_to_cart",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      110,
+      117
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "product_id",
+        "line": 113,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "cookies",
+        "key": "cart",
+        "line": 88,
+        "as": null,
+        "via": "_load_cart"
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [
+      {
+        "name": "_dump_cart",
+        "where": "cakeshop/shop.py:94"
+      },
+      {
+        "name": "_load_cart",
+        "where": "cakeshop/shop.py:87"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [
+      "orders",
+      "reviews"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  },
+  {
+    "id": "POST /checkout",
+    "url": "/checkout",
+    "methods": [
+      "POST"
+    ],
+    "function": "checkout",
+    "file": "cakeshop/shop.py",
+    "lines": [
+      120,
+      140
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "login_required",
+        "checks": [
+          {
+            "line": 14,
+            "if": "g.user is None",
+            "then": "return redirect(url_for('auth.login', next=request.path))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "product_id",
+        "line": 123,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "quantity",
+        "line": 124,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "price",
+        "line": 125,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "message",
+        "line": 135,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "note",
+        "line": 136,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "g.user['id']",
+        "line": 131,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 129,
+        "text": "INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)",
+        "verb": "INSERT",
+        "table": "orders",
+        "joins": [],
+        "writes": [
+          "user_id",
+          "product_id",
+          "quantity",
+          "total",
+          "message",
+          "note"
+        ],
+        "via": null,
+        "file": "cakeshop/shop.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "cakeshop/db.py:70"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "orders": [
+        "id",
+        "user_id",
+        "product_id",
+        "quantity",
+        "total",
+        "message",
+        "note",
+        "status"
+      ]
+    },
+    "related_tables": [
+      "products",
+      "reviews"
+    ],
+    "app_hooks": [
+      {
+        "function": "load_logged_in_user",
+        "where": "cakeshop/auth.py:33"
+      }
+    ]
+  }
+]

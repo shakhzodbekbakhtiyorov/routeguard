@@ -1,0 +1,127 @@
+{
+  "app": "workshophub",
+  "vulnerabilities": [
+    {
+      "id": "V01",
+      "title": "Workshop management page accessible to any member",
+      "cwe": "CWE-862",
+      "category": "logic",
+      "file": "workshophub/workshops.py",
+      "anchor": "def manage():",
+      "source": "Any authenticated member can navigate to /workshops/manage",
+      "notes": "The route uses @members_only but should use @staff_only. A normal member (bob) can GET /workshops/manage and see all workshops and all reservations including other members' data."
+    },
+    {
+      "id": "V02",
+      "title": "Booking receipt accessible without authentication",
+      "cwe": "CWE-306",
+      "category": "logic",
+      "file": "workshophub/bookings.py",
+      "anchor": "def receipt(rid):",
+      "source": "An unauthenticated visitor can navigate to /bookings/<rid>/receipt",
+      "notes": "The receipt route has no @members_only decorator. Anyone, even without logging in, can access /bookings/1/receipt and see the member's name, email, booking details and cost."
+    },
+    {
+      "id": "V03",
+      "title": "Any member can view any other member's booking details",
+      "cwe": "CWE-639",
+      "category": "logic",
+      "file": "workshophub/bookings.py",
+      "anchor": "def detail(rid):",
+      "source": "The rid path parameter selects any reservation regardless of owner",
+      "notes": "The detail route fetches the reservation by id (WHERE r.id = ?) without checking that r.owner_id matches the logged-in account. Bob can view Alice's booking at /bookings/1."
+    },
+    {
+      "id": "V04",
+      "title": "Booking total cost accepted from client form instead of server calculation",
+      "cwe": "CWE-602",
+      "category": "logic",
+      "file": "workshophub/workshops.py",
+      "anchor": "total_cost = request.form.get(\"total_cost\", type=float)",
+      "source": "The total_cost hidden form field in the booking form",
+      "notes": "The server reads total_cost directly from the submitted form data instead of computing it as seats * price_per_seat. An attacker can submit total_cost=0 (or any value) to book seats for free."
+    },
+    {
+      "id": "V05",
+      "title": "No validation on seat count allows zero or negative bookings",
+      "cwe": "CWE-1284",
+      "category": "logic",
+      "file": "workshophub/workshops.py",
+      "anchor": "seats = request.form.get(\"seats\", type=int) or 1",
+      "source": "The seats form field in the booking form",
+      "notes": "The seat count is taken from the form with no range check. Submitting seats=-5 creates a reservation with negative seats. There is also no check against remaining capacity."
+    },
+    {
+      "id": "V06",
+      "title": "Profile update writes role and credit_balance from form data",
+      "cwe": "CWE-915",
+      "category": "logic",
+      "file": "workshophub/members.py",
+      "anchor": "role = request.form.get(\"role\", g.account[\"role\"])",
+      "source": "Hidden or injected role and credit_balance form fields on POST /profile",
+      "notes": "The update_profile handler reads role and credit_balance from the form and writes them to the database. The template only shows display_name and email inputs, but an attacker can add role=admin and credit_balance=99999 to the POST body to escalate privileges and set arbitrary credit."
+    },
+    {
+      "id": "V07",
+      "title": "Profile update form has no CSRF protection",
+      "cwe": "CWE-352",
+      "category": "logic",
+      "file": "workshophub/members.py",
+      "anchor": "def update_profile():",
+      "source": "A cross-site form submission to POST /profile",
+      "notes": "The update_profile handler does not check a CSRF token, and the profile.html template does not include a _csrf hidden input. Other state-changing forms in the app (login, workshop create/edit, add note, admin update) all validate CSRF. A malicious page can submit a form to /profile on behalf of a logged-in user."
+    },
+    {
+      "id": "V08",
+      "title": "Any member can cancel any other member's booking",
+      "cwe": "CWE-639",
+      "category": "logic",
+      "file": "workshophub/bookings.py",
+      "anchor": "UPDATE reservations SET status = 'cancelled' WHERE id = ?",
+      "source": "The rid path parameter in POST /bookings/<rid>/cancel",
+      "notes": "The cancel route updates the reservation by id without checking that the logged-in user owns it. Bob can POST /bookings/1/cancel to cancel Alice's booking."
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D01",
+      "title": "Workshop edit form is staff-only",
+      "looks_like": "CWE-862",
+      "file": "workshophub/workshops.py",
+      "anchor": "def edit_form(wid):",
+      "why_safe": "The edit_form and edit routes both have the @staff_only decorator (which itself wraps @members_only), so only staff and admin accounts can access workshop editing. A normal member gets redirected."
+    },
+    {
+      "id": "D02",
+      "title": "Booking list filters by owner_id",
+      "looks_like": "CWE-639",
+      "file": "workshophub/bookings.py",
+      "anchor": "WHERE r.owner_id = ?",
+      "why_safe": "The my_bookings route includes WHERE r.owner_id = ? with the logged-in account's id, so each member only sees their own bookings. Bob cannot see Alice's bookings in the listing."
+    },
+    {
+      "id": "D03",
+      "title": "Add-note route checks reservation ownership via helper",
+      "looks_like": "CWE-639",
+      "file": "workshophub/bookings.py",
+      "anchor": "verify_reservation_owner(rid, g.account",
+      "why_safe": "The add_note route calls verify_reservation_owner() from db.py, which queries the database to confirm the reservation belongs to the logged-in user before allowing the note. Bob cannot add notes to Alice's bookings."
+    },
+    {
+      "id": "D04",
+      "title": "Admin member list has inline role check",
+      "looks_like": "CWE-862",
+      "file": "workshophub/members.py",
+      "anchor": "def admin_list():",
+      "why_safe": "The admin_list and admin_detail routes use @members_only plus an inline check (if g.account['role'] != 'admin') that redirects non-admin users. The check is not in a decorator but is still effective. Bob (a member) gets redirected with a permission error."
+    },
+    {
+      "id": "D05",
+      "title": "Admin member update has both role check and CSRF validation",
+      "looks_like": "CWE-352",
+      "file": "workshophub/members.py",
+      "anchor": "def admin_update(mid):",
+      "why_safe": "The admin_update route checks the admin role inline and validates the CSRF token with valid_csrf(). The admin_member_detail.html template includes the _csrf hidden input. Both the access control and CSRF protections are present, unlike the profile update route."
+    }
+  ]
+}

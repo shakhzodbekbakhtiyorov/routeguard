@@ -1,0 +1,595 @@
+[
+  {
+    "id": "GET/POST /account",
+    "url": "/account",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures only logged-in users can access it.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates the user's profile, which belongs to the logged-in user.",
+        "rule": "the owner"
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route updates the user's profile, but it does not allow changing the user's ID or role.",
+        "rule": "user id"
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route updates the user's profile, but it does not allow changing the user's ID or role.",
+        "rule": "role"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route updates the user's profile based on data sent by the client, which the server should validate to prevent malicious input.",
+        "rule": "email"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route updates the user's profile based on data sent by the client, which the server should validate to prevent malicious input.",
+        "rule": "address"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes stored data (updates the user's profile), so it should be protected against CSRF attacks.",
+        "rule": "The route changes stored data (updates the user's profile), so it should be protected against CSRF attacks."
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": true,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET /admin/orders",
+    "url": "/admin/orders",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is intended for administrative purposes and should only be accessible by admins.",
+        "rule": "admin"
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /admin/stats",
+    "url": "/admin/stats",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @admin_required decorator, which ensures only users with admin privileges can call it.",
+        "rule": "admin"
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /admin/orders/<int:order_id>/status",
+    "url": "/admin/orders/<int:order_id>/status",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @admin_required decorator, which ensures only admins can call it.",
+        "rule": "admin"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates the status of an order, which belongs to a specific user.",
+        "rule": "order_id"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route checks if the status is in a predefined set of values (ORDER_STATUSES), so it does not trust the client to provide a valid status.",
+        "rule": "status"
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route takes a status from the client, which must be one of the predefined values in ORDER_STATUSES.",
+        "rule": "status"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes stored data (updates the order status), so it should be protected against CSRF attacks.",
+        "rule": "The route changes stored data (updates the order status), so it should be protected against CSRF attacks."
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": true,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET/POST /register",
+    "url": "/register",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The route creates a new user record, which belongs to the user being created.",
+        "rule": "user"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route takes values from the client that the server should decide, look up or check itself, such as the username and password.",
+        "rule": "username"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route takes values from the client that the server should decide, look up or check itself, such as the username and password.",
+        "rule": "password"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes stored data (creates a new user record), so it should be protected against CSRF.",
+        "rule": "The route changes stored data (creates a new user record), so it should be protected against CSRF."
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET/POST /login",
+    "url": "/login",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "do_not_trust",
+        "applies_because": "The login route takes values from the client that the server should decide, look up or check itself, because a wrong value would cause harm.",
+        "rule": "password"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The login route changes stored data (user's session state) and the user's state (user logs in).",
+        "rule": "The login route changes stored data (user's session state) and the user's state (user logs in)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /orders",
+    "url": "/orders",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures only logged-in users can access it.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves orders for the user whose ID is stored in the session (g.user['id']).",
+        "rule": "user"
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /orders/<int:order_id>",
+    "url": "/orders/<int:order_id>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves data from the 'orders' table, which contains records that belong to specific users.",
+        "rule": "orders"
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /orders/<int:order_id>/invoice",
+    "url": "/orders/<int:order_id>/invoice",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can call it.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads records from the 'orders' table where the 'user_id' matches the logged-in user's ID.",
+        "rule": "user's orders"
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /",
+    "url": "/",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'products' table, which belongs to all users.",
+        "rule": "products"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route takes a search term from the client, which the server should sanitize to prevent SQL injection.",
+        "rule": "term"
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /product/<int:product_id>",
+    "url": "/product/<int:product_id>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data that belongs to a particular product.",
+        "rule": "product_id"
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /product/<int:product_id>/review",
+    "url": "/product/<int:product_id>/review",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures only logged-in users can call it.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route inserts a new review into the 'reviews' table, which belongs to the product and the user who wrote the review.",
+        "rule": "reviews"
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route takes the 'body' value from the client, which the server should decide, look up or check itself, because a wrong value would cause harm.",
+        "rule": "body"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes stored data (inserts a new review), so it should be protected against CSRF attacks.",
+        "rule": "The route changes stored data (inserts a new review), so it should be protected against CSRF attacks."
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET /image",
+    "url": "/image",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route takes a value from the client that the server should check itself to avoid harm.",
+        "rule": "filename"
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /thumbnail",
+    "url": "/thumbnail",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads a filename from the client, which could belong to any user.",
+        "rule": "filename"
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /greeting",
+    "url": "/greeting",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /cake-message/preview",
+    "url": "/cake-message/preview",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route takes a value from the client that the server should decide, look up or check itself, because a wrong value would cause harm.",
+        "rule": "text"
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": false,
+      "must_not_change": false,
+      "do_not_trust": true,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /cart",
+    "url": "/cart",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data that belongs to the user's cart, which is stored in cookies.",
+        "rule": "cart"
+      }
+    ],
+    "decisions": {
+      "who_may_call": false,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /cart/add",
+    "url": "/cart/add",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route modifies user-specific data (cart items), so it should only be callable by logged-in users.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route modifies the cart, which is specific to each user.",
+        "rule": "user"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes stored data (cart items), so it should be protected against CSRF.",
+        "rule": "CSRF protection"
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "POST /checkout",
+    "url": "/checkout",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route requires authentication with the @login_required decorator.",
+        "rule": "logged-in users"
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route creates a new order record for the user.",
+        "rule": "user_id"
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes stored data (INSERT INTO orders).",
+        "rule": "The route changes stored data (INSERT INTO orders)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": true,
+      "whose_data": true,
+      "must_not_change": false,
+      "do_not_trust": false,
+      "limits": false,
+      "csrf": true
+    },
+    "error": null
+  }
+]

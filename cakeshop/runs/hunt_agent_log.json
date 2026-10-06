@@ -1,0 +1,595 @@
+[
+  {
+    "where": "/account [cakeshop/account.py:account]",
+    "rounds": [
+      {
+        "prompt": "Route: GET, POST /account  (function account in cakeshop/account.py)\nNames used here that are defined elsewhere in the project: USER_COLUMNS, bp, get_db, login_required, account.html\n\n--- ROUTE: cakeshop/account.py (lines 11-22) ---\n  11 | @bp.route(\"/account\", methods=[\"GET\", \"POST\"])\n  12 | @login_required\n  13 | def account():\n  14 |     if request.method == \"POST\":\n  15 |         db = get_db()\n  16 |         for key, value in request.form.items():\n  17 |             if key in USER_COLUMNS:\n  18 |                 db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))\n  19 |         db.commit()\n  20 |         flash(\"Profile updated.\")\n  21 |         return redirect(url_for(\"account.account\"))\n  22 |     return render_template(\"account.html\")",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/account.py",
+              "code": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+              "line": 18,
+              "source": "request.form.items()",
+              "why": "An attacker can inject SQL by providing malicious values in the form data, leading to SQL injection.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 19.5
+  },
+  {
+    "where": "/admin/orders [cakeshop/admin.py:all_orders]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /admin/orders  (function all_orders in cakeshop/admin.py)\nNames used here that are defined elsewhere in the project: bp, get_db, admin_orders.html\n\n--- ROUTE: cakeshop/admin.py (lines 11-17) ---\n  11 | @bp.route(\"/orders\")\n  12 | def all_orders():\n  13 |     rows = get_db().execute(\n  14 |         \"SELECT orders.*, users.username, users.email, users.address \"\n  15 |         \"FROM orders JOIN users ON users.id = orders.user_id ORDER BY orders.id DESC\"\n  16 |     ).fetchall()\n  17 |     return render_template(\"admin_orders.html\", orders=rows)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/admin.py",
+              "code": "rows = get_db().execute(...).fetchall()",
+              "line": 16,
+              "source": "get_db().execute(...)",
+              "why": "The SQL query is hardcoded and does not include any parameterized queries, which makes it vulnerable to SQL injection attacks.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 12.6
+  },
+  {
+    "where": "/admin/stats [cakeshop/admin.py:stats]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /admin/stats  (function stats in cakeshop/admin.py)\nNames used here that are defined elsewhere in the project: ALLOWED_TABLES, admin_required, bp, count_rows, admin_stats.html\n\n--- ROUTE: cakeshop/admin.py (lines 20-24) ---\n  20 | @bp.route(\"/stats\")\n  21 | @admin_required\n  22 | def stats():\n  23 |     counts = {table: count_rows(table) for table in sorted(ALLOWED_TABLES)}\n  24 |     return render_template(\"admin_stats.html\", counts=counts)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/admin.py",
+              "code": "counts = {table: count_rows(table) for table in sorted(ALLOWED_TABLES)}",
+              "line": 23,
+              "source": "ALLOWED_TABLES",
+              "why": "The attacker can manipulate the contents of `ALLOWED_TABLES` to include tables they should not be allowed to access, potentially leading to unauthorized data exposure.",
+              "title": "Broken Access Control",
+              "cwe": "CWE-284",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 13.1
+  },
+  {
+    "where": "/admin/orders/<int:order_id>/status [cakeshop/admin.py:set_status]",
+    "rounds": [
+      {
+        "prompt": "Route: POST /admin/orders/<int:order_id>/status  (function set_status in cakeshop/admin.py)\nNames used here that are defined elsewhere in the project: ORDER_STATUSES, admin_required, bp, get_db\n\n--- ROUTE: cakeshop/admin.py (lines 27-36) ---\n  27 | @bp.route(\"/orders/<int:order_id>/status\", methods=[\"POST\"])\n  28 | @admin_required\n  29 | def set_status(order_id):\n  30 |     status = request.form.get(\"status\", \"\")\n  31 |     if status not in ORDER_STATUSES:\n  32 |         abort(400)\n  33 |     db = get_db()\n  34 |     db.execute(\"UPDATE orders SET status = ? WHERE id = ?\", (status, order_id))\n  35 |     db.commit()\n  36 |     return redirect(url_for(\"admin.all_orders\"))",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/admin.py",
+              "code": "status = request.form.get(\"status\", \"\")",
+              "line": 30,
+              "source": "request.form.get(\"status\", \"\")",
+              "why": "An attacker can send a malicious status value through the form, potentially leading to SQL injection if the status value is not properly sanitized.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 13.0
+  },
+  {
+    "where": "/register [cakeshop/auth.py:register]",
+    "rounds": [
+      {
+        "prompt": "Route: GET, POST /register  (function register in cakeshop/auth.py)\nNames used here that are defined elsewhere in the project: bp, get_db, hash_password, register.html\n\n--- ROUTE: cakeshop/auth.py (lines 41-60) ---\n  41 | @bp.route(\"/register\", methods=[\"GET\", \"POST\"])\n  42 | def register():\n  43 |     if request.method == \"POST\":\n  44 |         username = request.form[\"username\"].strip()\n  45 |         password = request.form[\"password\"]\n  46 |         if not username or not password:\n  47 |             flash(\"Username and password are required.\")\n  48 |         else:\n  49 |             db = get_db()\n  50 |             try:\n  51 |                 db.execute(\n  52 |                     \"INSERT INTO users (username, password_hash, email, address) VALUES (?, ?, ?, ?)\",\n  53 |                     (username, hash_password(password), request.form.get(\"email\"), request.form.get(\"address\")),\n  54 |                 )\n  55 |                 db.commit()\n  56 |             except db.IntegrityError:\n  57 |                 flash(\"That username is taken.\")\n  58 |             else:\n  59 |                 return redirect(url_for(\"auth.login\"))\n  60 |     return render_template(\"register.html\")",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/auth.py",
+              "code": "username = request.form['username'].strip()",
+              "line": 44,
+              "source": "request.form['username']",
+              "why": "The username is not validated before being used in the SQL query, which could lead to SQL injection if an attacker provides a malicious username.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            },
+            {
+              "file": "cakeshop/auth.py",
+              "code": "password = request.form['password']",
+              "line": 45,
+              "source": "request.form['password']",
+              "why": "The password is not validated before being used in the SQL query, which could lead to SQL injection if an attacker provides a malicious password.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            },
+            {
+              "file": "cakeshop/auth.py",
+              "code": "db.execute(...)",
+              "line": 51,
+              "source": "request.form.get('email')",
+              "why": "The email is not validated before being used in the SQL query, which could lead to SQL injection if an attacker provides a malicious email.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            },
+            {
+              "file": "cakeshop/auth.py",
+              "code": "db.execute(...)",
+              "line": 51,
+              "source": "request.form.get('address')",
+              "why": "The address is not validated before being used in the SQL query, which could lead to SQL injection if an attacker provides a malicious address.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 42.1
+  },
+  {
+    "where": "/login [cakeshop/auth.py:login]",
+    "rounds": [
+      {
+        "prompt": "Route: GET, POST /login  (function login in cakeshop/auth.py)\nNames used here that are defined elsewhere in the project: bp, check_password, get_db, login.html\n\n--- ROUTE: cakeshop/auth.py (lines 63-74) ---\n  63 | @bp.route(\"/login\", methods=[\"GET\", \"POST\"])\n  64 | def login():\n  65 |     if request.method == \"POST\":\n  66 |         user = get_db().execute(\n  67 |             \"SELECT * FROM users WHERE username = ?\", (request.form[\"username\"],)\n  68 |         ).fetchone()\n  69 |         if user is not None and check_password(user[\"password_hash\"], request.form[\"password\"]):\n  70 |             session.clear()\n  71 |             session[\"user_id\"] = user[\"id\"]\n  72 |             return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))\n  73 |         flash(\"Wrong username or password.\")\n  74 |     return render_template(\"login.html\")",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/auth.py",
+              "code": "user = get_db().execute(\"SELECT * FROM users WHERE username = ?\", (request.form[\"username\"],)).fetchone()",
+              "line": 67,
+              "source": "request.form[\"username\"]",
+              "why": "An attacker can inject SQL code into the username field, leading to SQL injection.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            },
+            {
+              "file": "cakeshop/auth.py",
+              "code": "if user is not None and check_password(user[\"password_hash\"], request.form[\"password\"]):",
+              "line": 69,
+              "source": "request.form[\"password\"]",
+              "why": "An attacker can inject a password that bypasses the password hash check, leading to unauthorized access.",
+              "title": "Password Hash Bypass",
+              "cwe": "CWE-327",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 25.6
+  },
+  {
+    "where": "/logout [cakeshop/auth.py:logout]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /logout  (function logout in cakeshop/auth.py)\nNames used here that are defined elsewhere in the project: bp\n\n--- ROUTE: cakeshop/auth.py (lines 77-80) ---\n  77 | @bp.route(\"/logout\")\n  78 | def logout():\n  79 |     session.clear()\n  80 |     return redirect(url_for(\"shop.index\"))",
+        "answer": {
+          "need": [],
+          "findings": []
+        }
+      }
+    ],
+    "seconds": 2.5
+  },
+  {
+    "where": "/orders [cakeshop/orders.py:my_orders]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /orders  (function my_orders in cakeshop/orders.py)\nNames used here that are defined elsewhere in the project: bp, get_db, login_required, orders.html\n\n--- ROUTE: cakeshop/orders.py (lines 12-18) ---\n  12 | @bp.route(\"/orders\")\n  13 | @login_required\n  14 | def my_orders():\n  15 |     rows = get_db().execute(\n  16 |         \"SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC\", (g.user[\"id\"],)\n  17 |     ).fetchall()\n  18 |     return render_template(\"orders.html\", orders=rows)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/orders.py",
+              "code": "rows = get_db().execute('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', (g.user['id'],))",
+              "line": 16,
+              "source": "g.user['id']",
+              "why": "The user ID is directly used in the SQL query without any validation or sanitization, which could lead to SQL injection if an attacker can control the user ID.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 15.9
+  },
+  {
+    "where": "/orders/<int:order_id> [cakeshop/orders.py:order_detail]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /orders/<int:order_id>  (function order_detail in cakeshop/orders.py)\nNames used here that are defined elsewhere in the project: bp, get_db, login_required, order.html\n\n--- ROUTE: cakeshop/orders.py (lines 21-27) ---\n  21 | @bp.route(\"/orders/<int:order_id>\")\n  22 | @login_required\n  23 | def order_detail(order_id):\n  24 |     order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()\n  25 |     if order is None:\n  26 |         abort(404)\n  27 |     return render_template(\"order.html\", order=order)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/orders.py",
+              "code": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+              "line": 24,
+              "source": "order_id",
+              "why": "An attacker can manipulate the `order_id` parameter to execute arbitrary SQL queries, leading to SQL injection.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 14.6
+  },
+  {
+    "where": "/orders/<int:order_id>/invoice [cakeshop/orders.py:invoice]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /orders/<int:order_id>/invoice  (function invoice in cakeshop/orders.py)\nNames used here that are defined elsewhere in the project: bp, get_db, invoice_date, login_required\n\n--- ROUTE: cakeshop/orders.py (lines 35-46) ---\n  35 | @bp.route(\"/orders/<int:order_id>/invoice\")\n  36 | @login_required\n  37 | def invoice(order_id):\n  38 |     order = get_db().execute(\n  39 |         \"SELECT * FROM orders WHERE id = ? AND user_id = ?\", (order_id, g.user[\"id\"])\n  40 |     ).fetchone()\n  41 |     if order is None:\n  42 |         abort(404)\n  43 |     fmt = request.args.get(\"format\", \"txt\")\n  44 |     path = os.path.join(current_app.config[\"INVOICE_DIR\"], f\"order_{order_id}.{fmt}\")\n  45 |     os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")\n  46 |     return send_file(path)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/orders.py",
+              "code": "os.system(f'echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path})",
+              "line": 45,
+              "source": "order_id, order['total'], invoice_date()",
+              "why": "The use of `os.system` with user-controlled data can lead to command injection. An attacker could manipulate `order_id`, `order['total']`, or `invoice_date()` to execute arbitrary commands on the server.",
+              "title": "Command Injection",
+              "cwe": "CWE-78",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 19.7
+  },
+  {
+    "where": "/ [cakeshop/shop.py:index]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /  (function index in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp, get_db, index.html\n\n--- ROUTE: cakeshop/shop.py (lines 27-30) ---\n  27 | @bp.route(\"/\")\n  28 | def index():\n  29 |     products = get_db().execute(\"SELECT * FROM products\").fetchall()\n  30 |     return render_template(\"index.html\", products=products)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "products = get_db().execute(\"SELECT * FROM products\").fetchall()",
+              "line": 29,
+              "source": "database query",
+              "why": "An attacker could manipulate the database query to retrieve unintended data or execute arbitrary SQL commands.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 13.0
+  },
+  {
+    "where": "/search [cakeshop/shop.py:search]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /search  (function search in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp, search_products, search.html\n\n--- ROUTE: cakeshop/shop.py (lines 33-37) ---\n  33 | @bp.route(\"/search\")\n  34 | def search():\n  35 |     q = request.args.get(\"q\", \"\")\n  36 |     results = search_products(q)\n  37 |     return render_template(\"search.html\", q=q, results=results)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "q = request.args.get('q', '')",
+              "line": 35,
+              "source": "request.args.get('q', '')",
+              "why": "An attacker can inject arbitrary SQL or OS commands into the search query, leading to SQL injection or OS command injection vulnerabilities.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            },
+            {
+              "file": "cakeshop/shop.py",
+              "code": "results = search_products(q)",
+              "line": 36,
+              "source": "q",
+              "why": "The search query is passed directly to the `search_products` function without any validation or sanitization, which could lead to SQL injection or other vulnerabilities.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 23.8
+  },
+  {
+    "where": "/product/<int:product_id> [cakeshop/shop.py:product]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /product/<int:product_id>  (function product in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp, get_db, product.html\n\n--- ROUTE: cakeshop/shop.py (lines 40-47) ---\n  40 | @bp.route(\"/product/<int:product_id>\")\n  41 | def product(product_id):\n  42 |     db = get_db()\n  43 |     item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()\n  44 |     if item is None:\n  45 |         abort(404)\n  46 |     reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()\n  47 |     return render_template(\"product.html\", product=item, reviews=reviews)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+              "line": 43,
+              "source": "product_id",
+              "why": "An attacker can inject SQL to manipulate the query and potentially access or modify data they should not.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            },
+            {
+              "file": "cakeshop/shop.py",
+              "code": "reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()",
+              "line": 46,
+              "source": "product_id",
+              "why": "An attacker can inject SQL to manipulate the query and potentially access or modify data they should not.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 26.0
+  },
+  {
+    "where": "/product/<int:product_id>/review [cakeshop/shop.py:add_review]",
+    "rounds": [
+      {
+        "prompt": "Route: POST /product/<int:product_id>/review  (function add_review in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp, get_db, login_required\n\n--- ROUTE: cakeshop/shop.py (lines 50-59) ---\n  50 | @bp.route(\"/product/<int:product_id>/review\", methods=[\"POST\"])\n  51 | @login_required\n  52 | def add_review(product_id):\n  53 |     db = get_db()\n  54 |     db.execute(\n  55 |         \"INSERT INTO reviews (product_id, username, body) VALUES (?, ?, ?)\",\n  56 |         (product_id, g.user[\"username\"], request.form[\"body\"]),\n  57 |     )\n  58 |     db.commit()\n  59 |     return redirect(url_for(\"shop.product\", product_id=product_id))",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "request.form['body']",
+              "line": 56,
+              "source": "request.form",
+              "why": "An attacker can inject SQL into the review body, leading to SQL injection.",
+              "title": "SQL Injection",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 12.9
+  },
+  {
+    "where": "/image [cakeshop/shop.py:cake_image]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /image  (function cake_image in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp\n\n--- ROUTE: cakeshop/shop.py (lines 62-65) ---\n  62 | @bp.route(\"/image\")\n  63 | def cake_image():\n  64 |     filename = request.args.get(\"name\", \"\")\n  65 |     return send_file(os.path.join(current_app.config[\"IMAGE_DIR\"], filename))",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "filename = request.args.get(\"name\", \"\")",
+              "line": 64,
+              "source": "request.args.get(\"name\", \"\")",
+              "why": "An attacker can provide a malicious filename to access arbitrary files on the server, leading to path traversal attacks.",
+              "title": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 13.5
+  },
+  {
+    "where": "/thumbnail [cakeshop/shop.py:cake_thumbnail]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /thumbnail  (function cake_thumbnail in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp\n\n--- ROUTE: cakeshop/shop.py (lines 68-71) ---\n  68 | @bp.route(\"/thumbnail\")\n  69 | def cake_thumbnail():\n  70 |     filename = secure_filename(request.args.get(\"name\", \"\"))\n  71 |     return send_from_directory(current_app.config[\"IMAGE_DIR\"], filename)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "filename = secure_filename(request.args.get(\"name\", \"\"))",
+              "line": 70,
+              "source": "request.args.get(\"name\", \"\")",
+              "why": "An attacker can provide a malicious filename to access arbitrary files on the server.",
+              "title": "Path Traversal",
+              "cwe": "CWE-22",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 13.3
+  },
+  {
+    "where": "/greeting [cakeshop/shop.py:greeting]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /greeting  (function greeting in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp\n\n--- ROUTE: cakeshop/shop.py (lines 74-77) ---\n  74 | @bp.route(\"/greeting\")\n  75 | def greeting():\n  76 |     name = request.args.get(\"name\", \"friend\")\n  77 |     return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+              "line": 77,
+              "source": "request.args.get(\"name\", \"friend\")",
+              "why": "An attacker can inject arbitrary HTML or JavaScript into the greeting message by providing a malicious value for the 'name' parameter in the URL. This can lead to Cross-Site Scripting (XSS) attacks.",
+              "title": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "MEDIUM"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 17.3
+  },
+  {
+    "where": "/cake-message/preview [cakeshop/shop.py:preview_message]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /cake-message/preview  (function preview_message in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp\n\n--- ROUTE: cakeshop/shop.py (lines 80-84) ---\n  80 | @bp.route(\"/cake-message/preview\")\n  81 | def preview_message():\n  82 |     text = request.args.get(\"text\", \"\")\n  83 |     template = \"<div class='cake-top'>\" + text + \"</div>\"\n  84 |     return render_template_string(template)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+              "line": 83,
+              "source": "request.args.get(\"text\", \"\")",
+              "why": "An attacker can inject arbitrary HTML into the `text` parameter, which will be rendered directly in the HTML response. This can lead to Cross-Site Scripting (XSS) attacks.",
+              "title": "Cross-Site Scripting (XSS)",
+              "cwe": "CWE-79",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 16.6
+  },
+  {
+    "where": "/cart [cakeshop/shop.py:view_cart]",
+    "rounds": [
+      {
+        "prompt": "Route: GET /cart  (function view_cart in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: _load_cart, bp, get_db, cart.html\n\n--- ROUTE: cakeshop/shop.py (lines 98-107) ---\n  98 | @bp.route(\"/cart\")\n  99 | def view_cart():\n 100 |     cart = _load_cart()\n 101 |     db = get_db()\n 102 |     items = []\n 103 |     for product_id, qty in cart.items():\n 104 |         row = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()\n 105 |         if row is not None:\n 106 |             items.append({\"product\": row, \"quantity\": qty})\n 107 |     return render_template(\"cart.html\", items=items)",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "cart = _load_cart()",
+              "line": 100,
+              "source": "user-controlled data",
+              "why": "If `_load_cart` does not properly sanitize or validate the cart data, an attacker could manipulate the cart contents to include invalid or malicious data.",
+              "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+              "cwe": "CWE-78",
+              "severity": "MEDIUM"
+            },
+            {
+              "file": "cakeshop/shop.py",
+              "code": "row = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+              "line": 104,
+              "source": "user-controlled data",
+              "why": "The `product_id` is directly used in the SQL query without proper sanitization, which could lead to SQL injection if an attacker provides a malicious `product_id`.",
+              "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+              "cwe": "CWE-89",
+              "severity": "HIGH"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 31.6
+  },
+  {
+    "where": "/cart/add [cakeshop/shop.py:add_to_cart]",
+    "rounds": [
+      {
+        "prompt": "Route: POST /cart/add  (function add_to_cart in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: _dump_cart, _load_cart, bp\n\n--- ROUTE: cakeshop/shop.py (lines 110-117) ---\n 110 | @bp.route(\"/cart/add\", methods=[\"POST\"])\n 111 | def add_to_cart():\n 112 |     cart = _load_cart()\n 113 |     product_id = int(request.form[\"product_id\"])\n 114 |     cart[product_id] = cart.get(product_id, 0) + 1\n 115 |     resp = make_response(redirect(url_for(\"shop.view_cart\")))\n 116 |     resp.set_cookie(\"cart\", _dump_cart(cart))\n 117 |     return resp",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "product_id = int(request.form['product_id'])",
+              "line": 113,
+              "source": "request.form['product_id']",
+              "why": "An attacker can provide a non-integer value for 'product_id', leading to a ValueError when attempting to convert it to an integer.",
+              "title": "Integer Conversion Error",
+              "cwe": "CWE-190",
+              "severity": "MEDIUM"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 15.4
+  },
+  {
+    "where": "/checkout [cakeshop/shop.py:checkout]",
+    "rounds": [
+      {
+        "prompt": "Route: POST /checkout  (function checkout in cakeshop/shop.py)\nNames used here that are defined elsewhere in the project: bp, get_db, login_required\n\n--- ROUTE: cakeshop/shop.py (lines 120-140) ---\n 120 | @bp.route(\"/checkout\", methods=[\"POST\"])\n 121 | @login_required\n 122 | def checkout():\n 123 |     product_id = int(request.form[\"product_id\"])\n 124 |     quantity = int(request.form.get(\"quantity\", 1))\n 125 |     price = int(request.form[\"price\"])\n 126 |     total = price * quantity\n 127 |     db = get_db()\n 128 |     cur = db.execute(\n 129 |         \"INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)\",\n 130 |         (\n 131 |             g.user[\"id\"],\n 132 |             product_id,\n 133 |             quantity,\n 134 |             total,\n 135 |             request.form.get(\"message\", \"\"),\n 136 |             request.form.get(\"note\", \"\"),\n 137 |         ),\n 138 |     )\n 139 |     db.commit()\n 140 |     return redirect(url_for(\"orders.order_detail\", order_id=cur.lastrowid))",
+        "answer": {
+          "need": [],
+          "findings": [
+            {
+              "file": "cakeshop/shop.py",
+              "code": "product_id = int(request.form['product_id'])",
+              "line": 123,
+              "source": "request.form['product_id']",
+              "why": "An attacker can provide a non-integer value for 'product_id', leading to a ValueError.",
+              "title": "Integer Overflow",
+              "cwe": "CWE-190",
+              "severity": "MEDIUM"
+            },
+            {
+              "file": "cakeshop/shop.py",
+              "code": "quantity = int(request.form.get('quantity', 1))",
+              "line": 124,
+              "source": "request.form.get('quantity', 1)",
+              "why": "An attacker can provide a non-integer value for 'quantity', leading to a ValueError.",
+              "title": "Integer Overflow",
+              "cwe": "CWE-190",
+              "severity": "MEDIUM"
+            },
+            {
+              "file": "cakeshop/shop.py",
+              "code": "price = int(request.form['price'])",
+              "line": 125,
+              "source": "request.form['price']",
+              "why": "An attacker can provide a non-integer value for 'price', leading to a ValueError.",
+              "title": "Integer Overflow",
+              "cwe": "CWE-190",
+              "severity": "MEDIUM"
+            },
+            {
+              "file": "cakeshop/shop.py",
+              "code": "total = price * quantity",
+              "line": 126,
+              "source": "price * quantity",
+              "why": "If 'price' or 'quantity' is very large, this could lead to an integer overflow, resulting in incorrect calculations.",
+              "title": "Integer Overflow",
+              "cwe": "CWE-190",
+              "severity": "MEDIUM"
+            }
+          ]
+        }
+      }
+    ],
+    "seconds": 47.4
+  }
+]

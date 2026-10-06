@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Results for “{{ q }}”</h1>
+{% for p in results %}
+<div class="card"><a href="{{ url_for('shop.product', product_id=p['id']) }}">{{ p['name'] }}</a> — {{ p['price'] }} UZS</div>
+{% else %}
+<p>No cakes found.</p>
+{% endfor %}
+{% endblock %}

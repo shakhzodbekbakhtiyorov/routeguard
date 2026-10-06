@@ -1,0 +1,875 @@
+[
+  {
+    "tool": "bandit",
+    "rule_id": [
+      "B106"
+    ],
+    "title": "hardcoded_password_funcarg",
+    "file": "cakeshop/__init__.py",
+    "line": 11,
+    "snippet": "SECRET_KEY=\"cakeshop-secret-2024\",",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-259"
+    ],
+    "extra": {
+      "confidence": "MEDIUM",
+      "text": "Possible hardcoded password: 'cakeshop-secret-2024'",
+      "verification": {
+        "stage": "rule",
+        "verdict": "real",
+        "reason": "secret/key assigned a string literal in source code",
+        "model": null
+      },
+      "merged_from": [
+        {
+          "tool": "bandit",
+          "rule_id": "B106",
+          "line": 11,
+          "title": "hardcoded_password_funcarg",
+          "cwe": [
+            "CWE-259"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        11
+      ]
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": [
+      "open-redirect"
+    ],
+    "title": "Data from request is passed to redirect(). This is an open redirect and could be",
+    "file": "cakeshop/auth.py",
+    "line": 72,
+    "snippet": "return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-601"
+    ],
+    "extra": {
+      "message": "Data from request is passed to redirect(). This is an open redirect and could be exploited. Consider using 'url_for()' to generate links to known locations. If you must use a URL to unknown pages, consider using 'urlparse()' or similar and checking if the 'netloc' property is the same as your site's",
+      "owasp": [
+        "A01:2021 - Broken Access Control",
+        "A01:2025 - Broken Access Control"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "request.args.get('next')",
+        "protection": "none",
+        "reason": "source: HTTP query/form/cookie/header | path: request.args.get('next') | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "semgrep",
+          "rule_id": "open-redirect",
+          "line": 72,
+          "title": "Data from request is passed to redirect(). This is an open redirect and could be",
+          "cwe": [
+            "CWE-601"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        72
+      ]
+    }
+  },
+  {
+    "tool": "bandit+semgrep",
+    "rule_id": [
+      "B608",
+      "formatted-sql-query"
+    ],
+    "title": "hardcoded_sql_expressions",
+    "file": "cakeshop/db.py",
+    "line": 111,
+    "snippet": "query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "confidence": "LOW",
+      "text": "Possible SQL injection vector through string-based query construction.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form",
+        "path": "request.args.get('q', '') -> search_products(q) -> query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+        "protection": "none",
+        "reason": "source: HTTP query/form | path: request.args.get('q', '') -> search_products(q) -> query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\" | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "bandit",
+          "rule_id": "B608",
+          "line": 111,
+          "title": "hardcoded_sql_expressions",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "formatted-sql-query",
+          "line": 112,
+          "title": "Detected possible formatted SQL query. Use parameterized queries instead.",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        111,
+        112
+      ]
+    }
+  },
+  {
+    "tool": "bandit+semgrep",
+    "rule_id": [
+      "B605",
+      "dangerous-system-call",
+      "dangerous-system-call-audit",
+      "os-system-injection"
+    ],
+    "title": "start_process_with_a_shell",
+    "file": "cakeshop/orders.py",
+    "line": 45,
+    "snippet": "os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "confidence": "HIGH",
+      "text": "Starting a process with a shell, possible injection detected, security issue.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "user-written database content",
+        "path": "Through the route parameter `order_id` and the `total` field fetched from the database.",
+        "protection": "None visible in the code shown.",
+        "reason": "source: user-written database content | path: Through the route parameter `order_id` and the `total` field fetched from the database. | protection: None visible in the code shown.",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "bandit",
+          "rule_id": "B605",
+          "line": 45,
+          "title": "start_process_with_a_shell",
+          "cwe": [
+            "CWE-78"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "os-system-injection",
+          "line": 45,
+          "title": "User data detected in os.system. This could be vulnerable to a command injection",
+          "cwe": [
+            "CWE-78"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "dangerous-system-call-audit",
+          "line": 45,
+          "title": "Found dynamic content used in a system call. This is dangerous if external data ",
+          "cwe": [
+            "CWE-78"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "dangerous-system-call",
+          "line": 45,
+          "title": "Found user-controlled data used in a system call. This could allow a malicious a",
+          "cwe": [
+            "CWE-78"
+          ]
+        }
+      ],
+      "n_warnings": 4,
+      "lines": [
+        45
+      ]
+    }
+  },
+  {
+    "tool": "bandit+semgrep",
+    "rule_id": [
+      "B324",
+      "insecure-hash-algorithm-md5",
+      "md5-used-as-password"
+    ],
+    "title": "hashlib",
+    "file": "cakeshop/security.py",
+    "line": 5,
+    "snippet": "return hashlib.md5(password.encode()).hexdigest()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-327"
+    ],
+    "extra": {
+      "confidence": "HIGH",
+      "text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+      "verification": {
+        "stage": "rule",
+        "verdict": "real",
+        "reason": "fast unsalted hash (md5) used for passwords",
+        "model": null
+      },
+      "merged_from": [
+        {
+          "tool": "bandit",
+          "rule_id": "B324",
+          "line": 5,
+          "title": "hashlib",
+          "cwe": [
+            "CWE-327"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "insecure-hash-algorithm-md5",
+          "line": 5,
+          "title": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision r",
+          "cwe": [
+            "CWE-327"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "md5-used-as-password",
+          "line": 5,
+          "title": "It looks like MD5 is used as a password hash. MD5 is not considered a secure pas",
+          "cwe": [
+            "CWE-327"
+          ]
+        }
+      ],
+      "n_warnings": 3,
+      "lines": [
+        5
+      ]
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": [
+      "render-template-string"
+    ],
+    "title": "Found a template created with string formatting. This is susceptible to server-s",
+    "file": "cakeshop/shop.py",
+    "line": 77,
+    "snippet": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-96"
+    ],
+    "extra": {
+      "message": "Found a template created with string formatting. This is susceptible to server-side template injection and cross-site scripting attacks.",
+      "owasp": [
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "HTTP query parameter 'name'",
+        "protection": "none",
+        "reason": "source: HTTP query/form/cookie/header | path: HTTP query parameter 'name' | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "semgrep",
+          "rule_id": "render-template-string",
+          "line": 77,
+          "title": "Found a template created with string formatting. This is susceptible to server-s",
+          "cwe": [
+            "CWE-96"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        77
+      ]
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": [
+      "raw-html-format",
+      "render-template-string"
+    ],
+    "title": "Detected user input flowing into a manually constructed HTML string. You may be ",
+    "file": "cakeshop/shop.py",
+    "line": 83,
+    "snippet": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79",
+      "CWE-96"
+    ],
+    "extra": {
+      "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is sa",
+      "owasp": [
+        "A07:2017 - Cross-Site Scripting (XSS)",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "request.args.get('text', '')",
+        "protection": "none",
+        "reason": "source: HTTP query/form/cookie/header | path: request.args.get('text', '') | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "semgrep",
+          "rule_id": "raw-html-format",
+          "line": 83,
+          "title": "Detected user input flowing into a manually constructed HTML string. You may be ",
+          "cwe": [
+            "CWE-79"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "render-template-string",
+          "line": 84,
+          "title": "Found a template created with string formatting. This is susceptible to server-s",
+          "cwe": [
+            "CWE-96"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        83,
+        84
+      ]
+    }
+  },
+  {
+    "tool": "bandit+semgrep",
+    "rule_id": [
+      "B301",
+      "avoid-pickle"
+    ],
+    "title": "blacklist",
+    "file": "cakeshop/shop.py",
+    "line": 91,
+    "snippet": "return pickle.loads(base64.b64decode(raw))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-502"
+    ],
+    "extra": {
+      "confidence": "HIGH",
+      "text": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "cookie",
+        "path": "request.cookies.get(\"cart\") -> pickle.loads(base64.b64decode(raw))",
+        "protection": "none",
+        "reason": "source: cookie | path: request.cookies.get(\"cart\") -> pickle.loads(base64.b64decode(raw)) | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "bandit",
+          "rule_id": "B301",
+          "line": 91,
+          "title": "blacklist",
+          "cwe": [
+            "CWE-502"
+          ]
+        },
+        {
+          "tool": "semgrep",
+          "rule_id": "avoid-pickle",
+          "line": 91,
+          "title": "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. ",
+          "cwe": [
+            "CWE-502"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        91
+      ]
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": [
+      "avoid-pickle"
+    ],
+    "title": "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. ",
+    "file": "cakeshop/shop.py",
+    "line": 95,
+    "snippet": "return base64.b64encode(pickle.dumps(cart)).decode()",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-502"
+    ],
+    "extra": {
+      "message": "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. When unpickling, the serialized data could be manipulated to run arbitrary code. Instead, consider serializing the relevant data as JSON or a similar text-based serialization format.",
+      "owasp": [
+        "A08:2017 - Insecure Deserialization",
+        "A08:2021 - Software and Data Integrity Failures",
+        "A08:2025 - Software or Data Integrity Failures"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "user-written database content",
+        "path": "HTTP cookie",
+        "protection": "none",
+        "reason": "source: user-written database content | path: HTTP cookie | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "semgrep",
+          "rule_id": "avoid-pickle",
+          "line": 95,
+          "title": "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. ",
+          "cwe": [
+            "CWE-502"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        95
+      ]
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": [
+      "secure-set-cookie"
+    ],
+    "title": "Found a Flask cookie with insecurely configured properties.  By default the secu",
+    "file": "cakeshop/shop.py",
+    "line": 116,
+    "snippet": "resp.set_cookie(\"cart\", _dump_cart(cart))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-614"
+    ],
+    "extra": {
+      "message": "Found a Flask cookie with insecurely configured properties.  By default the secure, httponly and samesite ar configured insecurely. cookies should be handled securely by setting `secure=True`, `httponly=True`, and `samesite='Lax'` in response.set_cookie(...). If these parameters are not properly set",
+      "owasp": [
+        "A05:2021 - Security Misconfiguration",
+        "A02:2025 - Security Misconfiguration"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "user-written database content",
+        "path": "add_to_cart() -> _dump_cart() -> resp.set_cookie()",
+        "protection": "none",
+        "reason": "source: user-written database content | path: add_to_cart() -> _dump_cart() -> resp.set_cookie() | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "semgrep",
+          "rule_id": "secure-set-cookie",
+          "line": 116,
+          "title": "Found a Flask cookie with insecurely configured properties.  By default the secu",
+          "cwe": [
+            "CWE-614"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        116
+      ]
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": [
+      "template-unescaped-with-safe"
+    ],
+    "title": "Detected a segment of a Flask template where autoescaping is explicitly disabled",
+    "file": "cakeshop/templates/product.html",
+    "line": 26,
+    "snippet": "<div class=\"card\"><strong>{{ r['username'] }}</strong>: {{ r['body']|safe }}</div>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "message": "Detected a segment of a Flask template where autoescaping is explicitly disabled with '| safe' filter. This allows rendering of raw HTML in this segment. Ensure no user data is rendered here, otherwise this is a cross-site scripting (XSS) vulnerability.",
+      "owasp": [
+        "A07:2017 - Cross-Site Scripting (XSS)",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm+escalated",
+        "verdict": "uncertain",
+        "agreement": 0.6,
+        "source": "user-written database content",
+        "path": "Reviews are fetched from the database and passed to the template.",
+        "protection": "{{ r['body']|safe }}",
+        "reason": "source: user-written database content | path: Reviews are fetched from the database and passed to the template. | protection: {{ r['body']|safe }}",
+        "votes": [
+          "false_positive",
+          "false_positive",
+          "real",
+          "false_positive",
+          "real"
+        ],
+        "first_votes": [
+          "false_positive",
+          "false_positive",
+          "real"
+        ],
+        "needs_human": true,
+        "model": "qwen2.5-coder:7b"
+      },
+      "merged_from": [
+        {
+          "tool": "semgrep",
+          "rule_id": "template-unescaped-with-safe",
+          "line": 26,
+          "title": "Detected a segment of a Flask template where autoescaping is explicitly disabled",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        26
+      ]
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": [
+      "PYSEC-2023-62",
+      "PYSEC-2026-2151"
+    ],
+    "title": "flask 2.2.4: When all of the following conditions are met, a response con",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "flask==2.2.4",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "flask",
+      "version": "2.2.4",
+      "cves": [
+        "CVE-2023-30861"
+      ],
+      "fix_versions": [
+        "2.2.5",
+        "2.3.2"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      },
+      "merged_from": [
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2023-62",
+          "line": null,
+          "title": "flask 2.2.4: When all of the following conditions are met, a response con",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-2151",
+          "line": null,
+          "title": "flask 2.2.4: When the `session` object is accessed, Flask should set the ",
+          "cwe": [
+            "CWE-1395"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": []
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": [
+      "PYSEC-2023-221",
+      "PYSEC-2026-1860",
+      "PYSEC-2026-2043",
+      "PYSEC-2026-2044",
+      "PYSEC-2026-2045",
+      "PYSEC-2026-2046",
+      "PYSEC-2026-2320",
+      "PYSEC-2026-3417"
+    ],
+    "title": "werkzeug 2.3.7: Werkzeug multipart data parser needs to find a boundary that",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==2.3.7",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "2.3.7",
+      "cves": [
+        "CVE-2023-46136"
+      ],
+      "fix_versions": [
+        "2.3.8",
+        "3.0.1"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      },
+      "merged_from": [
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2023-221",
+          "line": null,
+          "title": "werkzeug 2.3.7: Werkzeug multipart data parser needs to find a boundary that",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-2043",
+          "line": null,
+          "title": "werkzeug 2.3.7: The debugger in affected versions of Werkzeug can allow an a",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-2045",
+          "line": null,
+          "title": "werkzeug 2.3.7: On Python < 3.11 on Windows, `os.path.isabs()` does not catc",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-1860",
+          "line": null,
+          "title": "werkzeug 2.3.7: Applications using Werkzeug to parse `multipart/form-data` r",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-2046",
+          "line": null,
+          "title": "werkzeug 2.3.7: Werkzeug's `safe_join` function allows path segments with Wi",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-2044",
+          "line": null,
+          "title": "werkzeug 2.3.7: Werkzeug's `safe_join` function allows path segments with Wi",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-2320",
+          "line": null,
+          "title": "werkzeug 2.3.7: Werkzeug's `safe_join` function allows Windows device names ",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-3417",
+          "line": null,
+          "title": "werkzeug 2.3.7: Applications using Werkzeug to parse `multipart/form-data` r",
+          "cwe": [
+            "CWE-1395"
+          ]
+        }
+      ],
+      "n_warnings": 8,
+      "lines": []
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": [
+      "PYSEC-2026-1471",
+      "PYSEC-2026-1472",
+      "PYSEC-2026-1473",
+      "PYSEC-2026-1474",
+      "PYSEC-2026-1475"
+    ],
+    "title": "jinja2 3.1.2: The `xmlattr` filter in affected versions of Jinja accepts k",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "jinja2==3.1.2",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "jinja2",
+      "version": "3.1.2",
+      "cves": [
+        "CVE-2024-22195"
+      ],
+      "fix_versions": [
+        "3.1.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      },
+      "merged_from": [
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-1473",
+          "line": null,
+          "title": "jinja2 3.1.2: The `xmlattr` filter in affected versions of Jinja accepts k",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-1474",
+          "line": null,
+          "title": "jinja2 3.1.2: The `xmlattr` filter in affected versions of Jinja accepts k",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-1475",
+          "line": null,
+          "title": "jinja2 3.1.2: An oversight in how the Jinja sandboxed environment detects ",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-1472",
+          "line": null,
+          "title": "jinja2 3.1.2: A bug in the Jinja compiler allows an attacker that controls",
+          "cwe": [
+            "CWE-1395"
+          ]
+        },
+        {
+          "tool": "pip-audit",
+          "rule_id": "PYSEC-2026-1471",
+          "line": null,
+          "title": "jinja2 3.1.2: An oversight in how the Jinja sandboxed environment interact",
+          "cwe": [
+            "CWE-1395"
+          ]
+        }
+      ],
+      "n_warnings": 5,
+      "lines": []
+    }
+  }
+]

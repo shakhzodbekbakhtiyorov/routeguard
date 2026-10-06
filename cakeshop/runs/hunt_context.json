@@ -1,0 +1,762 @@
+[
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/account.py",
+    "line": 18,
+    "snippet": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.items()",
+      "why": "SQL injection vulnerability. An attacker can inject malicious SQL code into the form data, potentially leading to unauthorized data manipulation or deletion.",
+      "evidence": "exact",
+      "model_line": 18,
+      "model_code": "db.execute(f'UPDATE users SET {key} = ? WHERE id = ?', (value, g.user['id']))",
+      "where": "/account [cakeshop/account.py:account]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Broken Access Control",
+    "file": "cakeshop/admin.py",
+    "line": 13,
+    "snippet": "rows = get_db().execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-284"
+    ],
+    "extra": {
+      "source": "user_id from session",
+      "why": "The query does not filter by user_id, allowing any user to view all orders, bypassing access control.",
+      "evidence": "exact",
+      "model_line": 13,
+      "model_code": "rows = get_db().execute(...).fetchall()",
+      "where": "/admin/orders [cakeshop/admin.py:all_orders]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/db.py",
+    "line": 118,
+    "snippet": "return get_db().execute(f\"SELECT COUNT(*) FROM {table}\").fetchone()[0]",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "table",
+      "why": "The table name is directly inserted into the SQL query without proper sanitization, allowing an attacker to inject malicious SQL.",
+      "evidence": "exact",
+      "model_line": 118,
+      "model_code": "return get_db().execute(f\"SELECT COUNT(*) FROM {table}\").fetchone()[0]",
+      "where": "/admin/stats [cakeshop/admin.py:stats]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/admin.py",
+    "line": 30,
+    "snippet": "status = request.form.get(\"status\", \"\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.get(\"status\", \"\")",
+      "why": "An attacker can inject arbitrary SQL into the `status` parameter, leading to SQL injection.",
+      "evidence": "exact",
+      "model_line": 30,
+      "model_code": "status = request.form.get(\"status\", \"\")",
+      "where": "/admin/orders/<int:order_id>/status [cakeshop/admin.py:set_status]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Weak Cryptography",
+    "file": "cakeshop/security.py",
+    "line": 5,
+    "snippet": "return hashlib.md5(password.encode()).hexdigest()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-327"
+    ],
+    "extra": {
+      "source": "request.form['password']",
+      "why": "MD5 is a weak hash function and should not be used for password hashing. An attacker can easily crack MD5 hashes.",
+      "evidence": "exact",
+      "model_line": 5,
+      "model_code": "return hashlib.md5(password.encode()).hexdigest()",
+      "where": "/register [cakeshop/auth.py:register]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Broken Access Control",
+    "file": "cakeshop/auth.py",
+    "line": 79,
+    "snippet": "session.clear()",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-284"
+    ],
+    "extra": {
+      "source": "session",
+      "why": "The session is cleared, but there is no check to ensure that the user is logged in before clearing the session. This could lead to a potential security issue if an attacker can trigger this endpoint without being logged in.",
+      "evidence": "exact",
+      "model_line": 79,
+      "model_code": "session.clear()",
+      "where": "/logout [cakeshop/auth.py:logout]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/orders.py",
+    "line": 15,
+    "snippet": "rows = get_db().execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "g.user['id']",
+      "why": "The user ID is directly used in the SQL query without any validation or sanitization, which could lead to SQL injection if an attacker can control the user ID.",
+      "evidence": "moved",
+      "model_line": 16,
+      "model_code": "rows = get_db().execute('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', (g.user['id'],)).fetchall()",
+      "where": "/orders [cakeshop/orders.py:my_orders]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Path Traversal",
+    "file": "cakeshop/templates/orders.html",
+    "line": 8,
+    "snippet": "<td><a href=\"{{ url_for('orders.order_detail', order_id=o['id']) }}\">View</a></td></tr>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "o['id']",
+      "why": "The order ID is directly used in the URL without any validation or sanitization, which could lead to path traversal if an attacker can control the order ID.",
+      "evidence": "exact",
+      "model_line": 8,
+      "model_code": "<td><a href=\"{{ url_for('orders.order_detail', order_id=o['id']) }}\">View</a></td>",
+      "where": "/orders [cakeshop/orders.py:my_orders]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Broken Access Control",
+    "file": "cakeshop/orders.py",
+    "line": 24,
+    "snippet": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-284"
+    ],
+    "extra": {
+      "source": "order_id",
+      "why": "An attacker can manipulate the `order_id` parameter to access orders that do not belong to them, leading to potential data leakage or unauthorized access.",
+      "evidence": "exact",
+      "model_line": 24,
+      "model_code": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+      "where": "/orders/<int:order_id> [cakeshop/orders.py:order_detail]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting",
+    "file": "cakeshop/templates/order.html",
+    "line": 6,
+    "snippet": "<p>Message on the cake: {{ order['message'] }}</p>",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "order['message']",
+      "why": "The `message` field is directly rendered in the template without any sanitization, making it vulnerable to Cross-Site Scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 6,
+      "model_code": "{{ order['message'] }}",
+      "where": "/orders/<int:order_id> [cakeshop/orders.py:order_detail]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting",
+    "file": "cakeshop/templates/order.html",
+    "line": 7,
+    "snippet": "<p>Delivery note: {{ order['note'] }}</p>",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "order['note']",
+      "why": "The `note` field is directly rendered in the template without any sanitization, making it vulnerable to Cross-Site Scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 7,
+      "model_code": "{{ order['note'] }}",
+      "where": "/orders/<int:order_id> [cakeshop/orders.py:order_detail]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Command Injection",
+    "file": "cakeshop/orders.py",
+    "line": 45,
+    "snippet": "os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "source": "order_id, order['total'], invoice_date()",
+      "why": "The `os.system` call is vulnerable to command injection. An attacker could manipulate `order_id`, `order['total']`, or the date to execute arbitrary commands on the server.",
+      "evidence": "fuzzy",
+      "model_line": 45,
+      "model_code": "os.system(f'echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path})",
+      "where": "/orders/<int:order_id>/invoice [cakeshop/orders.py:invoice]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 29,
+    "snippet": "products = get_db().execute(\"SELECT * FROM products\").fetchall()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "database query",
+      "why": "The query does not include any parameters, making it vulnerable to SQL injection if the database connection is misconfigured or if the query is used in a way that could be influenced by user input.",
+      "evidence": "exact",
+      "model_line": 29,
+      "model_code": "products = get_db().execute(\"SELECT * FROM products\").fetchall()",
+      "where": "/ [cakeshop/shop.py:index]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/auth.py",
+    "line": 38,
+    "snippet": "g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "session.get(\"user_id\")",
+      "why": "The query uses parameterized queries, which is a good practice to prevent SQL injection. However, the vulnerability lies in the way the `user_id` is obtained from the session, which could be manipulated by an attacker if the session is not properly secured.",
+      "evidence": "exact",
+      "model_line": 38,
+      "model_code": "g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()",
+      "where": "/ [cakeshop/shop.py:index]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Path Traversal",
+    "file": "cakeshop/templates/index.html",
+    "line": 7,
+    "snippet": "<img src=\"{{ url_for('shop.cake_image', name=p['image']) }}\" width=\"80\" alt=\"\">",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "product['image']",
+      "why": "The `name` parameter in the `url_for` function is derived from user input (`product['image']`). If this input is not properly sanitized, it could lead to path traversal attacks, where an attacker could access files outside the intended directory.",
+      "evidence": "exact",
+      "model_line": 7,
+      "model_code": "<img src=\"{{ url_for('shop.cake_image', name=p['image']) }}\" width=\"80\" alt=\"\">",
+      "where": "/ [cakeshop/shop.py:index]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/db.py",
+    "line": 111,
+    "snippet": "query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.args.get(\"q\", \"\")",
+      "why": "The search term is directly included in the SQL query without proper sanitization, allowing SQL injection.",
+      "evidence": "exact",
+      "model_line": 111,
+      "model_code": "query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+      "where": "/search [cakeshop/shop.py:search]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/templates/search.html",
+    "line": 3,
+    "snippet": "<h1>Results for \u201c{{ q }}\u201d</h1>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.args.get(\"q\", \"\")",
+      "why": "The search term is directly rendered in the HTML template without proper escaping, allowing cross-site scripting (XSS).",
+      "evidence": "exact",
+      "model_line": 3,
+      "model_code": "<h1>Results for \u201c{{ q }}\u201d</h1>",
+      "where": "/search [cakeshop/shop.py:search]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 43,
+    "snippet": "item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "product_id",
+      "why": "An attacker can manipulate the product_id parameter to access any product in the database, potentially leading to data leakage or manipulation.",
+      "evidence": "exact",
+      "model_line": 43,
+      "model_code": "item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 46,
+    "snippet": "reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "product_id",
+      "why": "An attacker can manipulate the product_id parameter to access reviews for any product, potentially leading to data leakage or manipulation.",
+      "evidence": "exact",
+      "model_line": 46,
+      "model_code": "reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Path Traversal",
+    "file": "cakeshop/templates/product.html",
+    "line": 4,
+    "snippet": "<img src=\"{{ url_for('shop.cake_thumbnail', name=product['image']) }}\" width=\"160\" alt=\"\">",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "product['image']",
+      "why": "An attacker can manipulate the product['image'] value to perform path traversal attacks, potentially leading to the disclosure of sensitive files.",
+      "evidence": "exact",
+      "model_line": 4,
+      "model_code": "<img src=\"{{ url_for('shop.cake_thumbnail', name=product['image']) }}\" width=\"160\" alt=\"\">",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/templates/product.html",
+    "line": 8,
+    "snippet": "<input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "product['id']",
+      "why": "An attacker can manipulate the product['id'] value to perform SQL injection attacks, potentially leading to data leakage or manipulation.",
+      "evidence": "exact",
+      "model_line": 8,
+      "model_code": "<input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/templates/product.html",
+    "line": 15,
+    "snippet": "<input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "product['price']",
+      "why": "An attacker can manipulate the product['price'] value to perform SQL injection attacks, potentially leading to data leakage or manipulation.",
+      "evidence": "exact",
+      "model_line": 15,
+      "model_code": "<input type=\"hidden\" name=\"price\" value=\"{{ product['price'] }}\">",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Business Logic Error",
+    "file": "cakeshop/templates/product.html",
+    "line": 17,
+    "snippet": "<label>Quantity <input name=\"quantity\" type=\"number\" value=\"1\" min=\"1\"></label><br>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-614"
+    ],
+    "extra": {
+      "source": "user input",
+      "why": "The quantity input is not validated, allowing an attacker to input invalid values, potentially leading to business logic errors or data corruption.",
+      "evidence": "not_found",
+      "model_line": 17,
+      "model_code": "<input type=\"number\" name=\"quantity\" value=\"1\" min=\"1\">",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/templates/product.html",
+    "line": 32,
+    "snippet": "<textarea name=\"body\"></textarea><br><button>Post review</button>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "user input",
+      "why": "The review body input is not validated or sanitized, allowing an attacker to inject malicious content, potentially leading to cross-site scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 32,
+      "model_code": "<textarea name=\"body\"></textarea>",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/shop.py",
+    "line": 56,
+    "snippet": "(product_id, g.user[\"username\"], request.form[\"body\"]),",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.form['body']",
+      "why": "An attacker can inject malicious HTML or script into the review body, which could lead to cross-site scripting (XSS) if the review is rendered on the website.",
+      "evidence": "exact",
+      "model_line": 56,
+      "model_code": "request.form['body']",
+      "where": "/product/<int:product_id>/review [cakeshop/shop.py:add_review]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Path Traversal",
+    "file": "cakeshop/shop.py",
+    "line": 64,
+    "snippet": "filename = request.args.get(\"name\", \"\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "request.args.get(\"name\", \"\")",
+      "why": "An attacker can provide a malicious filename to access arbitrary files on the server, potentially leading to information disclosure or remote code execution.",
+      "evidence": "exact",
+      "model_line": 64,
+      "model_code": "filename = request.args.get(\"name\", \"\")",
+      "where": "/image [cakeshop/shop.py:cake_image]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Path Traversal",
+    "file": "cakeshop/shop.py",
+    "line": 70,
+    "snippet": "filename = secure_filename(request.args.get(\"name\", \"\"))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "request.args.get(\"name\", \"\")",
+      "why": "The filename is directly used to fetch a file from the directory without further validation. An attacker could provide a malicious filename to access arbitrary files on the server.",
+      "evidence": "exact",
+      "model_line": 70,
+      "model_code": "filename = secure_filename(request.args.get(\"name\", \"\"))",
+      "where": "/thumbnail [cakeshop/shop.py:cake_thumbnail]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/shop.py",
+    "line": 77,
+    "snippet": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.args.get(\"name\", \"friend\")",
+      "why": "The `name` parameter is directly used in the `render_template_string` function without any validation or escaping, which can lead to Cross-Site Scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 77,
+      "model_code": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+      "where": "/greeting [cakeshop/shop.py:greeting]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/shop.py",
+    "line": 83,
+    "snippet": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.args.get(\"text\", \"\")",
+      "why": "The attacker can inject arbitrary HTML into the `text` parameter, which will be rendered directly in the HTML response. This can lead to Cross-Site Scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 83,
+      "model_code": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+      "where": "/cake-message/preview [cakeshop/shop.py:preview_message]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Untrusted Deserialization",
+    "file": "cakeshop/shop.py",
+    "line": 88,
+    "snippet": "raw = request.cookies.get(\"cart\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-70"
+    ],
+    "extra": {
+      "source": "request.cookies.get('cart')",
+      "why": "The attacker can inject arbitrary data into the 'cart' cookie, which is then deserialized using pickle. This can lead to arbitrary code execution if the attacker crafts a malicious pickle payload.",
+      "evidence": "exact",
+      "model_line": 88,
+      "model_code": "raw = request.cookies.get('cart')",
+      "where": "/cart [cakeshop/shop.py:view_cart]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Untrusted Deserialization",
+    "file": "cakeshop/shop.py",
+    "line": 89,
+    "snippet": "if not raw:",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-70"
+    ],
+    "extra": {
+      "source": "pickle.loads(base64.b64decode(raw))",
+      "why": "The attacker can inject arbitrary data into the 'cart' cookie, which is then deserialized using pickle. This can lead to arbitrary code execution if the attacker crafts a malicious pickle payload.",
+      "evidence": "exact",
+      "model_line": 89,
+      "model_code": "return pickle.loads(base64.b64decode(raw))",
+      "where": "/cart [cakeshop/shop.py:view_cart]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Integer Injection",
+    "file": "cakeshop/shop.py",
+    "line": 113,
+    "snippet": "product_id = int(request.form[\"product_id\"])",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "request.form['product_id']",
+      "why": "An attacker can inject non-integer values, leading to a `ValueError` when `int()` is called.",
+      "evidence": "exact",
+      "model_line": 113,
+      "model_code": "product_id = int(request.form['product_id'])",
+      "where": "/cart/add [cakeshop/shop.py:add_to_cart]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Deserialization of Untrusted Data",
+    "file": "cakeshop/shop.py",
+    "line": 91,
+    "snippet": "return pickle.loads(base64.b64decode(raw))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-70"
+    ],
+    "extra": {
+      "source": "request.cookies.get('cart')",
+      "why": "The `pickle` module is used to deserialize data from an attacker-controlled cookie, which can lead to arbitrary code execution.",
+      "evidence": "exact",
+      "model_line": 91,
+      "model_code": "return pickle.loads(base64.b64decode(raw))",
+      "where": "/cart/add [cakeshop/shop.py:add_to_cart]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Integer Conversion Error",
+    "file": "cakeshop/shop.py",
+    "line": 123,
+    "snippet": "product_id = int(request.form[\"product_id\"])",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "request.form['product_id']",
+      "why": "An attacker can provide a non-integer value for 'product_id', leading to a `ValueError` when attempting to convert it to an integer.",
+      "evidence": "exact",
+      "model_line": 123,
+      "model_code": "product_id = int(request.form['product_id'])",
+      "where": "/checkout [cakeshop/shop.py:checkout]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Integer Conversion Error",
+    "file": "cakeshop/shop.py",
+    "line": 124,
+    "snippet": "quantity = int(request.form.get(\"quantity\", 1))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "request.form.get('quantity', 1)",
+      "why": "An attacker can provide a non-integer value for 'quantity', leading to a `ValueError` when attempting to convert it to an integer.",
+      "evidence": "exact",
+      "model_line": 124,
+      "model_code": "quantity = int(request.form.get('quantity', 1))",
+      "where": "/checkout [cakeshop/shop.py:checkout]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Integer Conversion Error",
+    "file": "cakeshop/shop.py",
+    "line": 125,
+    "snippet": "price = int(request.form[\"price\"])",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "request.form['price']",
+      "why": "An attacker can provide a non-integer value for 'price', leading to a `ValueError` when attempting to convert it to an integer.",
+      "evidence": "exact",
+      "model_line": 125,
+      "model_code": "price = int(request.form['price'])",
+      "where": "/checkout [cakeshop/shop.py:checkout]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "Arithmetic Operation with Non-Integer Values",
+    "file": "cakeshop/shop.py",
+    "line": 126,
+    "snippet": "total = price * quantity",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "price * quantity",
+      "why": "If `price` or `quantity` is not an integer, this could lead to unexpected behavior or errors.",
+      "evidence": "exact",
+      "model_line": 126,
+      "model_code": "total = price * quantity",
+      "where": "/checkout [cakeshop/shop.py:checkout]"
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": "context",
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 128,
+    "snippet": "cur = db.execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.get('message', '')",
+      "why": "An attacker can provide a malicious string for 'message', which could be used for SQL injection if not properly sanitized.",
+      "evidence": "exact",
+      "model_line": 128,
+      "model_code": "db.execute(...)",
+      "where": "/checkout [cakeshop/shop.py:checkout]"
+    }
+  }
+]

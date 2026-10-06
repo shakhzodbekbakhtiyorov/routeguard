@@ -1,0 +1,44 @@
+{
+  "label": "agent merged",
+  "strict": false,
+  "n_findings": 24,
+  "n_vuln": 19,
+  "detected": 6,
+  "recall": 0.316,
+  "cwe_exact": 2,
+  "cwe_related": 2,
+  "tp_findings": 6,
+  "precision": 0.25,
+  "code_precision": 0.25,
+  "decoys_flagged": [
+    "D03",
+    "D04",
+    "D05",
+    "D06"
+  ],
+  "decoy_findings": 4,
+  "other": 14,
+  "missed": [
+    "V01",
+    "V04",
+    "V05",
+    "V07",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19"
+  ],
+  "detected_ids": [
+    "V02",
+    "V03",
+    "V06",
+    "V08",
+    "V09",
+    "V10"
+  ]
+}

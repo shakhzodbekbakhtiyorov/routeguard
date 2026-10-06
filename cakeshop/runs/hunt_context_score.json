@@ -1,0 +1,47 @@
+{
+  "label": "hunt_context",
+  "strict": false,
+  "n_findings": 38,
+  "n_vuln": 19,
+  "detected": 10,
+  "recall": 0.526,
+  "cwe_exact": 3,
+  "cwe_related": 6,
+  "tp_findings": 13,
+  "precision": 0.342,
+  "code_precision": 0.342,
+  "decoys_flagged": [
+    "D01",
+    "D03",
+    "D04",
+    "D06",
+    "D08"
+  ],
+  "decoy_findings": 5,
+  "other": 20,
+  "real_unlabelled": 0,
+  "hand": false,
+  "missed": [
+    "V07",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V16",
+    "V17",
+    "V18",
+    "V19"
+  ],
+  "detected_ids": [
+    "V01",
+    "V02",
+    "V03",
+    "V04",
+    "V05",
+    "V06",
+    "V08",
+    "V09",
+    "V10",
+    "V15"
+  ]
+}

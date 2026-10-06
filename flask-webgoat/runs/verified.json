@@ -1,0 +1,829 @@
+[
+  {
+    "tool": "bandit",
+    "rule_id": "B105",
+    "title": "hardcoded_password_string",
+    "file": "flask_webgoat/__init__.py",
+    "line": 21,
+    "snippet": "app.secret_key = \"aeZ1iwoh2ree2mo0Eereireong4baitixaixu5Ee\"",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-259"
+    ],
+    "extra": {
+      "confidence": "MEDIUM",
+      "text": "Possible hardcoded password: 'aeZ1iwoh2ree2mo0Eereireong4baitixaixu5Ee'",
+      "verification": {
+        "stage": "rule",
+        "verdict": "real",
+        "reason": "secret/key assigned a string literal in source code",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "bandit",
+    "rule_id": "B602",
+    "title": "subprocess_popen_with_shell_equals_true",
+    "file": "flask_webgoat/actions.py",
+    "line": 44,
+    "snippet": "shell=True,",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "confidence": "HIGH",
+      "text": "subprocess call with shell=True identified, security issue.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "HTTP query parameter 'name'",
+        "protection": "none",
+        "reason": "source: HTTP query/form/cookie/header | path: HTTP query parameter 'name' | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "bandit",
+    "rule_id": "B301",
+    "title": "blacklist",
+    "file": "flask_webgoat/actions.py",
+    "line": 58,
+    "snippet": "deserialized = pickle.loads(data)",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-502"
+    ],
+    "extra": {
+      "confidence": "HIGH",
+      "text": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "user-written database content",
+        "path": "request.form.get('pickled') -> base64.urlsafe_b64decode(pickled) -> pickle.loads(data)",
+        "protection": "none",
+        "reason": "source: user-written database content | path: request.form.get('pickled') -> base64.urlsafe_b64decode(pickled) -> pickle.loads(data) | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "bandit",
+    "rule_id": "B608",
+    "title": "hardcoded_sql_expressions",
+    "file": "flask_webgoat/auth.py",
+    "line": 18,
+    "snippet": "\"SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'\"",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "confidence": "LOW",
+      "text": "Possible SQL injection vector through string-based query construction.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form",
+        "path": "request.form.get('username') and request.form.get('password')",
+        "protection": "None",
+        "reason": "source: HTTP query/form | path: request.form.get('username') and request.form.get('password') | protection: None",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "bandit",
+    "rule_id": "B608",
+    "title": "hardcoded_sql_expressions",
+    "file": "flask_webgoat/users.py",
+    "line": 38,
+    "snippet": "\"INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)\"",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "confidence": "LOW",
+      "text": "Possible SQL injection vector through string-based query construction.",
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form",
+        "path": "request.form.get('username')",
+        "protection": "none",
+        "reason": "source: HTTP query/form | path: request.form.get('username') | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "bandit",
+    "rule_id": "B201",
+    "title": "flask_debug_true",
+    "file": "run.py",
+    "line": 12,
+    "snippet": "app.run(debug=True)",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-94"
+    ],
+    "extra": {
+      "confidence": "MEDIUM",
+      "text": "A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+      "verification": {
+        "stage": "rule",
+        "verdict": "real",
+        "reason": "debug mode enabled in code",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": "request-data-write",
+    "title": "Found user-controlled request data passed into '.write(...)'. This could be dang",
+    "file": "flask_webgoat/actions.py",
+    "line": 22,
+    "snippet": "text_param = request.form.get(\"text\")",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-93"
+    ],
+    "extra": {
+      "message": "Found user-controlled request data passed into '.write(...)'. This could be dangerous if a malicious actor is able to control data into sensitive files. For example, a malicious actor could force rolling of critical log files, or cause a denial-of-service by using up available disk space. Instead, e",
+      "owasp": [
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form",
+        "path": "request.form.get(\"text\")",
+        "protection": "none",
+        "reason": "source: HTTP query/form | path: request.form.get(\"text\") | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": "subprocess-injection",
+    "title": "Detected user input entering a `subprocess` call unsafely. This could result in ",
+    "file": "flask_webgoat/actions.py",
+    "line": 42,
+    "snippet": "res = subprocess.run(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "message": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the serve",
+      "owasp": [
+        "A01:2017 - Injection",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "request.args.get('name')",
+        "protection": "None",
+        "reason": "source: HTTP query/form/cookie/header | path: request.args.get('name') | protection: None",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": "dangerous-subprocess-use",
+    "title": "Detected subprocess function 'run' with user controlled data. A malicious actor ",
+    "file": "flask_webgoat/actions.py",
+    "line": 43,
+    "snippet": "[\"ps aux | grep \" + name + \" | awk '{print $11}'\"],",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "message": "Detected subprocess function 'run' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'.",
+      "owasp": [
+        "A01:2017 - Injection",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "name parameter from request.args.get('name') is used in the OS command",
+        "protection": "none",
+        "reason": "source: HTTP query/form/cookie/header | path: name parameter from request.args.get('name') is used in the OS command | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": "subprocess-shell-true",
+    "title": "Found 'subprocess' function 'run' with 'shell=True'. This is dangerous because t",
+    "file": "flask_webgoat/actions.py",
+    "line": 44,
+    "snippet": "shell=True,",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "message": "Found 'subprocess' function 'run' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+      "owasp": [
+        "A01:2017 - Injection",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form/cookie/header",
+        "path": "HTTP query parameter 'name'",
+        "protection": "none",
+        "reason": "source: HTTP query/form/cookie/header | path: HTTP query parameter 'name' | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": "tainted-sql-string",
+    "title": "Detected user input used to manually construct a SQL string. This is usually bad",
+    "file": "flask_webgoat/auth.py",
+    "line": 17,
+    "snippet": "query = (",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-704"
+    ],
+    "extra": {
+      "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available",
+      "owasp": [
+        "A01:2017 - Injection",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP query/form",
+        "path": "request.form.get('username') and request.form.get('password')",
+        "protection": "none",
+        "reason": "source: HTTP query/form | path: request.form.get('username') and request.form.get('password') | protection: none",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "semgrep",
+    "rule_id": "tainted-sql-string",
+    "title": "Detected user input used to manually construct a SQL string. This is usually bad",
+    "file": "flask_webgoat/users.py",
+    "line": 37,
+    "snippet": "query = (",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-704"
+    ],
+    "extra": {
+      "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available",
+      "owasp": [
+        "A01:2017 - Injection",
+        "A03:2021 - Injection",
+        "A05:2025 - Injection"
+      ],
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP form",
+        "path": "request.form.get",
+        "protection": "None",
+        "reason": "source: HTTP form | path: request.form.get | protection: None",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2132",
+    "title": "click 7.1.2: Pallets Click, versions 8.3.2 and below, contain a command i",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "click==7.1.2",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "click",
+      "version": "7.1.2",
+      "cves": [
+        "CVE-2026-7246"
+      ],
+      "fix_versions": [
+        "8.3.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2023-62",
+    "title": "flask 1.1.2: When all of the following conditions are met, a response con",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "flask==1.1.2",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "flask",
+      "version": "1.1.2",
+      "cves": [
+        "CVE-2023-30861"
+      ],
+      "fix_versions": [
+        "2.2.5",
+        "2.3.2"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2151",
+    "title": "flask 1.1.2: When the `session` object is accessed, Flask should set the ",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "flask==1.1.2",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "flask",
+      "version": "1.1.2",
+      "cves": [
+        "CVE-2026-27205"
+      ],
+      "fix_versions": [
+        "3.1.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-1473",
+    "title": "jinja2 2.11.3: The `xmlattr` filter in affected versions of Jinja accepts k",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "jinja2==2.11.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "jinja2",
+      "version": "2.11.3",
+      "cves": [
+        "CVE-2024-22195"
+      ],
+      "fix_versions": [
+        "3.1.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-1474",
+    "title": "jinja2 2.11.3: The `xmlattr` filter in affected versions of Jinja accepts k",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "jinja2==2.11.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "jinja2",
+      "version": "2.11.3",
+      "cves": [
+        "CVE-2024-34064"
+      ],
+      "fix_versions": [
+        "3.1.4"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-1475",
+    "title": "jinja2 2.11.3: An oversight in how the Jinja sandboxed environment detects ",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "jinja2==2.11.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "jinja2",
+      "version": "2.11.3",
+      "cves": [
+        "CVE-2024-56326"
+      ],
+      "fix_versions": [
+        "3.1.5"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-1471",
+    "title": "jinja2 2.11.3: An oversight in how the Jinja sandboxed environment interact",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "jinja2==2.11.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "jinja2",
+      "version": "2.11.3",
+      "cves": [
+        "CVE-2025-27516"
+      ],
+      "fix_versions": [
+        "3.1.6"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2022-203",
+    "title": "werkzeug 1.0.1: ** DISPUTED ** Improper parsing of HTTP requests in Pallets ",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2022-29361"
+      ],
+      "fix_versions": [
+        "2.1.1"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2023-57",
+    "title": "werkzeug 1.0.1: Browsers may allow \"nameless\" cookies that look like `=value",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2023-23934"
+      ],
+      "fix_versions": [
+        "2.2.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2023-58",
+    "title": "werkzeug 1.0.1: Werkzeug's multipart form data parser will parse an unlimite",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2023-25577"
+      ],
+      "fix_versions": [
+        "2.2.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2023-221",
+    "title": "werkzeug 1.0.1: Werkzeug is a comprehensive WSGI web application library. If",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2023-46136"
+      ],
+      "fix_versions": [
+        "2.3.8",
+        "3.0.1"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2043",
+    "title": "werkzeug 1.0.1: The debugger in affected versions of Werkzeug can allow an a",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2024-34069"
+      ],
+      "fix_versions": [
+        "3.0.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2045",
+    "title": "werkzeug 1.0.1: On Python < 3.11 on Windows, `os.path.isabs()` does not catc",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2024-49766"
+      ],
+      "fix_versions": [
+        "3.0.6"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2046",
+    "title": "werkzeug 1.0.1: Werkzeug's `safe_join` function allows path segments with Wi",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2025-66221"
+      ],
+      "fix_versions": [
+        "3.1.4"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2044",
+    "title": "werkzeug 1.0.1: Werkzeug's `safe_join` function allows path segments with Wi",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2026-21860"
+      ],
+      "fix_versions": [
+        "3.1.5"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2320",
+    "title": "werkzeug 1.0.1: Werkzeug's `safe_join` function allows Windows device names ",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==1.0.1",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "1.0.1",
+      "cves": [
+        "CVE-2026-27199"
+      ],
+      "fix_versions": [
+        "3.1.6"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  }
+]

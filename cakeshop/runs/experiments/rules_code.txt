@@ -1,0 +1,127 @@
+/account   [csrf, do_not_trust, must_not_change, who_may_call, whose_data]
+   - who_may_call     logged-in users
+                      because: The route is protected by the @login_required decorator, which ensures only logged-in users can access it.
+   - whose_data       the owner
+                      because: The route updates the user's profile, which belongs to the logged-in user.
+   - must_not_change  user id
+                      because: The route updates the user's profile, but it does not allow changing the user's ID or role.
+   - must_not_change  role
+                      because: The route updates the user's profile, but it does not allow changing the user's ID or role.
+   - do_not_trust     email
+                      because: The route updates the user's profile based on data sent by the client, which the server should validate to prevent malicious input.
+   - do_not_trust     address
+                      because: The route updates the user's profile based on data sent by the client, which the server should validate to prevent malicious input.
+   - csrf             The route changes stored data (updates the user's profile), so it should be protected against CSRF attacks.
+                      because: The route changes stored data (updates the user's profile), so it should be protected against CSRF attacks.
+
+/admin/orders   [who_may_call]
+   - who_may_call     admin
+                      because: The route is intended for administrative purposes and should only be accessible by admins.
+
+/admin/stats   [who_may_call]
+   - who_may_call     admin
+                      because: The route is protected by the @admin_required decorator, which ensures only users with admin privileges can call it.
+
+/admin/orders/<int:order_id>/status   [csrf, do_not_trust, limits, who_may_call, whose_data]
+   - who_may_call     admin
+                      because: The route is protected by the @admin_required decorator, which ensures only admins can call it.
+   - whose_data       order_id
+                      because: The route updates the status of an order, which belongs to a specific user.
+   - do_not_trust     status
+                      because: The route checks if the status is in a predefined set of values (ORDER_STATUSES), so it does not trust the client to provide a valid status.
+   - limits           status
+                      because: The route takes a status from the client, which must be one of the predefined values in ORDER_STATUSES.
+   - csrf             The route changes stored data (updates the order status), so it should be protected against CSRF attacks.
+                      because: The route changes stored data (updates the order status), so it should be protected against CSRF attacks.
+
+/register   [csrf, do_not_trust, whose_data]   MISSING: limits
+   - whose_data       user  EXTRA
+                      because: The route creates a new user record, which belongs to the user being created.
+   - do_not_trust     username
+                      because: The route takes values from the client that the server should decide, look up or check itself, such as the username and password.
+   - do_not_trust     password
+                      because: The route takes values from the client that the server should decide, look up or check itself, such as the username and password.
+   - csrf             The route changes stored data (creates a new user record), so it should be protected against CSRF.
+                      because: The route changes stored data (creates a new user record), so it should be protected against CSRF.
+
+/login   [csrf, do_not_trust]
+   - do_not_trust     password
+                      because: The login route takes values from the client that the server should decide, look up or check itself, because a wrong value would cause harm.
+   - csrf             The login route changes stored data (user's session state) and the user's state (user logs in).
+                      because: The login route changes stored data (user's session state) and the user's state (user logs in).
+
+/logout   [no rules]
+
+/orders   [who_may_call, whose_data]
+   - who_may_call     logged-in users
+                      because: The route is protected by the @login_required decorator, which ensures only logged-in users can access it.
+   - whose_data       user
+                      because: The route retrieves orders for the user whose ID is stored in the session (g.user['id']).
+
+/orders/<int:order_id>   [who_may_call, whose_data]
+   - who_may_call     logged-in users
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.
+   - whose_data       orders
+                      because: The route retrieves data from the 'orders' table, which contains records that belong to specific users.
+
+/orders/<int:order_id>/invoice   [who_may_call, whose_data]
+   - who_may_call     logged-in users
+                      because: The route is protected by the @login_required decorator, which ensures that only logged-in users can call it.
+   - whose_data       user's orders
+                      because: The route reads records from the 'orders' table where the 'user_id' matches the logged-in user's ID.
+
+/   [no rules]
+
+/search   [do_not_trust, whose_data]
+   - whose_data       products  EXTRA
+                      because: The route reads data from the 'products' table, which belongs to all users.
+   - do_not_trust     term
+                      because: The route takes a search term from the client, which the server should sanitize to prevent SQL injection.
+
+/product/<int:product_id>   [whose_data]
+   - whose_data       product_id  EXTRA
+                      because: The route reads data that belongs to a particular product.
+
+/product/<int:product_id>/review   [csrf, do_not_trust, who_may_call, whose_data]
+   - who_may_call     logged-in users
+                      because: The route is protected by the @login_required decorator, which ensures only logged-in users can call it.
+   - whose_data       reviews  EXTRA
+                      because: The route inserts a new review into the 'reviews' table, which belongs to the product and the user who wrote the review.
+   - do_not_trust     body
+                      because: The route takes the 'body' value from the client, which the server should decide, look up or check itself, because a wrong value would cause harm.
+   - csrf             The route changes stored data (inserts a new review), so it should be protected against CSRF attacks.
+                      because: The route changes stored data (inserts a new review), so it should be protected against CSRF attacks.
+
+/image   [do_not_trust]
+   - do_not_trust     filename
+                      because: The route takes a value from the client that the server should check itself to avoid harm.
+
+/thumbnail   [whose_data]
+   - whose_data       filename  EXTRA
+                      because: The route reads a filename from the client, which could belong to any user.
+
+/greeting   [no rules]
+
+/cake-message/preview   [do_not_trust]
+   - do_not_trust     text
+                      because: The route takes a value from the client that the server should decide, look up or check itself, because a wrong value would cause harm.
+
+/cart   [whose_data]
+   - whose_data       cart  EXTRA
+                      because: The route reads data that belongs to the user's cart, which is stored in cookies.
+
+/cart/add   [csrf, who_may_call, whose_data]
+   - who_may_call     logged-in users  EXTRA
+                      because: The route modifies user-specific data (cart items), so it should only be callable by logged-in users.
+   - whose_data       user  EXTRA
+                      because: The route modifies the cart, which is specific to each user.
+   - csrf             CSRF protection
+                      because: The route changes stored data (cart items), so it should be protected against CSRF.
+
+/checkout   [csrf, who_may_call, whose_data]   MISSING: do_not_trust, limits
+   - who_may_call     logged-in users
+                      because: The route requires authentication with the @login_required decorator.
+   - whose_data       user_id
+                      because: The route creates a new order record for the user.
+   - csrf             The route changes stored data (INSERT INTO orders).
+                      because: The route changes stored data (INSERT INTO orders).

@@ -1,0 +1,349 @@
+[
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "workshophub/auth.py",
+    "line": 27,
+    "snippet": "if \"_csrf\" not in session:",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "GET /logout",
+      "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The code checks if the CSRF token is in the session, but it does not verify the token itself.",
+      "attack": "An attacker can forge a GET request to /logout from another website. Since the CSRF token is not verified, the request will be accepted, and the user will be logged out. The attacker does not need to be logged in to perform this attack. Method: GET, URL: /logout, Values: None, What happens: The user is logged out, and the attacker gains access to the user's session if they were logged in before the attack.",
+      "investigate": {
+        "route": "GET /logout",
+        "rule_type": "csrf",
+        "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "the forged GET only rewrote the session cookie (302 -> /login): a real change or bookkeeping; keep for a human",
+        "test": {
+          "plan": {
+            "method": "GET",
+            "values": [
+              {
+                "field": "_csrf",
+                "value": "invalid_token"
+              }
+            ],
+            "reason": "The route does not check for a CSRF token, so a GET request with an invalid CSRF token should be rejected."
+          },
+          "actor": "anon",
+          "method": "GET",
+          "url": "/logout",
+          "result": "302 -> /login",
+          "changed": []
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+    "file": "workshophub/bookings.py",
+    "line": 28,
+    "snippet": "def detail(rid):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "confirmed",
+    "extra": {
+      "route": "GET /bookings/<int:rid>",
+      "rule": "The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+      "verdict": "not_enforced",
+      "reason": "The @members_only decorator ensures that only authenticated users can access the route. However, it does not check if the logged-in user is the owner of the booking or an administrator.",
+      "attack": "A malicious user can bypass the @members_only decorator by manipulating the session to include a valid account ID. They can then access the booking detail for any booking where they are not the owner or an administrator. For example, if the logged-in user has an account ID of 1, they can access the booking detail for any booking with an owner_id of 1, even if they are not the owner of that booking. The request would be a GET request to /bookings/1, and the response would be the booking detail for the booking with ID 1, regardless of whether the logged-in user is the owner of that booking or an administrator. The logged-in user is not an administrator, and the booking is not owned by the logged-in user, but the route still allows access to the booking detail.",
+      "investigate": {
+        "route": "GET /bookings/<int:rid>",
+        "rule_type": "whose_data",
+        "rule": "The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+        "from_finding": true,
+        "verdict": "confirmed",
+        "why": "bob read alice's reservations #1; response shows owner-only data 'confirmed'",
+        "test": {
+          "plan": {
+            "victim": "alice",
+            "action": "read",
+            "reason": "bob is not authorized to access alice's booking records"
+          },
+          "actor": "bob",
+          "method": "GET",
+          "url": "/bookings/1",
+          "targets": "alice's reservations #1",
+          "file": "workshophub/bookings.py",
+          "line": 31,
+          "result": "200"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+    "file": "workshophub/bookings.py",
+    "line": 56,
+    "snippet": "def cancel(rid):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "confirmed",
+    "extra": {
+      "route": "POST /bookings/<int:rid>/cancel",
+      "rule": "Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+      "verdict": "not_enforced",
+      "reason": "The @members_only decorator ensures that only authenticated users can access the route, but it does not check if the logged-in user is the owner of the booking.",
+      "attack": "A malicious user could log in and attempt to cancel a booking that does not belong to them. They would provide the correct booking ID (rid) but their 'owner_id' would not match the booking's 'owner_id'. The @members_only decorator would allow this request through, and the booking would be canceled, potentially causing financial loss or other issues for the correct owner of the booking.",
+      "investigate": {
+        "route": "POST /bookings/<int:rid>/cancel",
+        "rule_type": "whose_data",
+        "rule": "Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+        "from_finding": true,
+        "verdict": "confirmed",
+        "why": "bob changed status of alice's reservations #1 (302 -> /bookings/)",
+        "test": {
+          "plan": {
+            "victim": "alice",
+            "action": "modify",
+            "reason": "bob should not be allowed to cancel alice's booking"
+          },
+          "actor": "bob",
+          "method": "POST",
+          "url": "/bookings/1/cancel",
+          "targets": "alice's reservations #1",
+          "file": "workshophub/bookings.py",
+          "line": 59,
+          "result": "302 -> /bookings/"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "workshophub/auth.py",
+    "line": 27,
+    "snippet": "if \"_csrf\" not in session:",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "confirmed",
+    "extra": {
+      "route": "POST /bookings/<int:rid>/cancel",
+      "rule": "POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The CSRF token is not checked in the route handler.",
+      "attack": "An attacker can forge a POST request to /bookings/<int:rid>/cancel from another website. They can set the CSRF token in the request headers or cookies to bypass the check. The request would be made by a logged-in user, using the POST method, with the URL /bookings/<int:rid>/cancel and the values for rid. The booking would be cancelled, even though the request was forged from another website. The attacker would not be logged in to the application, but they could still cancel a booking if they knew the rid value.",
+      "investigate": {
+        "route": "POST /bookings/<int:rid>/cancel",
+        "rule_type": "csrf",
+        "rule": "POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+        "from_finding": true,
+        "verdict": "confirmed",
+        "why": "a forged POST with no token changed table reservations (302 -> /bookings/)",
+        "test": {
+          "plan": {
+            "method": "POST",
+            "values": [
+              {
+                "field": "rid",
+                "value": "1"
+              }
+            ],
+            "reason": "The route does not include CSRF protection, allowing an attacker to forge a request to cancel a booking without a valid CSRF token."
+          },
+          "actor": "bob",
+          "method": "POST",
+          "url": "/bookings/1/cancel",
+          "result": "302 -> /bookings/",
+          "changed": [
+            "table reservations"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /bookings/<int:rid>/receipt.",
+    "file": "workshophub/bookings.py",
+    "line": 95,
+    "snippet": "def receipt(rid):",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "confirmed",
+    "extra": {
+      "route": "GET /bookings/<int:rid>/receipt",
+      "rule": "Only logged-in users may call /bookings/<int:rid>/receipt.",
+      "verdict": "uncertain",
+      "reason": "@before_app_request is not a decorator of this route",
+      "attack": "None. The rule is enforced by the code provided. Only logged-in users can access the /bookings/<int:rid>/receipt endpoint because the `load_signed_in_account` function checks for a valid 'account_id' in the session before allowing access to any route that requires authentication.",
+      "investigate": {
+        "route": "GET /bookings/<int:rid>/receipt",
+        "rule_type": "who_may_call",
+        "rule": "Only logged-in users may call /bookings/<int:rid>/receipt.",
+        "from_finding": true,
+        "verdict": "confirmed",
+        "why": "anon (below 'logged_in_user') received alice's data '2026-10-06 15:21:24' -- no access check",
+        "test": {
+          "plan": {
+            "actor": "anon",
+            "use_victim_record": false,
+            "reason": "The route enforces that only a 'logged_in_user' caller may use this route. 'anon' is not logged in and therefore should be blocked."
+          },
+          "actor": "anon",
+          "method": "GET",
+          "url": "/bookings/1/receipt",
+          "need": "logged_in_user",
+          "result": "200"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "workshophub/members.py",
+    "line": 19,
+    "snippet": "def update_profile():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "confirmed",
+    "extra": {
+      "route": "POST /profile",
+      "rule": "POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The CSRF token is generated and stored in the session before each request, but it is not checked in the POST /profile route.",
+      "attack": "An attacker can forge a POST request to /profile from another website. They can include a CSRF token from a previous request to the same site, which will be accepted because it is not checked. The attacker can then update the user's profile without their knowledge or consent. The attacker is logged in as a member, the method is POST, the URL is /profile, the values are any valid form data, and the result is that the user's profile is updated without proper authentication or authorization.",
+      "investigate": {
+        "route": "POST /profile",
+        "rule_type": "csrf",
+        "rule": "POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+        "from_finding": true,
+        "verdict": "confirmed",
+        "why": "a forged POST with no token changed table accounts (302 -> /profile)",
+        "test": {
+          "plan": {
+            "method": "POST",
+            "values": [
+              {
+                "field": "display_name",
+                "value": "Hacked"
+              },
+              {
+                "field": "email",
+                "value": "hacked@example.com"
+              },
+              {
+                "field": "role",
+                "value": "admin"
+              },
+              {
+                "field": "credit_balance",
+                "value": "1000.00"
+              }
+            ],
+            "reason": "This test attempts to bypass the CSRF protection by sending a POST request without a CSRF token. The values are chosen to update the display name, email, role, and credit balance of the logged-in user."
+          },
+          "actor": "bob",
+          "method": "POST",
+          "url": "/profile",
+          "result": "302 -> /profile",
+          "changed": [
+            "table accounts"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+    "file": "workshophub/members.py",
+    "line": 89,
+    "snippet": "float(request.form[\"credit_balance\"]),",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "POST /admin/members/<int:mid>/update",
+      "rule": "credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+      "verdict": "not_enforced",
+      "reason": "The code converts the credit balance to a float, but it does not validate that the value is non-negative.",
+      "attack": "An attacker could send a negative credit balance value. For example, a POST request to /admin/members/1/update with the form data {'credit_balance': '-100'} would bypass the validation and update the credit balance to a negative value. The user would then have a negative credit balance, which could be exploited for further attacks.",
+      "investigate": {
+        "route": "POST /admin/members/<int:mid>/update",
+        "rule_type": "limits",
+        "rule": "credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "value accepted but no row of the caller's was found to check",
+        "test": {
+          "plan": {
+            "field": "credit_balance",
+            "value": "-1000.00",
+            "reason": "This value is negative and should be rejected by the server."
+          },
+          "actor": "bob",
+          "method": "POST",
+          "field": "credit_balance",
+          "value": "-1000.00",
+          "type": "limits",
+          "result": "302 -> /workshops/"
+        }
+      }
+    }
+  },
+  {
+    "tool": "investigate",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route should only allow access to the receipt of bookings made by the logged-in user.",
+    "file": "workshophub/bookings.py",
+    "line": 94,
+    "snippet": "@bp.get(\"/<int:rid>/receipt\")",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET /bookings/<int:rid>/receipt",
+      "rule": "The route should only allow access to the receipt of bookings made by the logged-in user.",
+      "investigate": {
+        "route": "GET /bookings/<int:rid>/receipt",
+        "rule_type": "whose_data",
+        "rule": "The route should only allow access to the receipt of bookings made by the logged-in user.",
+        "from_finding": false,
+        "verdict": "confirmed",
+        "why": "bob read alice's reservations #1; response shows owner-only data 'confirmed'",
+        "test": {
+          "plan": {
+            "victim": "alice",
+            "action": "read",
+            "reason": "bob should not be allowed to access alice's booking receipt"
+          },
+          "actor": "bob",
+          "method": "GET",
+          "url": "/bookings/1/receipt",
+          "targets": "alice's reservations #1",
+          "file": "workshophub/bookings.py",
+          "line": 98,
+          "result": "200"
+        }
+      }
+    },
+    "confidence": "confirmed"
+  }
+]

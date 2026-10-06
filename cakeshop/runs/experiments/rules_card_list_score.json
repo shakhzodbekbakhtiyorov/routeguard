@@ -1,0 +1,23 @@
+{
+  "rules": "runs/rules_card.json",
+  "must_found": 6,
+  "must_total": 9,
+  "must": {
+    "V11 /account": true,
+    "V10 /admin/orders": false,
+    "D05 /admin/stats": true,
+    "V12 /login": false,
+    "V08 /orders/<int:order_id>": true,
+    "D07 /orders/<int:order_id>/invoice": true,
+    "V05 /checkout": true,
+    "V06 /checkout": true
+  },
+  "csrf_routes": [
+    3,
+    7
+  ],
+  "required_hit": 21,
+  "required_total": 25,
+  "extra": 35,
+  "n_rules": 92
+}

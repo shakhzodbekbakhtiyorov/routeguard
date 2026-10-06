@@ -1,0 +1,201 @@
+[
+  {
+    "tool": "semgrep",
+    "rule_id": "nan-injection",
+    "title": "Found user input going directly into typecast for bool(), float(), or complex().",
+    "file": "workshophub/workshops.py",
+    "line": 62,
+    "snippet": "price = float(request.form[\"price_per_seat\"])",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-704"
+    ],
+    "extra": {
+      "message": "Found user input going directly into typecast for bool(), float(), or complex(). This allows an attacker to inject Python's not-a-number (NaN) into the typecast. This results in undefind behavior, particularly when doing comparisons. Either cast to a different type, or add a guard checking for all c",
+      "owasp": null,
+      "verification": {
+        "stage": "llm",
+        "verdict": "real",
+        "agreement": 1.0,
+        "source": "HTTP form",
+        "path": "request.form",
+        "protection": "None",
+        "reason": "source: HTTP form | path: request.form | protection: None",
+        "votes": [
+          "real",
+          "real",
+          "real"
+        ],
+        "model": "qwen2.5-coder:7b"
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-1377",
+    "title": "flask 3.1.0: In Flask 3.1.0, the way fallback key configuration was handl",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "flask==3.1.0",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "flask",
+      "version": "3.1.0",
+      "cves": [
+        "CVE-2025-47278"
+      ],
+      "fix_versions": [
+        "3.1.1"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2151",
+    "title": "flask 3.1.0: When the `session` object is accessed, Flask should set the ",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "flask==3.1.0",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "flask",
+      "version": "3.1.0",
+      "cves": [
+        "CVE-2026-27205"
+      ],
+      "fix_versions": [
+        "3.1.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2046",
+    "title": "werkzeug 3.1.3: Werkzeug's `safe_join` function allows path segments with Wi",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==3.1.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "3.1.3",
+      "cves": [
+        "CVE-2025-66221"
+      ],
+      "fix_versions": [
+        "3.1.4"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2044",
+    "title": "werkzeug 3.1.3: Werkzeug's `safe_join` function allows path segments with Wi",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==3.1.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "3.1.3",
+      "cves": [
+        "CVE-2026-21860"
+      ],
+      "fix_versions": [
+        "3.1.5"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2320",
+    "title": "werkzeug 3.1.3: Werkzeug's `safe_join` function allows Windows device names ",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "werkzeug==3.1.3",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "werkzeug",
+      "version": "3.1.3",
+      "cves": [
+        "CVE-2026-27199"
+      ],
+      "fix_versions": [
+        "3.1.6"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  },
+  {
+    "tool": "pip-audit",
+    "rule_id": "PYSEC-2026-2132",
+    "title": "click 8.1.8: Pallets Click, versions 8.3.2 and below, contain a command i",
+    "file": "requirements.txt",
+    "line": null,
+    "snippet": "click==8.1.8",
+    "severity": "UNKNOWN",
+    "cwe": [
+      "CWE-1395"
+    ],
+    "extra": {
+      "package": "click",
+      "version": "8.1.8",
+      "cves": [
+        "CVE-2026-7246"
+      ],
+      "fix_versions": [
+        "8.3.3"
+      ],
+      "verification": {
+        "stage": "advisory",
+        "verdict": "real",
+        "reason": "pinned version is listed in a vulnerability advisory database",
+        "model": null
+      }
+    }
+  }
+]

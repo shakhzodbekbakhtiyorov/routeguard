@@ -1,0 +1,1026 @@
+[
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Hardcoded Secret Key",
+    "file": "cakeshop/__init__.py",
+    "line": 11,
+    "snippet": "SECRET_KEY=\"cakeshop-secret-2024\",",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-312"
+    ],
+    "extra": {
+      "source": "none",
+      "why": "The secret key is hardcoded, making the application vulnerable to session hijacking and other attacks that rely on the secret key.",
+      "evidence": "exact",
+      "model_line": 11,
+      "model_code": "SECRET_KEY = \"cakeshop-secret-2024\"",
+      "where": "cakeshop/__init__.py:1-29",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 11,
+          "title": "Hardcoded Secret Key",
+          "cwe": [
+            "CWE-312"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        11
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/account.py",
+    "line": 18,
+    "snippet": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.items()",
+      "why": "SQL injection vulnerability. An attacker can inject malicious SQL code through the form data.",
+      "evidence": "exact",
+      "model_line": 18,
+      "model_code": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+      "where": "cakeshop/account.py:1-22",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 18,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        18
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/admin.py",
+    "line": 30,
+    "snippet": "status = request.form.get(\"status\", \"\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form",
+      "why": "The status value is directly used in an SQL query without proper validation or sanitization, which could lead to SQL injection if an attacker provides malicious input.",
+      "evidence": "exact",
+      "model_line": 30,
+      "model_code": "status = request.form.get('status', '')",
+      "where": "cakeshop/admin.py:1-36",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 30,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        30
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/auth.py",
+    "line": 44,
+    "snippet": "username = request.form[\"username\"].strip()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form['username']",
+      "why": "The username is not validated or sanitized before being used in the SQL query. An attacker could inject SQL code through the username field.",
+      "evidence": "exact",
+      "model_line": 44,
+      "model_code": "username = request.form['username'].strip()",
+      "where": "cakeshop/auth.py:1-80",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 44,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 45,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        44,
+        45
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/auth.py",
+    "line": 66,
+    "snippet": "user = get_db().execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form['username']",
+      "why": "The username is not validated or sanitized before being used in the SQL query. An attacker could inject SQL code through the username field.",
+      "evidence": "exact",
+      "model_line": 66,
+      "model_code": "user = get_db().execute('SELECT * FROM users WHERE username = ?', (request.form['username'],)).fetchone()",
+      "where": "cakeshop/auth.py:1-80",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 66,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        66
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Session Manipulation",
+    "file": "cakeshop/auth.py",
+    "line": 70,
+    "snippet": "session.clear()",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "user['id']",
+      "why": "The user ID is not validated or sanitized before being stored in the session. An attacker could potentially manipulate the session data.",
+      "evidence": "exact",
+      "model_line": 70,
+      "model_code": "session['user_id'] = user['id']",
+      "where": "cakeshop/auth.py:1-80",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 70,
+          "title": "Session Manipulation",
+          "cwe": [
+            "CWE-22"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        70
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/db.py",
+    "line": 111,
+    "snippet": "query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "term",
+      "why": "This SQL query is vulnerable to SQL injection because the `term` parameter is not properly sanitized. An attacker could inject malicious SQL code to manipulate the query and potentially access or modify data they should not.",
+      "evidence": "exact",
+      "model_line": 111,
+      "model_code": "query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"",
+      "where": "cakeshop/db.py:1-118",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 111,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        111
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Command Injection",
+    "file": "cakeshop/orders.py",
+    "line": 45,
+    "snippet": "os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "source": "order_id, order['total'], invoice_date()",
+      "why": "This command is vulnerable to command injection. An attacker could inject malicious commands into the `order_id`, `order['total']`, or `invoice_date()` values.",
+      "evidence": "fuzzy",
+      "model_line": 45,
+      "model_code": "os.system(f'echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path})",
+      "where": "cakeshop/orders.py:1-46",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 45,
+          "title": "Command Injection",
+          "cwe": [
+            "CWE-78"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        45
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Weak Cryptography",
+    "file": "cakeshop/security.py",
+    "line": 5,
+    "snippet": "return hashlib.md5(password.encode()).hexdigest()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-327"
+    ],
+    "extra": {
+      "source": "password",
+      "why": "MD5 is a weak hash function and should not be used for password hashing. It can be easily cracked.",
+      "evidence": "exact",
+      "model_line": 5,
+      "model_code": "return hashlib.md5(password.encode()).hexdigest()",
+      "where": "cakeshop/security.py:1-9",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 5,
+          "title": "Weak Cryptography",
+          "cwe": [
+            "CWE-327"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        5
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-Site Scripting",
+    "file": "cakeshop/shop.py",
+    "line": 83,
+    "snippet": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.args.get(\"text\", \"\")",
+      "why": "This code is vulnerable to Cross-Site Scripting (XSS) because it directly includes user-controlled input (`text`) in an HTML template without proper sanitization.",
+      "evidence": "exact",
+      "model_line": 83,
+      "model_code": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+      "where": "cakeshop/shop.py:1-140",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 83,
+          "title": "Cross-Site Scripting",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        83
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Deserialization of Untrusted Data",
+    "file": "cakeshop/shop.py",
+    "line": 91,
+    "snippet": "return pickle.loads(base64.b64decode(raw))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-502"
+    ],
+    "extra": {
+      "source": "request.cookies.get(\"cart\")",
+      "why": "This code is vulnerable to Deserialization of Untrusted Data (CWE-502) because it deserializes data from a user-controlled cookie (`cart`). If an attacker crafts a malicious serialized object, it could lead to arbitrary code execution.",
+      "evidence": "fuzzy",
+      "model_line": 88,
+      "model_code": "cart = pickle.loads(base64.b64decode(raw))",
+      "where": "cakeshop/shop.py:1-140",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 91,
+          "title": "Deserialization of Untrusted Data",
+          "cwe": [
+            "CWE-502"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        91
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-site Scripting",
+    "file": "cakeshop/templates/account.html",
+    "line": 5,
+    "snippet": "<label>Email <input name=\"email\" value=\"{{ g.user['email'] or '' }}\"></label><br>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "g.user['email']",
+      "why": "This could lead to cross-site scripting (XSS) if an attacker can inject malicious content into the user's email.",
+      "evidence": "exact",
+      "model_line": 5,
+      "model_code": "{{ g.user['email'] or '' }}",
+      "where": "cakeshop/templates/account.html:1-9",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 5,
+          "title": "Cross-site Scripting",
+          "cwe": [
+            "CWE-79"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 6,
+          "title": "Cross-site Scripting",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/templates/admin_orders.html",
+    "line": 7,
+    "snippet": "<tr><td>{{ o['id'] }}</td><td>{{ o['username'] }} ({{ o['email'] }})</td><td>{{ o['address'] }}</td>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "o['username'] and o['email']",
+      "why": "This could lead to cross-site scripting (XSS) if an attacker can inject malicious content into the username or email fields.",
+      "evidence": "exact",
+      "model_line": 7,
+      "model_code": "{{ o['username'] }} ({{ o['email'] }})",
+      "where": "cakeshop/templates/admin_orders.html:1-11",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 7,
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        7
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/templates/index.html",
+    "line": 4,
+    "snippet": "<form action=\"{{ url_for('shop.search') }}\"><input name=\"q\" placeholder=\"Search cakes\"> <button>Search</button></form>",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.args.get('q')",
+      "why": "The search query parameter is directly used in the URL without any validation or sanitization, which could lead to SQL injection or other types of attacks.",
+      "evidence": "not_found",
+      "model_line": 4,
+      "model_code": "{{ url_for('shop.search', q=request.args.get('q')) }}",
+      "where": "cakeshop/templates/index.html:1-11",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 4,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        4
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Path Traversal",
+    "file": "cakeshop/templates/index.html",
+    "line": 7,
+    "snippet": "<img src=\"{{ url_for('shop.cake_image', name=p['image']) }}\" width=\"80\" alt=\"\">",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "p['image']",
+      "why": "The image name is directly used in the URL without any validation or sanitization, which could lead to path traversal attacks.",
+      "evidence": "exact",
+      "model_line": 7,
+      "model_code": "{{ url_for('shop.cake_image', name=p['image']) }}",
+      "where": "cakeshop/templates/index.html:1-11",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 7,
+          "title": "Path Traversal",
+          "cwe": [
+            "CWE-22"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        7
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Broken Access Control",
+    "file": "cakeshop/templates/index.html",
+    "line": 8,
+    "snippet": "<a href=\"{{ url_for('shop.product', product_id=p['id']) }}\"><strong>{{ p['name'] }}</strong></a> \u2014 {{ p['price'] }} UZS",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-264"
+    ],
+    "extra": {
+      "source": "p['id']",
+      "why": "The product ID is directly used in the URL without any validation or sanitization, which could lead to broken access control or other types of attacks.",
+      "evidence": "exact",
+      "model_line": 8,
+      "model_code": "{{ url_for('shop.product', product_id=p['id']) }}",
+      "where": "cakeshop/templates/index.html:1-11",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 8,
+          "title": "Broken Access Control",
+          "cwe": [
+            "CWE-264"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        8
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/templates/login.html",
+    "line": 5,
+    "snippet": "<label>Username <input name=\"username\"></label><br>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "none",
+      "why": "The username field is vulnerable to cross-site scripting (XSS) because it does not escape user input before rendering it in the HTML.",
+      "evidence": "exact",
+      "model_line": 5,
+      "model_code": "<label>Username <input name=\"username\"></label><br>",
+      "where": "cakeshop/templates/login.html:1-9",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 5,
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 6,
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-site Scripting (XSS)",
+    "file": "cakeshop/templates/order.html",
+    "line": 6,
+    "snippet": "<p>Message on the cake: {{ order['message'] }}</p>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "order['message']",
+      "why": "An attacker could inject malicious content into the message, which could be executed in the browser of users viewing the order.",
+      "evidence": "exact",
+      "model_line": 6,
+      "model_code": "{{ order['message'] }}",
+      "where": "cakeshop/templates/order.html:1-10",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 6,
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 7,
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        6,
+        7
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-site Scripting (XSS)",
+    "file": "cakeshop/templates/product.html",
+    "line": 3,
+    "snippet": "<h1>{{ product['name'] }}</h1>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "product['name']",
+      "why": "An attacker could inject malicious HTML or script into the product name, which would be rendered on the page.",
+      "evidence": "exact",
+      "model_line": 3,
+      "model_code": "{{ product['name'] }}",
+      "where": "cakeshop/templates/product.html:1-35",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 3,
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 5,
+          "title": "Cross-site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        3,
+        5
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Path Traversal",
+    "file": "cakeshop/templates/product.html",
+    "line": 4,
+    "snippet": "<img src=\"{{ url_for('shop.cake_thumbnail', name=product['image']) }}\" width=\"160\" alt=\"\">",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "product['image']",
+      "why": "An attacker could manipulate the product image URL to point to a malicious file, potentially leading to a path traversal attack or serving malicious content.",
+      "evidence": "not_found",
+      "model_line": 4,
+      "model_code": "{{ product['image'] }}",
+      "where": "cakeshop/templates/product.html:1-35",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 4,
+          "title": "Path Traversal",
+          "cwe": [
+            "CWE-22"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        4
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-Site Request Forgery (CSRF)",
+    "file": "cakeshop/templates/product.html",
+    "line": 8,
+    "snippet": "<input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "source": "product['id']",
+      "why": "An attacker could manipulate the product ID to perform a request forgery (CSRF) attack or access unauthorized data.",
+      "evidence": "exact",
+      "model_line": 8,
+      "model_code": "{{ product['id'] }}",
+      "where": "cakeshop/templates/product.html:1-35",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 8,
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": [
+            "CWE-352"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        8
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-Site Request Forgery (CSRF)",
+    "file": "cakeshop/templates/product.html",
+    "line": 15,
+    "snippet": "<input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "source": "product['id']",
+      "why": "An attacker could manipulate the product ID to perform a request forgery (CSRF) attack or access unauthorized data.",
+      "evidence": "exact",
+      "model_line": 15,
+      "model_code": "{{ product['id'] }}",
+      "where": "cakeshop/templates/product.html:1-35",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 15,
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": [
+            "CWE-352"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 16,
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": [
+            "CWE-352"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 15,
+          "title": "Cross-Site Request Forgery (CSRF)",
+          "cwe": [
+            "CWE-352"
+          ]
+        }
+      ],
+      "n_warnings": 3,
+      "lines": [
+        15,
+        16
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+    "file": "cakeshop/templates/register.html",
+    "line": 5,
+    "snippet": "<label>Username <input name=\"username\"></label><br>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "none",
+      "why": "The username input is not validated or sanitized, allowing an attacker to inject malicious data.",
+      "evidence": "exact",
+      "model_line": 5,
+      "model_code": "<label>Username <input name=\"username\"></label><br>",
+      "where": "cakeshop/templates/register.html:1-11",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 5,
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 6,
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 7,
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 8,
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 4,
+      "lines": [
+        5,
+        6,
+        7,
+        8
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/templates/search.html",
+    "line": 3,
+    "snippet": "<h1>Results for \u201c{{ q }}\u201d</h1>",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "none",
+      "why": "The search query `q` is directly rendered in the HTML without any sanitization or escaping, which could lead to Cross-Site Scripting (XSS) if an attacker injects malicious script into the search query.",
+      "evidence": "not_found",
+      "model_line": 3,
+      "model_code": "{{ q }}",
+      "where": "cakeshop/templates/search.html:1-9",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 3,
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        3
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "file"
+    ],
+    "title": "Insecure Debug Mode",
+    "file": "run.py",
+    "line": 6,
+    "snippet": "app.run(host=\"127.0.0.1\", port=5000, debug=True)",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-949"
+    ],
+    "extra": {
+      "source": "none",
+      "why": "Running the application with debug mode enabled on a non-localhost address can expose the application to remote attackers.",
+      "evidence": "exact",
+      "model_line": 6,
+      "model_code": "app.run(host=\"127.0.0.1\", port=5000, debug=True)",
+      "where": "run.py:1-6",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "file",
+          "line": 6,
+          "title": "Insecure Debug Mode",
+          "cwe": [
+            "CWE-949"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        6
+      ]
+    }
+  }
+]

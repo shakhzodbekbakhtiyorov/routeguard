@@ -1,0 +1,42 @@
+{
+  "label": "file merged",
+  "strict": false,
+  "n_findings": 25,
+  "n_vuln": 19,
+  "detected": 9,
+  "recall": 0.474,
+  "cwe_exact": 4,
+  "cwe_related": 5,
+  "tp_findings": 10,
+  "precision": 0.4,
+  "code_precision": 0.4,
+  "decoys_flagged": [
+    "D06",
+    "D08"
+  ],
+  "decoy_findings": 2,
+  "other": 13,
+  "missed": [
+    "V03",
+    "V05",
+    "V06",
+    "V07",
+    "V08",
+    "V10",
+    "V11",
+    "V16",
+    "V17",
+    "V18"
+  ],
+  "detected_ids": [
+    "V01",
+    "V02",
+    "V04",
+    "V09",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V19"
+  ]
+}

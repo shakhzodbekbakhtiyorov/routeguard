@@ -1,0 +1,344 @@
+[
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data that belongs to one particular user account based on the username provided.",
+    "file": "workshophub/auth.py",
+    "line": 79,
+    "snippet": "session.clear()",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /login",
+      "rule": "The route reads data that belongs to one particular user account based on the username provided.",
+      "verdict": "not_enforced",
+      "reason": "The code clears the session and then sets the account ID and role, which could potentially allow another user to access the session data of another user if they know the session ID.",
+      "attack": "An attacker could log in as another user by guessing or stealing a session ID. They would then be able to access the session data of the user associated with that session ID, including their account ID and role. This could lead to unauthorized access to the user's account and potentially other sensitive information."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /logout.",
+    "file": "workshophub/auth.py",
+    "line": 87,
+    "snippet": "def logout():",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /logout",
+      "rule": "Only logged-in users may call /logout.",
+      "verdict": "not_enforced",
+      "reason": "The route /logout does not check if the user is logged in before allowing them to call it.",
+      "attack": "An attacker can call /logout without being logged in. They can simply make a GET request to /logout. The request does not require any authentication, so the server will clear the session and redirect them to the login page. The attacker is not logged in, but they can still call the /logout route."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "workshophub/auth.py",
+    "line": 27,
+    "snippet": "if \"_csrf\" not in session:",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /logout",
+      "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The code checks if the CSRF token is in the session, but it does not verify the token itself.",
+      "attack": "An attacker can forge a GET request to /logout from another website. Since the CSRF token is not verified, the request will be accepted, and the user will be logged out. The attacker does not need to be logged in to perform this attack. Method: GET, URL: /logout, Values: None, What happens: The user is logged out, and the attacker gains access to the user's session if they were logged in before the attack."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+    "file": "workshophub/bookings.py",
+    "line": 28,
+    "snippet": "def detail(rid):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /bookings/<int:rid>",
+      "rule": "The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+      "verdict": "not_enforced",
+      "reason": "The @members_only decorator ensures that only authenticated users can access the route. However, it does not check if the logged-in user is the owner of the booking or an administrator.",
+      "attack": "A malicious user can bypass the @members_only decorator by manipulating the session to include a valid account ID. They can then access the booking detail for any booking where they are not the owner or an administrator. For example, if the logged-in user has an account ID of 1, they can access the booking detail for any booking with an owner_id of 1, even if they are not the owner of that booking. The request would be a GET request to /bookings/1, and the response would be the booking detail for the booking with ID 1, regardless of whether the logged-in user is the owner of that booking or an administrator. The logged-in user is not an administrator, and the booking is not owned by the logged-in user, but the route still allows access to the booking detail."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+    "file": "workshophub/bookings.py",
+    "line": 56,
+    "snippet": "def cancel(rid):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /bookings/<int:rid>/cancel",
+      "rule": "Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+      "verdict": "not_enforced",
+      "reason": "The @members_only decorator ensures that only authenticated users can access the route, but it does not check if the logged-in user is the owner of the booking.",
+      "attack": "A malicious user could log in and attempt to cancel a booking that does not belong to them. They would provide the correct booking ID (rid) but their 'owner_id' would not match the booking's 'owner_id'. The @members_only decorator would allow this request through, and the booking would be canceled, potentially causing financial loss or other issues for the correct owner of the booking."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "workshophub/auth.py",
+    "line": 27,
+    "snippet": "if \"_csrf\" not in session:",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /bookings/<int:rid>/cancel",
+      "rule": "POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The CSRF token is not checked in the route handler.",
+      "attack": "An attacker can forge a POST request to /bookings/<int:rid>/cancel from another website. They can set the CSRF token in the request headers or cookies to bypass the check. The request would be made by a logged-in user, using the POST method, with the URL /bookings/<int:rid>/cancel and the values for rid. The booking would be cancelled, even though the request was forged from another website. The attacker would not be logged in to the application, but they could still cancel a booking if they knew the rid value."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /bookings/<int:rid>/receipt.",
+    "file": "workshophub/bookings.py",
+    "line": 95,
+    "snippet": "def receipt(rid):",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "GET /bookings/<int:rid>/receipt",
+      "rule": "Only logged-in users may call /bookings/<int:rid>/receipt.",
+      "verdict": "uncertain",
+      "reason": "@before_app_request is not a decorator of this route",
+      "attack": "None. The rule is enforced by the code provided. Only logged-in users can access the /bookings/<int:rid>/receipt endpoint because the `load_signed_in_account` function checks for a valid 'account_id' in the session before allowing access to any route that requires authentication."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "workshophub/members.py",
+    "line": 19,
+    "snippet": "def update_profile():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /profile",
+      "rule": "POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The CSRF token is generated and stored in the session before each request, but it is not checked in the POST /profile route.",
+      "attack": "An attacker can forge a POST request to /profile from another website. They can include a CSRF token from a previous request to the same site, which will be accepted because it is not checked. The attacker can then update the user's profile without their knowledge or consent. The attacker is logged in as a member, the method is POST, the URL is /profile, the values are any valid form data, and the result is that the user's profile is updated without proper authentication or authorization."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: credit_balance: The server must validate and sanitize the credit balance to prevent unauthorized changes.",
+    "file": "workshophub/members.py",
+    "line": 23,
+    "snippet": "credit = request.form.get(\"credit_balance\", type=float)",
+    "cwe": [
+      "CWE-20"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /profile",
+      "rule": "credit_balance: The server must validate and sanitize the credit balance to prevent unauthorized changes.",
+      "verdict": "not_enforced",
+      "reason": "The code attempts to convert the credit balance to a float, but it does not validate or sanitize the input.",
+      "attack": "An attacker could submit a non-numeric value for the credit balance, such as 'abc', which would cause a ValueError. This could be exploited to bypass the intended validation and potentially manipulate the credit balance in an unauthorized manner."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+    "file": "workshophub/members.py",
+    "line": 89,
+    "snippet": "float(request.form[\"credit_balance\"]),",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /admin/members/<int:mid>/update",
+      "rule": "credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+      "verdict": "not_enforced",
+      "reason": "The code converts the credit balance to a float, but it does not validate that the value is non-negative.",
+      "attack": "An attacker could send a negative credit balance value. For example, a POST request to /admin/members/1/update with the form data {'credit_balance': '-100'} would bypass the validation and update the credit balance to a negative value. The user would then have a negative credit balance, which could be exploited for further attacks."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: price_per_seat: The server must ensure that the price per seat is a non-negative number.",
+    "file": "workshophub/workshops.py",
+    "line": 62,
+    "snippet": "price = float(request.form[\"price_per_seat\"])",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/create",
+      "rule": "price_per_seat: The server must ensure that the price per seat is a non-negative number.",
+      "verdict": "not_enforced",
+      "reason": "The code converts the 'price_per_seat' value to a float, but it does not enforce that the value is non-negative.",
+      "attack": "A malicious user can create a workshop with a negative price per seat by submitting a POST request to /workshops/create with the following values: title='Test Workshop', description='A test workshop', capacity=10, price_per_seat=-10.0, scheduled_at='2023-10-01'. The server will not check if the price is non-negative, and the workshop will be created with a negative price, which could lead to financial discrepancies or other issues."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: Only the staff member who created the workshop can edit it.",
+    "file": "workshophub/auth.py",
+    "line": 45,
+    "snippet": "if g.account[\"role\"] not in (\"staff\", \"admin\"):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /workshops/<int:wid>/edit",
+      "rule": "Only the staff member who created the workshop can edit it.",
+      "verdict": "not_enforced",
+      "reason": "The staff_only decorator checks if the user's role is either 'staff' or 'admin'. If not, it redirects the user to the workshop listing page.",
+      "attack": "A non-staff member who is logged in can still edit a workshop if they know the workshop ID. They can do this by visiting the URL /workshops/<wid>/edit where <wid> is the ID of any workshop. The staff_only decorator will not prevent this because it only checks if the user is a staff member or admin, not if the user created the workshop. The user can then edit the workshop without permission."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The workshop record belongs to the user with the ID stored in the 'created_by' column.",
+    "file": "workshophub/auth.py",
+    "line": 45,
+    "snippet": "if g.account[\"role\"] not in (\"staff\", \"admin\"):",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/<int:wid>/edit",
+      "rule": "The workshop record belongs to the user with the ID stored in the 'created_by' column.",
+      "verdict": "not_enforced",
+      "reason": "The staff_only decorator checks if the user's role is either 'staff' or 'admin'. If not, it redirects the user to the workshop listing page.",
+      "attack": "A non-staff or non-admin user can edit a workshop record by providing a valid CSRF token and workshop ID. The staff_only decorator does not check if the workshop's 'created_by' column matches the user's ID, allowing unauthorized edits."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: capacity: The server must validate and sanitize the capacity to ensure it is a non-negative integer.",
+    "file": "workshophub/workshops.py",
+    "line": 110,
+    "snippet": "int(request.form[\"capacity\"]),",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/<int:wid>/edit",
+      "rule": "capacity: The server must validate and sanitize the capacity to ensure it is a non-negative integer.",
+      "verdict": "not_enforced",
+      "reason": "The code converts the capacity value to an integer, but it does not validate that the value is non-negative.",
+      "attack": "A malicious user could submit a negative capacity value, such as -1, which would be converted to a non-negative integer by the int() function. This could lead to unexpected behavior or potential security issues if the negative value is used in further calculations or logic."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: price_per_seat: The server must validate and sanitize the price per seat to ensure it is a non-negative floating-point number.",
+    "file": "workshophub/workshops.py",
+    "line": 111,
+    "snippet": "float(request.form[\"price_per_seat\"]),",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/<int:wid>/edit",
+      "rule": "price_per_seat: The server must validate and sanitize the price per seat to ensure it is a non-negative floating-point number.",
+      "verdict": "not_enforced",
+      "reason": "The code converts the 'price_per_seat' value to a float, but it does not validate that the value is non-negative.",
+      "attack": "A malicious user could submit a negative value for 'price_per_seat', such as '-10.0'. This would be converted to a float and could potentially be stored in the database, bypassing the intended validation rule. The user is logged in as a staff member, the method is POST, the URL is '/workshops/<int:wid>/edit', and the values are {'title': 'Example Workshop', 'description': 'A sample workshop', 'capacity': '50', 'price_per_seat': '-10.0', 'scheduled_at': '2023-12-31T23:59:59'}, resulting in an invalid price per seat being stored in the database."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The reservations table stores records that belong to one particular user account, identified by the owner_id column.",
+    "file": "workshophub/workshops.py",
+    "line": 162,
+    "snippet": "(wid, g.account[\"id\"], seats, total_cost),",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/<int:wid>/book",
+      "rule": "The reservations table stores records that belong to one particular user account, identified by the owner_id column.",
+      "verdict": "not_enforced",
+      "reason": "The `members_only` decorator checks if `g.account` is `None`, but it does not verify that the `owner_id` in the reservation matches the `g.account['id']` of the logged-in user.",
+      "attack": "An attacker could create a reservation for another user's workshop by manipulating the `owner_id` in the request. For example, if the logged-in user has an `id` of 1, they could send a POST request to `/workshops/1/book` with a `owner_id` of 2. The request would pass the `members_only` check, but the reservation would be associated with the wrong user, violating the rule that reservations belong to one particular user account."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: seats: The server must ensure that the number of seats is a non-negative integer and does not exceed the available capacity of the workshop.",
+    "file": "workshophub/workshops.py",
+    "line": 155,
+    "snippet": "seats = request.form.get(\"seats\", type=int) or 1",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/<int:wid>/book",
+      "rule": "seats: The server must ensure that the number of seats is a non-negative integer and does not exceed the available capacity of the workshop.",
+      "verdict": "not_enforced",
+      "reason": "The code allows 'seats' to be set to 0 or negative by providing a default value of 1 if 'seats' is not provided in the request form.",
+      "attack": "A user can book a workshop with 0 or negative seats by not providing a value for 'seats' in the request form. The user is logged in, the method is POST, the URL is /workshops/<int:wid>/book, and the values are {'seats': None}. The booking will be confirmed, but the number of seats will be 1, which does not adhere to the rule that the number of seats must be a non-negative integer and does not exceed the available capacity of the workshop."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: total_cost: The server must calculate the total cost based on the number of seats and the workshop's price per seat.",
+    "file": "workshophub/workshops.py",
+    "line": 156,
+    "snippet": "total_cost = request.form.get(\"total_cost\", type=float)",
+    "cwe": [
+      "CWE-78"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /workshops/<int:wid>/book",
+      "rule": "total_cost: The server must calculate the total cost based on the number of seats and the workshop's price per seat.",
+      "verdict": "not_enforced",
+      "reason": "The code does not calculate the total cost based on the number of seats and the workshop's price per seat. Instead, it directly takes the value from the request form and converts it to a float.",
+      "attack": "An attacker can manipulate the 'total_cost' field in the request to book a workshop at a different price. For example, if the workshop's price per seat is $10 and the workshop has a capacity of 10, an attacker can set 'seats' to 10 and 'total_cost' to $500 to book the workshop at a higher price. This bypasses the server's validation and allows the attacker to charge more than the workshop's actual price."
+    }
+  }
+]

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ product['name'] }}</h1>
+<img src="{{ url_for('shop.cake_thumbnail', name=product['image']) }}" width="160" alt="">
+<p>{{ product['price'] }} UZS</p>
+
+<form method="post" action="{{ url_for('shop.add_to_cart') }}">
+  <input type="hidden" name="product_id" value="{{ product['id'] }}">
+  <button>Add to cart</button>
+</form>
+
+{% if g.user %}
+<h2>Order now</h2>
+<form method="post" action="{{ url_for('shop.checkout') }}">
+  <input type="hidden" name="product_id" value="{{ product['id'] }}">
+  <input type="hidden" name="price" value="{{ product['price'] }}">
+  <label>Quantity <input name="quantity" type="number" value="1" min="1"></label><br>
+  <label>Message on the cake <input name="message"></label><br>
+  <label>Delivery note <input name="note"></label><br>
+  <button>Place order</button>
+</form>
+{% endif %}
+
+<h2>Reviews</h2>
+{% for r in reviews %}
+<div class="card"><strong>{{ r['username'] }}</strong>: {{ r['body']|safe }}</div>
+{% else %}
+<p>No reviews yet.</p>
+{% endfor %}
+{% if g.user %}
+<form method="post" action="{{ url_for('shop.add_review', product_id=product['id']) }}">
+  <textarea name="body"></textarea><br><button>Post review</button>
+</form>
+{% endif %}
+{% endblock %}

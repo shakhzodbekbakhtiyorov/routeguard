@@ -1,0 +1,714 @@
+[
+  {
+    "id": "GET/POST /account",
+    "url": "/account",
+    "prompt": "Route: GET/POST /account  (function account in cakeshop/account.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET/POST /account   function account()  cakeshop/account.py:11-22\nURL parameters: none\nDecorators:\n  @login_required (defined in cakeshop/auth.py:11)\n      if g.user is None -> return redirect(url_for('auth.login', next=request.path))\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 16: request.form ALL fields (loop)\nCurrent user used:\n  line 18: g.user['id']\nDatabase statements:\n  line 18: UPDATE users SET {key} = ? WHERE id = ?\n      writes columns: {key}\n      WHERE on: id\nChecks in the code:\n  line 14: if request.method == 'POST' -> return redirect(url_for('account.account'))\n  line 17: if key in USER_COLUMNS -> then runs: db.execute(f'UPDATE users SET {key} = ? WHERE id = ?', (value, g.us...\nConstant USER_COLUMNS = {'username', 'email', 'address', 'is_admin'}\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 21: redirect(url_for('account.account'))\n  line 22: render_template('account.html')\nTable users: id, username, password_hash, email, address, is_admin\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/account.py) ---\n    11 | @bp.route(\"/account\", methods=[\"GET\", \"POST\"])\n    12 | @login_required\n    13 | def account():\n    14 |     if request.method == \"POST\":\n    15 |         db = get_db()\n    16 |         for key, value in request.form.items():\n    17 |             if key in USER_COLUMNS:\n    18 |                 db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))\n    19 |         db.commit()\n    20 |         flash(\"Profile updated.\")\n    21 |         return redirect(url_for(\"account.account\"))\n    22 |     return render_template(\"account.html\")\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CONSTANT USER_COLUMNS (cakeshop/account.py) ---\n     8 | USER_COLUMNS = {\"username\", \"email\", \"address\", \"is_admin\"}\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/account.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>My account</h1>\n     4 | <form method=\"post\">\n     5 |   <label>Email <input name=\"email\" value=\"{{ g.user['email'] or '' }}\"></label><br>\n     6 |   <label>Delivery address <input name=\"address\" value=\"{{ g.user['address'] or '' }}\"></label><br>\n     7 |   <button>Save</button>\n     8 | </form>\n     9 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE users (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    username TEXT UNIQUE NOT NULL,\n    password_hash TEXT NOT NULL,\n    email TEXT,\n    address TEXT,\n    is_admin INTEGER NOT NULL DEFAULT 0\n);",
+    "prompt_tokens": 1520,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is decorated with @login_required, which ensures that only logged-in users can access it.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route updates the user's data based on the current user's ID.",
+          "rule": "The route reads and changes a record that belongs to the current user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route updates the user's data, but does not allow changing the 'is_admin' field.",
+          "rule": "Users must not be able to set or change their own 'is_admin' status through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route updates the user's data based on user input, which the server must validate.",
+          "rule": "Values sent by the client that the server must decide, look up or check itself include the fields in USER_COLUMNS."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route updates the user's data, and some fields may have specific limits or choices.",
+          "rule": "Values for the fields in USER_COLUMNS must be within allowed bounds or choices."
+        }
+      ]
+    },
+    "seconds": 46.4
+  },
+  {
+    "id": "GET /admin/orders",
+    "url": "/admin/orders",
+    "prompt": "Route: GET /admin/orders  (function all_orders in cakeshop/admin.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /admin/orders   function all_orders()  cakeshop/admin.py:11-17\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used: nowhere\nDatabase statements:\n  line 14: SELECT orders.*, users.username, users.email, users.address FROM orders JOIN users ON users.id = orders.user_id ORDER BY orders.id DESC\n      WHERE on: nothing (no WHERE clause)\nChecks in the code: none\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 17: render_template('admin_orders.html', orders=rows)\n      the page shows: orders.id, orders.username, orders.email, orders.address, orders.total, orders.status\nTable orders: id, user_id, product_id, quantity, total, message, note, status\nTable users: id, username, password_hash, email, address, is_admin\nOther routes in the same file: stats() with @admin_required; set_status() with @admin_required\n\nCODE:\n--- ROUTE (cakeshop/admin.py) ---\n    11 | @bp.route(\"/orders\")\n    12 | def all_orders():\n    13 |     rows = get_db().execute(\n    14 |         \"SELECT orders.*, users.username, users.email, users.address \"\n    15 |         \"FROM orders JOIN users ON users.id = orders.user_id ORDER BY orders.id DESC\"\n    16 |     ).fetchall()\n    17 |     return render_template(\"admin_orders.html\", orders=rows)\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/admin_orders.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>All orders</h1>\n     4 | <table>\n     5 |   <tr><th>#</th><th>Customer</th><th>Address</th><th>Total</th><th>Status</th></tr>\n     6 |   {% for o in orders %}\n     7 |   <tr><td>{{ o['id'] }}</td><td>{{ o['username'] }} ({{ o['email'] }})</td><td>{{ o['address'] }}</td>\n     8 |       <td>{{ o['total'] }} UZS</td><td>{{ o['status'] }}</td></tr>\n     9 |   {% endfor %}\n    10 | </table>\n    11 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE users (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    username TEXT UNIQUE NOT NULL,\n    password_hash TEXT NOT NULL,\n    email TEXT,\n    address TEXT,\n    is_admin INTEGER NOT NULL DEFAULT 0\n);\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);",
+    "prompt_tokens": 1374,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is accessible to anyone, but it only shows data if the user is logged in.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route displays data from the 'orders' and 'users' tables.",
+          "rule": "The route displays data that belongs to any user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route only reads data and does not allow any changes.",
+          "rule": "No fields can be changed through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route does not accept any input from the client.",
+          "rule": "No client inputs are trusted and must be validated or checked by the server."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not have any specific limits on the data it handles.",
+          "rule": "No specific limits are applied to the data handled by this route."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route does not change any data.",
+          "rule": "This route does not require CSRF protection."
+        }
+      ]
+    },
+    "seconds": 44.3
+  },
+  {
+    "id": "GET /admin/stats",
+    "url": "/admin/stats",
+    "prompt": "Route: GET /admin/stats  (function stats in cakeshop/admin.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /admin/stats   function stats()  cakeshop/admin.py:20-24\nURL parameters: none\nDecorators:\n  @admin_required (defined in cakeshop/auth.py:21)\n      wraps @login_required\n      if not g.user['is_admin'] -> abort(403)\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used: nowhere\nDatabase statements:\n  line 118 (inside count_rows() in cakeshop/db.py): SELECT COUNT(*) FROM {table}\n      WHERE on: nothing (no WHERE clause)\nChecks in the code:\n  line 116: if table not in ALLOWED_TABLES -> raise ValueError(f'unknown table: {table}') (inside count_rows())\nConstant ALLOWED_TABLES = {'products', 'orders', 'users', 'reviews'}\nCalls project functions: count_rows (cakeshop/db.py:115), count_rows > get_db (cakeshop/db.py:70)\nResponses:\n  line 24: render_template('admin_stats.html', counts=counts)\n      the page shows: counts\nTable {table}: (columns unknown: dynamic or not in the schema)\nOther routes in the same file: all_orders() with no decorators; set_status() with @admin_required\n\nCODE:\n--- ROUTE (cakeshop/admin.py) ---\n    20 | @bp.route(\"/stats\")\n    21 | @admin_required\n    22 | def stats():\n    23 |     counts = {table: count_rows(table) for table in sorted(ALLOWED_TABLES)}\n    24 |     return render_template(\"admin_stats.html\", counts=counts)\n\n--- DECORATOR admin_required (cakeshop/auth.py) ---\n    21 | def admin_required(view):\n    22 |     @functools.wraps(view)\n    23 |     @login_required\n    24 |     def wrapped(*args, **kwargs):\n    25 |         if not g.user[\"is_admin\"]:\n    26 |             abort(403)\n    27 |         return view(*args, **kwargs)\n    28 | \n    29 |     return wrapped\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CONSTANT ALLOWED_TABLES (cakeshop/db.py) ---\n     8 | ALLOWED_TABLES = {\"products\", \"orders\", \"users\", \"reviews\"}\n\n--- CALLED count_rows (cakeshop/db.py) ---\n   115 | def count_rows(table):\n   116 |     if table not in ALLOWED_TABLES:\n   117 |         raise ValueError(f\"unknown table: {table}\")\n   118 |     return get_db().execute(f\"SELECT COUNT(*) FROM {table}\").fetchone()[0]\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/admin_stats.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Stats</h1>\n     4 | <ul>\n     5 |   {% for table, n in counts.items() %}<li>{{ table }}: {{ n }}</li>{% endfor %}\n     6 | </ul>\n     7 | {% endblock %}",
+    "prompt_tokens": 1465,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @admin_required decorator, which ensures only logged-in users with admin privileges can access it.",
+          "rule": "Only admin users may call this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route does not accept any user input, but it uses a dynamic table name from the ALLOWED_TABLES constant, which the server must check.",
+          "rule": "The server must verify the table name against a predefined set of allowed tables."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route uses a dynamic table name from the ALLOWED_TABLES constant, which the server must check against a fixed set of allowed values.",
+          "rule": "The table name must be one of the following: 'products', 'orders', 'users', 'reviews'."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route does not change any data, so it does not need to be protected against CSRF attacks.",
+          "rule": "This route does not change any data, so it does not require CSRF protection."
+        }
+      ]
+    },
+    "seconds": 42.2
+  },
+  {
+    "id": "POST /admin/orders/<int:order_id>/status",
+    "url": "/admin/orders/<int:order_id>/status",
+    "prompt": "Route: POST /admin/orders/<int:order_id>/status  (function set_status in cakeshop/admin.py)\n\nROUTE CARD (facts read from the code):\nROUTE POST /admin/orders/<int:order_id>/status   function set_status()  cakeshop/admin.py:27-36\nURL parameters: order_id (int)\nDecorators:\n  @admin_required (defined in cakeshop/auth.py:21)\n      wraps @login_required\n      if not g.user['is_admin'] -> abort(403)\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 30: request.form status\nCurrent user used: nowhere\nDatabase statements:\n  line 34: UPDATE orders SET status = ? WHERE id = ?\n      writes columns: status\n      WHERE on: id\nChecks in the code:\n  line 31: if status not in ORDER_STATUSES -> abort(400)\nConstant ORDER_STATUSES = {'new', 'baking', 'out_for_delivery', 'delivered', 'cancelled'}\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 32: abort(400)\n  line 36: redirect(url_for('admin.all_orders'))\nTable orders: id, user_id, product_id, quantity, total, message, note, status\nOther routes in the same file: all_orders() with no decorators; stats() with @admin_required\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/admin.py) ---\n    27 | @bp.route(\"/orders/<int:order_id>/status\", methods=[\"POST\"])\n    28 | @admin_required\n    29 | def set_status(order_id):\n    30 |     status = request.form.get(\"status\", \"\")\n    31 |     if status not in ORDER_STATUSES:\n    32 |         abort(400)\n    33 |     db = get_db()\n    34 |     db.execute(\"UPDATE orders SET status = ? WHERE id = ?\", (status, order_id))\n    35 |     db.commit()\n    36 |     return redirect(url_for(\"admin.all_orders\"))\n\n--- DECORATOR admin_required (cakeshop/auth.py) ---\n    21 | def admin_required(view):\n    22 |     @functools.wraps(view)\n    23 |     @login_required\n    24 |     def wrapped(*args, **kwargs):\n    25 |         if not g.user[\"is_admin\"]:\n    26 |             abort(403)\n    27 |         return view(*args, **kwargs)\n    28 | \n    29 |     return wrapped\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CONSTANT ORDER_STATUSES (cakeshop/admin.py) ---\n     8 | ORDER_STATUSES = {\"new\", \"baking\", \"out_for_delivery\", \"delivered\", \"cancelled\"}\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);",
+    "prompt_tokens": 1474,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @admin_required decorator, which ensures only logged-in admin users can access it.",
+          "rule": "Only logged-in admin users may call this route."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route checks if the provided status is in the set of allowed statuses (ORDER_STATUSES).",
+          "rule": "The status must be one of the following: 'new', 'baking', 'out_for_delivery', 'delivered', 'cancelled'."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The status is directly taken from the request form and not validated further.",
+          "rule": "The server must validate the status to ensure it is one of the allowed values."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route changes data, but there is no CSRF protection mechanism in place.",
+          "rule": "A CSRF token must be included in the request to prevent cross-site request forgery."
+        }
+      ]
+    },
+    "seconds": 39.2
+  },
+  {
+    "id": "GET/POST /register",
+    "url": "/register",
+    "prompt": "Route: GET/POST /register  (function register in cakeshop/auth.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET/POST /register   function register()  cakeshop/auth.py:41-60\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 44: request.form username\n  line 45: request.form password\n  line 53: request.form email\n  line 53: request.form address\nCurrent user used: nowhere\nDatabase statements:\n  line 52: INSERT INTO users (username, password_hash, email, address) VALUES (?, ?, ?, ?)\n      writes columns: username, password_hash, email, address\nChecks in the code:\n  line 43: if request.method == 'POST' -> then runs: username = request.form['username'].strip()\n  line 46: if not username or not password -> then runs: flash('Username and password are required.')\nCalls project functions: get_db (cakeshop/db.py:70), hash_password (cakeshop/security.py:4)\nResponses:\n  line 59: redirect(url_for('auth.login'))\n  line 60: render_template('register.html')\nTable users: id, username, password_hash, email, address, is_admin\nOther table reviews: id, product_id, username, body  (same column name as this route's data: username)\nOther routes in the same file: login() with no decorators; logout() with no decorators\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/auth.py) ---\n    41 | @bp.route(\"/register\", methods=[\"GET\", \"POST\"])\n    42 | def register():\n    43 |     if request.method == \"POST\":\n    44 |         username = request.form[\"username\"].strip()\n    45 |         password = request.form[\"password\"]\n    46 |         if not username or not password:\n    47 |             flash(\"Username and password are required.\")\n    48 |         else:\n    49 |             db = get_db()\n    50 |             try:\n    51 |                 db.execute(\n    52 |                     \"INSERT INTO users (username, password_hash, email, address) VALUES (?, ?, ?, ?)\",\n    53 |                     (username, hash_password(password), request.form.get(\"email\"), request.form.get(\"address\")),\n    54 |                 )\n    55 |                 db.commit()\n    56 |             except db.IntegrityError:\n    57 |                 flash(\"That username is taken.\")\n    58 |             else:\n    59 |                 return redirect(url_for(\"auth.login\"))\n    60 |     return render_template(\"register.html\")\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- CALLED hash_password (cakeshop/security.py) ---\n     4 | def hash_password(password):\n     5 |     return hashlib.md5(password.encode()).hexdigest()\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/register.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Register</h1>\n     4 | <form method=\"post\">\n     5 |   <label>Username <input name=\"username\"></label><br>\n     6 |   <label>Password <input name=\"password\" type=\"password\"></label><br>\n     7 |   <label>Email <input name=\"email\"></label><br>\n     8 |   <label>Delivery address <input name=\"address\"></label><br>\n     9 |   <button>Create account</button>\n    10 | </form>\n    11 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE users (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    username TEXT UNIQUE NOT NULL,\n    password_hash TEXT NOT NULL,\n    email TEXT,\n    address TEXT,\n    is_admin INTEGER NOT NULL DEFAULT 0\n);\n\n--- TABLE (schema) ---\nCREATE TABLE reviews (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    product_id INTEGER NOT NULL,\n    username TEXT NOT NULL,\n    body TEXT NOT NULL\n);",
+    "prompt_tokens": 1676,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is publicly accessible and does not require authentication.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route inserts a new user record, and the user should not be able to set their own role or another user's id.",
+          "rule": "The 'is_admin' field must not be set or changed through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route inserts user-provided data into the database, which the server must verify or sanitize.",
+          "rule": "The 'username', 'password', 'email', and 'address' fields must be validated and sanitized by the server."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route inserts user-provided data into the database, which may have length or format constraints.",
+          "rule": "The 'username' field must be between 4 and 20 characters in length."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route changes data, and CSRF protection is not implemented.",
+          "rule": "CSRF protection must be implemented to prevent cross-site request forgery."
+        }
+      ]
+    },
+    "seconds": 47.2
+  },
+  {
+    "id": "GET/POST /login",
+    "url": "/login",
+    "prompt": "Route: GET/POST /login  (function login in cakeshop/auth.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET/POST /login   function login()  cakeshop/auth.py:63-74\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 67: request.form username\n  line 69: request.form password\n  line 72: request.args next\nCurrent user used:\n  line 71: session['user_id']\nDatabase statements:\n  line 67: SELECT * FROM users WHERE username = ?\n      WHERE on: username\nChecks in the code:\n  line 65: if request.method == 'POST' -> then runs: user = get_db().execute('SELECT * FROM users WHERE username = ?', (...\n  line 69: if user is not None and check_password(user['password_hash'], request.form['password']) -> return redirect(request.args.get('next') or url_for('shop.index'))\nCalls project functions: check_password (cakeshop/security.py:8), check_password > hash_password (cakeshop/security.py:4), get_db (cakeshop/db.py:70)\nResponses:\n  line 72: redirect(request.args.get('next') or url_for('shop.index'))\n  line 74: render_template('login.html')\nTable users: id, username, password_hash, email, address, is_admin\nOther table reviews: id, product_id, username, body  (same column name as this route's data: username)\nOther routes in the same file: register() with no decorators; logout() with no decorators\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/auth.py) ---\n    63 | @bp.route(\"/login\", methods=[\"GET\", \"POST\"])\n    64 | def login():\n    65 |     if request.method == \"POST\":\n    66 |         user = get_db().execute(\n    67 |             \"SELECT * FROM users WHERE username = ?\", (request.form[\"username\"],)\n    68 |         ).fetchone()\n    69 |         if user is not None and check_password(user[\"password_hash\"], request.form[\"password\"]):\n    70 |             session.clear()\n    71 |             session[\"user_id\"] = user[\"id\"]\n    72 |             return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))\n    73 |         flash(\"Wrong username or password.\")\n    74 |     return render_template(\"login.html\")\n\n--- CALLED check_password (cakeshop/security.py) ---\n     8 | def check_password(stored_hash, password):\n     9 |     return hash_password(password) == stored_hash\n\n--- CALLED hash_password (cakeshop/security.py) ---\n     4 | def hash_password(password):\n     5 |     return hashlib.md5(password.encode()).hexdigest()\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/login.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Log in</h1>\n     4 | <form method=\"post\">\n     5 |   <label>Username <input name=\"username\"></label><br>\n     6 |   <label>Password <input name=\"password\" type=\"password\"></label><br>\n     7 |   <button>Log in</button>\n     8 | </form>\n     9 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE users (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    username TEXT UNIQUE NOT NULL,\n    password_hash TEXT NOT NULL,\n    email TEXT,\n    address TEXT,\n    is_admin INTEGER NOT NULL DEFAULT 0\n);\n\n--- TABLE (schema) ---\nCREATE TABLE reviews (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    product_id INTEGER NOT NULL,\n    username TEXT NOT NULL,\n    body TEXT NOT NULL\n);",
+    "prompt_tokens": 1600,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is publicly accessible and does not require authentication.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route accepts user-provided input for username and password.",
+          "rule": "The server must verify the username and password provided by the client."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route expects a username and password to be provided.",
+          "rule": "The username and password must not be empty."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route changes data (logs in a user), but CSRF protection is not implemented.",
+          "rule": "CSRF protection must be implemented to prevent cross-site request forgery."
+        }
+      ]
+    },
+    "seconds": 36.1
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "prompt": "Route: GET /logout  (function logout in cakeshop/auth.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /logout   function logout()  cakeshop/auth.py:77-80\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used: nowhere\nDatabase statements: none\nChecks in the code: none\nResponses:\n  line 80: redirect(url_for('shop.index'))\nOther routes in the same file: register() with no decorators; login() with no decorators\n\nCODE:\n--- ROUTE (cakeshop/auth.py) ---\n    77 | @bp.route(\"/logout\")\n    78 | def logout():\n    79 |     session.clear()\n    80 |     return redirect(url_for(\"shop.index\"))\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()",
+    "prompt_tokens": 746,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any decorators or checks to restrict access, allowing anyone to call it.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route changes data (clears the session), so a request forged from another website must be rejected.",
+          "rule": "A CSRF token must be included in the request to prevent cross-site request forgery."
+        }
+      ]
+    },
+    "seconds": 16.8
+  },
+  {
+    "id": "GET /orders",
+    "url": "/orders",
+    "prompt": "Route: GET /orders  (function my_orders in cakeshop/orders.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /orders   function my_orders()  cakeshop/orders.py:12-18\nURL parameters: none\nDecorators:\n  @login_required (defined in cakeshop/auth.py:11)\n      if g.user is None -> return redirect(url_for('auth.login', next=request.path))\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used:\n  line 16: g.user['id']\nDatabase statements:\n  line 16: SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC\n      WHERE on: user_id\nChecks in the code: none\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 18: render_template('orders.html', orders=rows)\n      the page shows: orders.id, orders.total, orders.status\nTable orders: id, user_id, product_id, quantity, total, message, note, status\nOther routes in the same file: order_detail() with @login_required; invoice() with @login_required\n\nCODE:\n--- ROUTE (cakeshop/orders.py) ---\n    12 | @bp.route(\"/orders\")\n    13 | @login_required\n    14 | def my_orders():\n    15 |     rows = get_db().execute(\n    16 |         \"SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC\", (g.user[\"id\"],)\n    17 |     ).fetchall()\n    18 |     return render_template(\"orders.html\", orders=rows)\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/orders.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>My orders</h1>\n     4 | <table>\n     5 |   <tr><th>#</th><th>Total</th><th>Status</th><th></th></tr>\n     6 |   {% for o in orders %}\n     7 |   <tr><td>{{ o['id'] }}</td><td>{{ o['total'] }} UZS</td><td>{{ o['status'] }}</td>\n     8 |       <td><a href=\"{{ url_for('orders.order_detail', order_id=o['id']) }}\">View</a></td></tr>\n     9 |   {% endfor %}\n    10 | </table>\n    11 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);",
+    "prompt_tokens": 1364,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route retrieves orders for the current user from the database using the user_id from the session.",
+          "rule": "The route reads data that belongs to the current user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route only retrieves data and does not allow any changes to the database.",
+          "rule": "No fields can be changed through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route does not accept any input from the client and only uses data from the database and session.",
+          "rule": "No client-provided values are used or trusted by this route."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not have any specific limits on the input or output.",
+          "rule": "No specific limits are enforced on the data processed by this route."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route does not change any data in the database.",
+          "rule": "This route does not require CSRF protection as it does not change any data."
+        }
+      ]
+    },
+    "seconds": 46.9
+  },
+  {
+    "id": "GET /orders/<int:order_id>",
+    "url": "/orders/<int:order_id>",
+    "prompt": "Route: GET /orders/<int:order_id>  (function order_detail in cakeshop/orders.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /orders/<int:order_id>   function order_detail()  cakeshop/orders.py:21-27\nURL parameters: order_id (int)\nDecorators:\n  @login_required (defined in cakeshop/auth.py:11)\n      if g.user is None -> return redirect(url_for('auth.login', next=request.path))\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used: nowhere\nDatabase statements:\n  line 24: SELECT * FROM orders WHERE id = ?\n      WHERE on: id\nChecks in the code:\n  line 25: if order is None -> abort(404)\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 26: abort(404)\n  line 27: render_template('order.html', order=order)\n      the page shows: order.id, order.quantity, order.total, order.message, order.note, order.status\nTable orders: id, user_id, product_id, quantity, total, message, note, status\nOther routes in the same file: my_orders() with @login_required; invoice() with @login_required\n\nCODE:\n--- ROUTE (cakeshop/orders.py) ---\n    21 | @bp.route(\"/orders/<int:order_id>\")\n    22 | @login_required\n    23 | def order_detail(order_id):\n    24 |     order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()\n    25 |     if order is None:\n    26 |         abort(404)\n    27 |     return render_template(\"order.html\", order=order)\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/order.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Order #{{ order['id'] }}</h1>\n     4 | <p>Quantity: {{ order['quantity'] }}</p>\n     5 | <p>Total: {{ order['total'] }} UZS</p>\n     6 | <p>Message on the cake: {{ order['message'] }}</p>\n     7 | <p>Delivery note: {{ order['note'] }}</p>\n     8 | <p>Status: {{ order['status'] }}</p>\n     9 | <p><a href=\"{{ url_for('orders.invoice', order_id=order['id']) }}\">Download invoice</a></p>\n    10 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);",
+    "prompt_tokens": 1406,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route retrieves an order by its ID, which is a foreign key to the user's ID, and displays it.",
+          "rule": "The route reads data that belongs to the user who placed the order."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route only retrieves data and does not allow any changes to the order.",
+          "rule": "Users must not be able to change any fields through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route uses the order ID provided by the client, which it must validate and check.",
+          "rule": "The server must decide, look up, or check the order ID itself."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route expects an integer order ID, which should be within a reasonable range.",
+          "rule": "The order ID must be a valid integer."
+        }
+      ]
+    },
+    "seconds": 42.9
+  },
+  {
+    "id": "GET /orders/<int:order_id>/invoice",
+    "url": "/orders/<int:order_id>/invoice",
+    "prompt": "Route: GET /orders/<int:order_id>/invoice  (function invoice in cakeshop/orders.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /orders/<int:order_id>/invoice   function invoice()  cakeshop/orders.py:35-46\nURL parameters: order_id (int)\nDecorators:\n  @login_required (defined in cakeshop/auth.py:11)\n      if g.user is None -> return redirect(url_for('auth.login', next=request.path))\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 43: request.args format\nCurrent user used:\n  line 39: g.user['id']\nDatabase statements:\n  line 39: SELECT * FROM orders WHERE id = ? AND user_id = ?\n      WHERE on: id, user_id\nChecks in the code:\n  line 41: if order is None -> abort(404)\nCalls project functions: get_db (cakeshop/db.py:70), invoice_date (cakeshop/orders.py:30)\nResponses:\n  line 42: abort(404)\n  line 46: send_file(path)\nTable orders: id, user_id, product_id, quantity, total, message, note, status\nOther routes in the same file: my_orders() with @login_required; order_detail() with @login_required\n\nCODE:\n--- ROUTE (cakeshop/orders.py) ---\n    35 | @bp.route(\"/orders/<int:order_id>/invoice\")\n    36 | @login_required\n    37 | def invoice(order_id):\n    38 |     order = get_db().execute(\n    39 |         \"SELECT * FROM orders WHERE id = ? AND user_id = ?\", (order_id, g.user[\"id\"])\n    40 |     ).fetchone()\n    41 |     if order is None:\n    42 |         abort(404)\n    43 |     fmt = request.args.get(\"format\", \"txt\")\n    44 |     path = os.path.join(current_app.config[\"INVOICE_DIR\"], f\"order_{order_id}.{fmt}\")\n    45 |     os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")\n    46 |     return send_file(path)\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- CALLED invoice_date (cakeshop/orders.py) ---\n    30 | def invoice_date():\n    31 |     result = subprocess.run([\"date\", \"+%Y-%m-%d\"], capture_output=True, text=True, check=False)\n    32 |     return result.stdout.strip()\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);",
+    "prompt_tokens": 1397,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route fetches an order based on the order_id and the user_id of the current logged-in user.",
+          "rule": "The route reads a record that belongs to the current logged-in user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route does not allow changing any fields of the order record.",
+          "rule": "Users must not be able to set or change any fields of the order record through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route uses the format parameter from the request.args, which the server must decide, look up, or check itself.",
+          "rule": "The server must decide, look up, or check the format parameter sent by the client."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route uses the format parameter, which should be limited to specific values (e.g., 'txt', 'pdf').",
+          "rule": "The format parameter should be limited to specific values."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route changes data (generates an invoice file), so a request forged from another website must be rejected.",
+          "rule": "A request forged from another website must be rejected."
+        }
+      ]
+    },
+    "seconds": 49.6
+  },
+  {
+    "id": "GET /",
+    "url": "/",
+    "prompt": "Route: GET /  (function index in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /   function index()  cakeshop/shop.py:27-30\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used: nowhere\nDatabase statements:\n  line 29: SELECT * FROM products\n      WHERE on: nothing (no WHERE clause)\nChecks in the code: none\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 30: render_template('index.html', products=products)\n      the page shows: products.name, products.price\nTable products: id, name, price, image\nOther routes in the same file: search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    27 | @bp.route(\"/\")\n    28 | def index():\n    29 |     products = get_db().execute(\"SELECT * FROM products\").fetchall()\n    30 |     return render_template(\"index.html\", products=products)\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/index.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Our cakes</h1>\n     4 | <form action=\"{{ url_for('shop.search') }}\"><input name=\"q\" placeholder=\"Search cakes\"> <button>Search</button></form>\n     5 | {% for p in products %}\n     6 | <div class=\"card\">\n     7 |   <img src=\"{{ url_for('shop.cake_image', name=p['image']) }}\" width=\"80\" alt=\"\">\n     8 |   <a href=\"{{ url_for('shop.product', product_id=p['id']) }}\"><strong>{{ p['name'] }}</strong></a> \u2014 {{ p['price'] }} UZS\n     9 | </div>\n    10 | {% endfor %}\n    11 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);",
+    "prompt_tokens": 1203,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is publicly accessible with no authentication required.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route reads data from the 'products' table, which does not belong to any specific user.",
+          "rule": "The route reads data that belongs to no specific user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route only reads data and does not allow any changes to the database.",
+          "rule": "No fields may be changed through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route does not accept any user input that it must decide, look up, or check itself.",
+          "rule": "No values sent by the client that the server must decide, look up, or check itself."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not have any specific limits on the values it processes.",
+          "rule": "No specific limits on the values processed by this route."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route does not change any data, so it does not need CSRF protection.",
+          "rule": "This route does not need CSRF protection."
+        }
+      ]
+    },
+    "seconds": 46.3
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "prompt": "Route: GET /search  (function search in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /search   function search()  cakeshop/shop.py:33-37\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 35: request.args q\nCurrent user used: nowhere\nDatabase statements:\n  line 111 (inside search_products() in cakeshop/db.py): SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\n      WHERE on: name\nChecks in the code: none\nCalls project functions: search_products (cakeshop/db.py:109), search_products > get_db (cakeshop/db.py:70)\nResponses:\n  line 37: render_template('search.html', q=q, results=results)\n      the page shows: q, results.name, results.price\nTable products: id, name, price, image\nOther routes in the same file: index() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    33 | @bp.route(\"/search\")\n    34 | def search():\n    35 |     q = request.args.get(\"q\", \"\")\n    36 |     results = search_products(q)\n    37 |     return render_template(\"search.html\", q=q, results=results)\n\n--- CALLED search_products (cakeshop/db.py) ---\n   109 | def search_products(term):\n   110 |     db = get_db()\n   111 |     query = f\"SELECT id, name, price, image FROM products WHERE name LIKE '%{term}%'\"\n   112 |     return db.execute(query).fetchall()\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/search.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Results for \u201c{{ q }}\u201d</h1>\n     4 | {% for p in results %}\n     5 | <div class=\"card\"><a href=\"{{ url_for('shop.product', product_id=p['id']) }}\">{{ p['name'] }}</a> \u2014 {{ p['price'] }} UZS</div>\n     6 | {% else %}\n     7 | <p>No cakes found.</p>\n     8 | {% endfor %}\n     9 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);",
+    "prompt_tokens": 1278,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any authentication or authorization checks.",
+          "rule": "Anyone can call this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The search term is directly used in the SQL query without any sanitization or parameterized queries.",
+          "rule": "The search term must be sanitized or use parameterized queries to prevent SQL injection."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The search term is not limited in length.",
+          "rule": "The search term should have a maximum length to prevent denial of service attacks."
+        }
+      ]
+    },
+    "seconds": 32.1
+  },
+  {
+    "id": "GET /product/<int:product_id>",
+    "url": "/product/<int:product_id>",
+    "prompt": "Route: GET /product/<int:product_id>  (function product in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /product/<int:product_id>   function product()  cakeshop/shop.py:40-47\nURL parameters: product_id (int)\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs: none\nCurrent user used: nowhere\nDatabase statements:\n  line 43: SELECT * FROM products WHERE id = ?\n      WHERE on: id\n  line 46: SELECT * FROM reviews WHERE product_id = ?\n      WHERE on: product_id\nChecks in the code:\n  line 44: if item is None -> abort(404)\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 45: abort(404)\n  line 47: render_template('product.html', product=item, reviews=reviews)\n      the page shows: product.name, product.price, product.id, reviews.username, reviews.body |safe\nTable products: id, name, price, image\nTable reviews: id, product_id, username, body\nOther routes in the same file: index() with no decorators; search() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    40 | @bp.route(\"/product/<int:product_id>\")\n    41 | def product(product_id):\n    42 |     db = get_db()\n    43 |     item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()\n    44 |     if item is None:\n    45 |         abort(404)\n    46 |     reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()\n    47 |     return render_template(\"product.html\", product=item, reviews=reviews)\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/product.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>{{ product['name'] }}</h1>\n     4 | <img src=\"{{ url_for('shop.cake_thumbnail', name=product['image']) }}\" width=\"160\" alt=\"\">\n     5 | <p>{{ product['price'] }} UZS</p>\n     6 | \n     7 | <form method=\"post\" action=\"{{ url_for('shop.add_to_cart') }}\">\n     8 |   <input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">\n     9 |   <button>Add to cart</button>\n    10 | </form>\n    11 | \n    12 | {% if g.user %}\n    13 | <h2>Order now</h2>\n    14 | <form method=\"post\" action=\"{{ url_for('shop.checkout') }}\">\n    15 |   <input type=\"hidden\" name=\"product_id\" value=\"{{ product['id'] }}\">\n    16 |   <input type=\"hidden\" name=\"price\" value=\"{{ product['price'] }}\">\n    17 |   <label>Quantity <input name=\"quantity\" type=\"number\" value=\"1\" min=\"1\"></label><br>\n    18 |   <label>Message on the cake <input name=\"message\"></label><br>\n    19 |   <label>Delivery note <input name=\"note\"></label><br>\n    20 |   <button>Place order</button>\n    21 | </form>\n    22 | {% endif %}\n    23 | \n    24 | <h2>Reviews</h2>\n    25 | {% for r in reviews %}\n    26 | <div class=\"card\"><strong>{{ r['username'] }}</strong>: {{ r['body']|safe }}</div>\n    27 | {% else %}\n    28 | <p>No reviews yet.</p>\n    29 | {% endfor %}\n    30 | {% if g.user %}\n    31 | <form method=\"post\" action=\"{{ url_for('shop.add_review', product_id=product['id']) }}\">\n    32 |   <textarea name=\"body\"></textarea><br><button>Post review</button>\n    33 | </form>\n    34 | {% endif %}\n    35 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);\n\n--- TABLE (schema) ---\nCREATE TABLE reviews (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    product_id INTEGER NOT NULL,\n    username TEXT NOT NULL,\n    body TEXT NOT NULL\n);",
+    "prompt_tokens": 1728,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any decorators, so it is accessible to anyone.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route reads data from the 'products' and 'reviews' tables based on the 'product_id' parameter.",
+          "rule": "The route reads data that belongs to the product with the given 'product_id'."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route only reads data and does not allow any changes to the database.",
+          "rule": "No fields may be changed through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route does not accept any user input that it must decide, look up, or check itself.",
+          "rule": "No values sent by the client that the server must decide, look up, or check itself."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not have any specific limits on the values it accepts.",
+          "rule": "No specific limits on the values accepted by this route."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route does not change any data, so it does not need CSRF protection.",
+          "rule": "This route does not need CSRF protection."
+        }
+      ]
+    },
+    "seconds": 53.8
+  },
+  {
+    "id": "POST /product/<int:product_id>/review",
+    "url": "/product/<int:product_id>/review",
+    "prompt": "Route: POST /product/<int:product_id>/review  (function add_review in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE POST /product/<int:product_id>/review   function add_review()  cakeshop/shop.py:50-59\nURL parameters: product_id (int)\nDecorators:\n  @login_required (defined in cakeshop/auth.py:11)\n      if g.user is None -> return redirect(url_for('auth.login', next=request.path))\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 56: request.form body\nCurrent user used:\n  line 56: g.user['username']\nDatabase statements:\n  line 55: INSERT INTO reviews (product_id, username, body) VALUES (?, ?, ?)\n      writes columns: product_id, username, body\nChecks in the code: none\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 59: redirect(url_for('shop.product', product_id=product_id))\nTable reviews: id, product_id, username, body\nOther table users: id, username, password_hash, email, address, is_admin  (same column name as this route's data: username)\nOther table orders: id, user_id, product_id, quantity, total, message, note, status  (same column name as this route's data: product_id)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    50 | @bp.route(\"/product/<int:product_id>/review\", methods=[\"POST\"])\n    51 | @login_required\n    52 | def add_review(product_id):\n    53 |     db = get_db()\n    54 |     db.execute(\n    55 |         \"INSERT INTO reviews (product_id, username, body) VALUES (?, ?, ?)\",\n    56 |         (product_id, g.user[\"username\"], request.form[\"body\"]),\n    57 |     )\n    58 |     db.commit()\n    59 |     return redirect(url_for(\"shop.product\", product_id=product_id))\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE users (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    username TEXT UNIQUE NOT NULL,\n    password_hash TEXT NOT NULL,\n    email TEXT,\n    address TEXT,\n    is_admin INTEGER NOT NULL DEFAULT 0\n);\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);\n\n--- TABLE (schema) ---\nCREATE TABLE reviews (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    product_id INTEGER NOT NULL,\n    username TEXT NOT NULL,\n    body TEXT NOT NULL\n);",
+    "prompt_tokens": 1551,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route inserts a new record into the 'reviews' table, which belongs to a user.",
+          "rule": "The route reads or changes a record that belongs to a user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route inserts a new record into the 'reviews' table, and the 'product_id' and 'username' fields are set by the server based on the request and the current user.",
+          "rule": "Users must not be able to set or change the 'product_id' or 'username' fields through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route inserts a new record into the 'reviews' table, and the 'body' field is provided by the client.",
+          "rule": "Values sent by the client that the server must decide, look up or check itself (for example, the 'body' field)."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route inserts a new record into the 'reviews' table, and the 'body' field has a limit on its length.",
+          "rule": "The 'body' field must not exceed a certain length."
+        }
+      ]
+    },
+    "seconds": 48.7
+  },
+  {
+    "id": "GET /image",
+    "url": "/image",
+    "prompt": "Route: GET /image  (function cake_image in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /image   function cake_image()  cakeshop/shop.py:62-65\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 64: request.args name\nCurrent user used: nowhere\nDatabase statements: none\nChecks in the code: none\nResponses:\n  line 65: send_file(os.path.join(current_app.config['IMAGE_DIR'], filename))\nOther table products: id, name, price, image  (same column name as this route's data: name)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    62 | @bp.route(\"/image\")\n    63 | def cake_image():\n    64 |     filename = request.args.get(\"name\", \"\")\n    65 |     return send_file(os.path.join(current_app.config[\"IMAGE_DIR\"], filename))\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);",
+    "prompt_tokens": 926,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route reads a filename from the client's input without validation.",
+          "rule": "The filename parameter must be validated to prevent directory traversal attacks."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not limit the length of the filename parameter.",
+          "rule": "The filename parameter must have a maximum length to prevent excessive resource consumption."
+        }
+      ]
+    },
+    "seconds": 16.6
+  },
+  {
+    "id": "GET /thumbnail",
+    "url": "/thumbnail",
+    "prompt": "Route: GET /thumbnail  (function cake_thumbnail in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /thumbnail   function cake_thumbnail()  cakeshop/shop.py:68-71\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 70: request.args name\nCurrent user used: nowhere\nDatabase statements: none\nChecks in the code: none\nResponses:\n  line 71: send_from_directory(current_app.config['IMAGE_DIR'], filename)\nOther table products: id, name, price, image  (same column name as this route's data: name)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; greeting() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    68 | @bp.route(\"/thumbnail\")\n    69 | def cake_thumbnail():\n    70 |     filename = secure_filename(request.args.get(\"name\", \"\"))\n    71 |     return send_from_directory(current_app.config[\"IMAGE_DIR\"], filename)\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);",
+    "prompt_tokens": 935,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route reads a filename from the client's input without validation.",
+          "rule": "The filename parameter must be validated to prevent directory traversal attacks."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not limit the length of the filename parameter.",
+          "rule": "The filename parameter must have a maximum length to prevent excessive resource consumption."
+        }
+      ]
+    },
+    "seconds": 16.6
+  },
+  {
+    "id": "GET /greeting",
+    "url": "/greeting",
+    "prompt": "Route: GET /greeting  (function greeting in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /greeting   function greeting()  cakeshop/shop.py:74-77\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 76: request.args name\nCurrent user used: nowhere\nDatabase statements: none\nChecks in the code: none\nResponses:\n  line 77: render_template_string('<p>Happy birthday, {{ name }}!</p>', name=name)\nOther table products: id, name, price, image  (same column name as this route's data: name)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; preview_message() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    74 | @bp.route(\"/greeting\")\n    75 | def greeting():\n    76 |     name = request.args.get(\"name\", \"friend\")\n    77 |     return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);",
+    "prompt_tokens": 931,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any authentication or authorization checks.",
+          "rule": "Anyone can call this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route uses a value from the client (request.args.get('name')) without any validation or sanitization.",
+          "rule": "The server must decide, look up, or check the 'name' value itself."
+        }
+      ]
+    },
+    "seconds": 17.6
+  },
+  {
+    "id": "GET /cake-message/preview",
+    "url": "/cake-message/preview",
+    "prompt": "Route: GET /cake-message/preview  (function preview_message in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /cake-message/preview   function preview_message()  cakeshop/shop.py:80-84\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 82: request.args text\nCurrent user used: nowhere\nDatabase statements: none\nChecks in the code: none\nResponses:\n  line 84: render_template_string(template)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; view_cart() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    80 | @bp.route(\"/cake-message/preview\")\n    81 | def preview_message():\n    82 |     text = request.args.get(\"text\", \"\")\n    83 |     template = \"<div class='cake-top'>\" + text + \"</div>\"\n    84 |     return render_template_string(template)\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()",
+    "prompt_tokens": 865,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any decorators or checks to restrict access, allowing anyone to call it.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route uses user-provided input (`text`) directly in the response without any validation or sanitization.",
+          "rule": "The server must decide, look up, or check the `text` value itself."
+        }
+      ]
+    },
+    "seconds": 15.1
+  },
+  {
+    "id": "GET /cart",
+    "url": "/cart",
+    "prompt": "Route: GET /cart  (function view_cart in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE GET /cart   function view_cart()  cakeshop/shop.py:98-107\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 88: request.cookies cart, inside _load_cart()\nCurrent user used: nowhere\nDatabase statements:\n  line 104: SELECT * FROM products WHERE id = ?\n      WHERE on: id\nChecks in the code:\n  line 105: if row is not None -> then runs: items.append({'product': row, 'quantity': qty})\n  line 89: if not raw -> return {} (inside _load_cart())\nCalls project functions: _load_cart (cakeshop/shop.py:87), get_db (cakeshop/db.py:70)\nResponses:\n  line 107: render_template('cart.html', items=items)\n      the page shows: items.quantity\nTable products: id, name, price, image\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; and 2 more\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n    98 | @bp.route(\"/cart\")\n    99 | def view_cart():\n   100 |     cart = _load_cart()\n   101 |     db = get_db()\n   102 |     items = []\n   103 |     for product_id, qty in cart.items():\n   104 |         row = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()\n   105 |         if row is not None:\n   106 |             items.append({\"product\": row, \"quantity\": qty})\n   107 |     return render_template(\"cart.html\", items=items)\n\n--- CALLED _load_cart (cakeshop/shop.py) ---\n    87 | def _load_cart():\n    88 |     raw = request.cookies.get(\"cart\")\n    89 |     if not raw:\n    90 |         return {}\n    91 |     return pickle.loads(base64.b64decode(raw))\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TEMPLATE (cakeshop/templates/cart.html) ---\n     1 | {% extends \"base.html\" %}\n     2 | {% block content %}\n     3 | <h1>Cart</h1>\n     4 | {% for item in items %}\n     5 | <div class=\"card\">{{ item.product['name'] }} \u00d7 {{ item.quantity }}</div>\n     6 | {% else %}\n     7 | <p>Your cart is empty.</p>\n     8 | {% endfor %}\n     9 | {% endblock %}\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);",
+    "prompt_tokens": 1336,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any decorators or checks to restrict access based on user roles or authentication status.",
+          "rule": "Anyone can call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route reads data from the 'cart' cookie, which is not tied to any specific user.",
+          "rule": "The route reads data that belongs to the user who set the 'cart' cookie."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route only reads data and does not allow any changes to the database.",
+          "rule": "No fields can be changed through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route reads data from the 'cart' cookie, which is not validated or sanitized.",
+          "rule": "Values sent by the client that the server must decide, look up or check itself."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not have any checks on the number of items in the cart or the quantity of each item.",
+          "rule": "There are no limits on the number of items or the quantity of each item in the cart."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route does not change any data in the database.",
+          "rule": "This route does not need CSRF protection."
+        }
+      ]
+    },
+    "seconds": 40.6
+  },
+  {
+    "id": "POST /cart/add",
+    "url": "/cart/add",
+    "prompt": "Route: POST /cart/add  (function add_to_cart in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE POST /cart/add   function add_to_cart()  cakeshop/shop.py:110-117\nURL parameters: none\nDecorators: none\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 113: request.form product_id, converted with int()\n  line 88: request.cookies cart, inside _load_cart()\nCurrent user used: nowhere\nDatabase statements: none\nChecks in the code:\n  line 89: if not raw -> return {} (inside _load_cart())\nCalls project functions: _dump_cart (cakeshop/shop.py:94), _load_cart (cakeshop/shop.py:87)\nResponses:\n  line 115: make_response(redirect(url_for('shop.view_cart')))\n  line 115: redirect(url_for('shop.view_cart'))\n  line 116: resp.set_cookie('cart', _dump_cart(cart))\nOther table orders: id, user_id, product_id, quantity, total, message, note, status  (same column name as this route's data: product_id)\nOther table reviews: id, product_id, username, body  (same column name as this route's data: product_id)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; and 2 more\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n   110 | @bp.route(\"/cart/add\", methods=[\"POST\"])\n   111 | def add_to_cart():\n   112 |     cart = _load_cart()\n   113 |     product_id = int(request.form[\"product_id\"])\n   114 |     cart[product_id] = cart.get(product_id, 0) + 1\n   115 |     resp = make_response(redirect(url_for(\"shop.view_cart\")))\n   116 |     resp.set_cookie(\"cart\", _dump_cart(cart))\n   117 |     return resp\n\n--- CALLED _dump_cart (cakeshop/shop.py) ---\n    94 | def _dump_cart(cart):\n    95 |     return base64.b64encode(pickle.dumps(cart)).decode()\n\n--- CALLED _load_cart (cakeshop/shop.py) ---\n    87 | def _load_cart():\n    88 |     raw = request.cookies.get(\"cart\")\n    89 |     if not raw:\n    90 |         return {}\n    91 |     return pickle.loads(base64.b64decode(raw))\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);\n\n--- TABLE (schema) ---\nCREATE TABLE reviews (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    product_id INTEGER NOT NULL,\n    username TEXT NOT NULL,\n    body TEXT NOT NULL\n);",
+    "prompt_tokens": 1349,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route does not have any decorators or checks to restrict access, so anyone can call it.",
+          "rule": "Anyone may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route modifies the cart data, which belongs to the user who is logged in.",
+          "rule": "Only the user who is logged in may modify their own cart data."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route does not allow changing the product_id or quantity directly through the request form.",
+          "rule": "Users must not be able to set or change the product_id or quantity through this route."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route uses the product_id directly from the request form without any validation or sanitization.",
+          "rule": "The server must validate and sanitize the product_id before using it."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route does not have any limits on the product_id or quantity.",
+          "rule": "The product_id and quantity must be within a valid range."
+        },
+        {
+          "type": "csrf",
+          "applies_because": "The route changes data, but there is no CSRF protection.",
+          "rule": "A request forged from another website must be rejected."
+        }
+      ]
+    },
+    "seconds": 43.7
+  },
+  {
+    "id": "POST /checkout",
+    "url": "/checkout",
+    "prompt": "Route: POST /checkout  (function checkout in cakeshop/shop.py)\n\nROUTE CARD (facts read from the code):\nROUTE POST /checkout   function checkout()  cakeshop/shop.py:120-140\nURL parameters: none\nDecorators:\n  @login_required (defined in cakeshop/auth.py:11)\n      if g.user is None -> return redirect(url_for('auth.login', next=request.path))\nRuns before every request: load_logged_in_user() (cakeshop/auth.py:33) sets g.user from session.get('user_id') using: SELECT * FROM users WHERE id = ?\nRequest inputs:\n  line 123: request.form product_id, converted with int()\n  line 124: request.form quantity, converted with int()\n  line 125: request.form price, converted with int()\n  line 135: request.form message\n  line 136: request.form note\nCurrent user used:\n  line 131: g.user['id']\nDatabase statements:\n  line 129: INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)\n      writes columns: user_id, product_id, quantity, total, message, note\nChecks in the code: none\nCalls project functions: get_db (cakeshop/db.py:70)\nResponses:\n  line 140: redirect(url_for('orders.order_detail', order_id=cur.lastrowid))\nTable orders: id, user_id, product_id, quantity, total, message, note, status\nOther table products: id, name, price, image  (same column name as this route's data: price)\nOther table reviews: id, product_id, username, body  (same column name as this route's data: product_id)\nOther routes in the same file: index() with no decorators; search() with no decorators; product() with no decorators; add_review() with @login_required; cake_image() with no decorators; cake_thumbnail() with no decorators; greeting() with no decorators; preview_message() with no decorators; and 2 more\nCSRF protection: the word 'csrf' appears nowhere in the project\n\nCODE:\n--- ROUTE (cakeshop/shop.py) ---\n   120 | @bp.route(\"/checkout\", methods=[\"POST\"])\n   121 | @login_required\n   122 | def checkout():\n   123 |     product_id = int(request.form[\"product_id\"])\n   124 |     quantity = int(request.form.get(\"quantity\", 1))\n   125 |     price = int(request.form[\"price\"])\n   126 |     total = price * quantity\n   127 |     db = get_db()\n   128 |     cur = db.execute(\n   129 |         \"INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)\",\n   130 |         (\n   131 |             g.user[\"id\"],\n   132 |             product_id,\n   133 |             quantity,\n   134 |             total,\n   135 |             request.form.get(\"message\", \"\"),\n   136 |             request.form.get(\"note\", \"\"),\n   137 |         ),\n   138 |     )\n   139 |     db.commit()\n   140 |     return redirect(url_for(\"orders.order_detail\", order_id=cur.lastrowid))\n\n--- DECORATOR login_required (cakeshop/auth.py) ---\n    11 | def login_required(view):\n    12 |     @functools.wraps(view)\n    13 |     def wrapped(*args, **kwargs):\n    14 |         if g.user is None:\n    15 |             return redirect(url_for(\"auth.login\", next=request.path))\n    16 |         return view(*args, **kwargs)\n    17 | \n    18 |     return wrapped\n\n--- CALLED get_db (cakeshop/db.py) ---\n    70 | def get_db():\n    71 |     if \"db\" not in g:\n    72 |         g.db = sqlite3.connect(current_app.config[\"DATABASE\"])\n    73 |         g.db.row_factory = sqlite3.Row\n    74 |     return g.db\n\n--- RUNS BEFORE EVERY REQUEST load_logged_in_user (cakeshop/auth.py) ---\n    32 | @bp.before_app_request\n    33 | def load_logged_in_user():\n    34 |     user_id = session.get(\"user_id\")\n    35 |     if user_id is None:\n    36 |         g.user = None\n    37 |     else:\n    38 |         g.user = get_db().execute(\"SELECT * FROM users WHERE id = ?\", (user_id,)).fetchone()\n\n--- TABLE (schema) ---\nCREATE TABLE products (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT NOT NULL,\n    price INTEGER NOT NULL,\n    image TEXT\n);\n\n--- TABLE (schema) ---\nCREATE TABLE orders (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    product_id INTEGER NOT NULL,\n    quantity INTEGER NOT NULL,\n    total INTEGER NOT NULL,\n    message TEXT,\n    note TEXT,\n    status TEXT NOT NULL DEFAULT 'new'\n);\n\n--- TABLE (schema) ---\nCREATE TABLE reviews (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    product_id INTEGER NOT NULL,\n    username TEXT NOT NULL,\n    body TEXT NOT NULL\n);",
+    "prompt_tokens": 1708,
+    "dropped": 0,
+    "answer": {
+      "rules": [
+        {
+          "type": "who_may_call",
+          "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+          "rule": "Only logged-in users may call this route."
+        },
+        {
+          "type": "whose_data",
+          "applies_because": "The route inserts data into the 'orders' table, which belongs to the user making the request.",
+          "rule": "The route reads or changes a record that belongs to the current user."
+        },
+        {
+          "type": "must_not_change",
+          "applies_because": "The route inserts data into the 'orders' table, and the 'user_id' field is set to the current user's ID, which should not be changed by the user.",
+          "rule": "The user must not be able to set or change their own role or another user's ID."
+        },
+        {
+          "type": "do_not_trust",
+          "applies_because": "The route inserts data into the 'orders' table, and the 'product_id', 'quantity', and 'price' fields are directly taken from the user's input without further validation.",
+          "rule": "Values sent by the client that the server must decide, look up or check itself (e.g., product_id, quantity, price)."
+        },
+        {
+          "type": "limits",
+          "applies_because": "The route inserts data into the 'orders' table, and the 'quantity' field is directly taken from the user's input without any bounds checking.",
+          "rule": "Values that need bounds or a fixed set of allowed values (e.g., quantity)."
+        }
+      ]
+    },
+    "seconds": 43.7
+  }
+]

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{% if workshop %}Edit Workshop{% else %}New Workshop{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if workshop %}Edit Workshop{% else %}New Workshop{% endif %}</h1>
+<div class="card" style="max-width:500px;">
+  <form method="post"
+        action="{% if workshop %}{{ url_for('workshops.edit', wid=workshop['id']) }}{% else %}{{ url_for('workshops.create') }}{% endif %}">
+    <input type="hidden" name="_csrf" value="{{ g.csrf_token }}">
+    <label>Title
+      <input type="text" name="title"
+             value="{{ workshop['title'] if workshop else '' }}" required>
+    </label>
+    <label>Description
+      <textarea name="description">{{ workshop['description'] if workshop else '' }}</textarea>
+    </label>
+    <label>Capacity
+      <input type="number" name="capacity" min="1"
+             value="{{ workshop['capacity'] if workshop else '' }}" required>
+    </label>
+    <label>Price per seat (&pound;)
+      <input type="number" name="price_per_seat" step="0.01" min="0"
+             value="{{ workshop['price_per_seat'] if workshop else '' }}" required>
+    </label>
+    <label>Date / Time
+      <input type="text" name="scheduled_at" placeholder="YYYY-MM-DD HH:MM"
+             value="{{ workshop['scheduled_at'] if workshop else '' }}" required>
+    </label>
+    <br>
+    <button class="btn" type="submit">
+      {% if workshop %}Save Changes{% else %}Create Workshop{% endif %}
+    </button>
+  </form>
+</div>
+{% endblock %}

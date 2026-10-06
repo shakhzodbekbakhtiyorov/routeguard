@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Our cakes</h1>
+<form action="{{ url_for('shop.search') }}"><input name="q" placeholder="Search cakes"> <button>Search</button></form>
+{% for p in products %}
+<div class="card">
+  <img src="{{ url_for('shop.cake_image', name=p['image']) }}" width="80" alt="">
+  <a href="{{ url_for('shop.product', product_id=p['id']) }}"><strong>{{ p['name'] }}</strong></a> — {{ p['price'] }} UZS
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,207 @@
+[
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: filename: The server must sanitize the filename to prevent directory traversal attacks.",
+    "file": "flask_webgoat/actions.py",
+    "line": 32,
+    "snippet": "filename = filename_param + \".txt\"",
+    "cwe": [
+      "CWE-78"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "POST /message",
+      "rule": "filename: The server must sanitize the filename to prevent directory traversal attacks.",
+      "verdict": "not_enforced",
+      "reason": "The filename is directly concatenated with the user-provided filename_param, which can lead to directory traversal attacks.",
+      "attack": "An attacker can exploit this by providing a filename like `../../etc/passwd.txt`. This would allow the attacker to read sensitive system files. The user is logged in, the method is POST, the URL is `/message`, and the values are `filename=../../etc/passwd.txt` and `text=any_text`. The server will write the text to `/data/user_id/../../etc/passwd.txt`, which could potentially lead to unauthorized access to system files.",
+      "replay": {
+        "route": "POST /message",
+        "rule_type": "do_not_trust",
+        "rule": "filename: The server must sanitize the filename to prevent directory traversal attacks.",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "the value reaches a sink this replay does not model; keep for a human",
+        "request": {
+          "actor": "anon",
+          "method": "POST",
+          "url": "/message",
+          "value": "filename",
+          "type": "do_not_trust"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+    "file": "flask_webgoat/actions.py",
+    "line": 40,
+    "snippet": "def grep_processes():",
+    "cwe": [
+      "CWE-78"
+    ],
+    "confidence": "confirmed",
+    "extra": {
+      "route": "GET /grep_processes",
+      "rule": "name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+      "verdict": "not_enforced",
+      "reason": "The 'name' parameter is directly concatenated into the command string without sanitization, making it vulnerable to command injection attacks.",
+      "attack": "An attacker can inject malicious commands into the 'name' parameter. For example, if the attacker sets 'name' to 'root; rm -rf /', the command executed will be 'ps aux | grep root; rm -rf / | awk \\'{print $11}\\''. This will result in the deletion of all files on the server, leading to a complete system compromise.",
+      "replay": {
+        "route": "GET /grep_processes",
+        "rule_type": "do_not_trust",
+        "rule": "name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+        "from_finding": true,
+        "verdict": "confirmed",
+        "why": "a shell metacharacter payload ran a command (wrote a marker file) \u2014 command injection",
+        "request": {
+          "actor": "anon",
+          "method": "GET",
+          "url": "/grep_processes",
+          "value": "name",
+          "type": "do_not_trust",
+          "result": "200"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+    "file": "flask_webgoat/actions.py",
+    "line": 58,
+    "snippet": "deserialized = pickle.loads(data)",
+    "cwe": [
+      "CWE-502"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "POST /deserialized_descr",
+      "rule": "pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+      "verdict": "not_enforced",
+      "reason": "The code uses the `pickle` module to deserialize data directly from the user input without any validation or sanitization.",
+      "attack": "An attacker could provide a maliciously crafted pickled object that, when deserialized, could execute arbitrary code on the server. For example, an attacker could send a pickled object that contains a `subprocess.Popen` call to execute a harmful command. The server would execute this command, potentially leading to a remote code execution vulnerability.",
+      "replay": {
+        "route": "POST /deserialized_descr",
+        "rule_type": "do_not_trust",
+        "rule": "pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "the value reaches a sink this replay does not model; keep for a human",
+        "request": {
+          "actor": "anon",
+          "method": "POST",
+          "url": "/deserialized_descr",
+          "value": "pickled",
+          "type": "do_not_trust"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "flask_webgoat/auth.py",
+    "line": 8,
+    "snippet": "def login():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "POST /login",
+      "rule": "POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The code does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to /login from another website. They can provide any username and password, and if the credentials are correct, they will be logged in. No CSRF token is required or checked, making it easy for attackers to perform unauthorized actions on behalf of users.",
+      "replay": {
+        "route": "POST /login",
+        "rule_type": "csrf",
+        "rule": "POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "the forged POST only rewrote the session cookie (200): a real change (log in/out) or bookkeeping (a flash message, a token); keep for a human",
+        "request": {
+          "actor": "bob",
+          "method": "POST",
+          "url": "/login",
+          "result": "200",
+          "changed": []
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+    "file": "flask_webgoat/auth.py",
+    "line": 17,
+    "snippet": "query = (",
+    "cwe": [
+      "CWE-89"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "POST /login",
+      "rule": "password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+      "verdict": "not_enforced",
+      "reason": "The password is being directly inserted into the SQL query without any form of hashing or verification.",
+      "attack": "An attacker can bypass the authentication by providing a username and a password that matches the SQL query syntax. For example, if the attacker provides the username 'admin' and the password 'admin' (or any other string that is not a valid password but matches the SQL syntax), the query will still execute successfully, and the attacker will be authenticated. This is because the password is being directly inserted into the SQL query without any form of hashing or verification.",
+      "replay": {
+        "route": "POST /login",
+        "rule_type": "do_not_trust",
+        "rule": "password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "the value reaches a sink this replay does not model; keep for a human",
+        "request": {
+          "actor": "bob",
+          "method": "POST",
+          "url": "/login",
+          "value": "password",
+          "type": "do_not_trust"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+    "file": "flask_webgoat/auth.py",
+    "line": 32,
+    "snippet": "url = request.args.get(\"url\")",
+    "cwe": [
+      "CWE-601"
+    ],
+    "confidence": "uncertain",
+    "extra": {
+      "route": "GET /login_and_redirect",
+      "rule": "url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+      "verdict": "not_enforced",
+      "reason": "The code does not validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+      "attack": "An attacker can provide a malicious URL as the 'url' parameter. For example, the attacker could use a URL like 'http://malicious-site.com' to redirect the user to a malicious site. This would bypass the intended functionality of the login and redirect route.",
+      "replay": {
+        "route": "GET /login_and_redirect",
+        "rule_type": "do_not_trust",
+        "rule": "url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+        "from_finding": true,
+        "verdict": "uncertain",
+        "why": "the value reaches a sink this replay does not model; keep for a human",
+        "request": {
+          "actor": "bob",
+          "method": "GET",
+          "url": "/login_and_redirect",
+          "value": "url",
+          "type": "do_not_trust"
+        }
+      }
+    }
+  }
+]

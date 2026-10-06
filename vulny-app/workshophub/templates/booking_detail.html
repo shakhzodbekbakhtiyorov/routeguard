@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Booking #{{ booking['id'] }}{% endblock %}
+{% block content %}
+<h1>Booking #{{ booking['id'] }}</h1>
+<div class="card">
+  <p><strong>Workshop:</strong> {{ booking['workshop_title'] }}</p>
+  <p><strong>Date:</strong> {{ booking['scheduled_at'] }}</p>
+  <p><strong>Seats:</strong> {{ booking['seats'] }}</p>
+  <p><strong>Total paid:</strong> &pound;{{ "%.2f"|format(booking['total_cost']) }}</p>
+  <p><strong>Status:</strong> {{ booking['status'] }}</p>
+  <p><strong>Booked at:</strong> {{ booking['reserved_at'] }}</p>
+
+  {% if booking['status'] == 'confirmed' %}
+  <form method="post" action="{{ url_for('bookings.cancel', rid=booking['id']) }}"
+        style="margin-top:1rem;">
+    <button class="btn btn-danger" type="submit"
+            onclick="return confirm('Cancel this booking?')">Cancel Booking</button>
+  </form>
+  {% endif %}
+</div>
+
+<h2>Notes for Organiser</h2>
+{% for note in notes %}
+<div class="card">
+  <p>{{ note['body'] }}</p>
+  <small>{{ note['author_name'] }} &mdash; {{ note['created_at'] }}</small>
+</div>
+{% endfor %}
+
+<div class="card">
+  <form method="post" action="{{ url_for('bookings.add_note', rid=booking['id']) }}">
+    <input type="hidden" name="_csrf" value="{{ g.csrf_token }}">
+    <label>Add a note
+      <textarea name="body" placeholder="Any special requests or questions..." required></textarea>
+    </label>
+    <br>
+    <button class="btn" type="submit">Send Note</button>
+  </form>
+</div>
+{% endblock %}

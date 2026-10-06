@@ -1,0 +1,6 @@
+# Scanners used by run.sh (installed in agentenv/). The agent itself uses only the standard library
+# and talks to Ollama over HTTP. Versions are the ones the reported runs used.
+bandit==1.9.4
+semgrep==1.178.0
+pip-audit==2.10.1
+# also needed, not on PyPI: gitleaks (on PATH) and Ollama with qwen2.5-coder:7b

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Receipt #{{ booking['id'] }}{% endblock %}
+{% block content %}
+<h1>Booking Receipt</h1>
+<div class="card" style="max-width:500px;">
+  <h2>Receipt #{{ booking['id'] }}</h2>
+  <table>
+    <tr><td><strong>Member</strong></td><td>{{ booking['member_name'] }}</td></tr>
+    <tr><td><strong>Email</strong></td><td>{{ booking['member_email'] }}</td></tr>
+    <tr><td><strong>Workshop</strong></td><td>{{ booking['workshop_title'] }}</td></tr>
+    <tr><td><strong>Date</strong></td><td>{{ booking['scheduled_at'] }}</td></tr>
+    <tr><td><strong>Seats</strong></td><td>{{ booking['seats'] }}</td></tr>
+    <tr><td><strong>Unit price</strong></td><td>&pound;{{ "%.2f"|format(booking['price_per_seat']) }}</td></tr>
+    <tr><td><strong>Total</strong></td><td>&pound;{{ "%.2f"|format(booking['total_cost']) }}</td></tr>
+    <tr><td><strong>Status</strong></td><td>{{ booking['status'] }}</td></tr>
+    <tr><td><strong>Booked at</strong></td><td>{{ booking['reserved_at'] }}</td></tr>
+  </table>
+  <p style="margin-top:1rem; color:#888; font-size:0.85rem;">
+    This receipt is for your records.
+  </p>
+</div>
+{% endblock %}

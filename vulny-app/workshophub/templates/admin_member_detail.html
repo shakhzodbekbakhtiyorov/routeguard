@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Edit Member{% endblock %}
+{% block content %}
+<h1>Edit Member: {{ member['username'] }}</h1>
+<div class="card" style="max-width:450px;">
+  <form method="post"
+        action="{{ url_for('members.admin_update', mid=member['id']) }}">
+    <input type="hidden" name="_csrf" value="{{ g.csrf_token }}">
+    <label>Display Name
+      <input type="text" name="display_name"
+             value="{{ member['display_name'] }}" required>
+    </label>
+    <label>Email
+      <input type="email" name="email"
+             value="{{ member['email'] or '' }}">
+    </label>
+    <label>Role
+      <select name="role">
+        <option value="member" {% if member['role'] == 'member' %}selected{% endif %}>member</option>
+        <option value="staff" {% if member['role'] == 'staff' %}selected{% endif %}>staff</option>
+        <option value="admin" {% if member['role'] == 'admin' %}selected{% endif %}>admin</option>
+      </select>
+    </label>
+    <label>Credit Balance (&pound;)
+      <input type="number" name="credit_balance" step="0.01"
+             value="{{ member['credit_balance'] }}">
+    </label>
+    <br>
+    <button class="btn" type="submit">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

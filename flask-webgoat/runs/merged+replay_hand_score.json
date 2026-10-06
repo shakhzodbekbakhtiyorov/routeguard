@@ -1,0 +1,38 @@
+{
+  "label": "merged+replay",
+  "strict": false,
+  "n_findings": 17,
+  "n_vuln": 16,
+  "detected": 12,
+  "recall": 0.75,
+  "cwe_exact": 9,
+  "cwe_related": 11,
+  "tp_findings": 16,
+  "precision": 0.941,
+  "code_precision": 0.923,
+  "decoys_flagged": [],
+  "decoy_findings": 0,
+  "other": 1,
+  "real_unlabelled": 1,
+  "hand": true,
+  "missed": [
+    "V07",
+    "V08",
+    "V09",
+    "V12"
+  ],
+  "detected_ids": [
+    "V01",
+    "V02",
+    "V03",
+    "V04",
+    "V05",
+    "V06",
+    "V10",
+    "V11",
+    "V13",
+    "V14",
+    "V15",
+    "V16"
+  ]
+}

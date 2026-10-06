@@ -1,0 +1,569 @@
+[
+  {
+    "id": "GET/POST /account",
+    "url": "/account",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for managing a user's account, which requires authentication. It updates user-specific data.",
+        "rule": "Only logged-in users may call /account."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates user-specific data stored in the 'users' table, where each row is owned by a specific user identified by 'id'.",
+        "rule": "The route updates data for the user whose ID is stored in the session (g.user['id'])."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: UPDATE users, method GET/POST",
+        "rule": "GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "A boolean value that determines if the user has admin privileges, which will be written to the users.is_admin field in the database.",
+        "rule": "is_admin: The server must not allow the client to set the is_admin field through this route."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password_hash": "content",
+        "email": "content",
+        "address": "content",
+        "is_admin": "must_not_set"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /admin/orders",
+    "url": "/admin/orders",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for viewing all orders, which is a task typically performed by administrators.",
+        "rule": "Only administrators may call /admin/orders."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves data from the 'orders' table, which contains records that belong to specific user accounts.",
+        "rule": "The 'orders' table stores records that belong to specific user accounts, identified by the 'user_id' column."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /admin/stats",
+    "url": "/admin/stats",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for administrative purposes and should only be accessible by administrators.",
+        "rule": "Only administrators may call /admin/stats."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "POST /admin/orders/<int:order_id>/status",
+    "url": "/admin/orders/<int:order_id>/status",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for changing the status of an order, which is an administrative task. Only administrators should be able to perform this action.",
+        "rule": "Only administrators may call /admin/orders/<int:order_id>/status."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "This route updates the status of an order, which belongs to a specific user. The table 'orders' stores the user_id for each order, so the route should only allow the owner of the order or an administrator to change its status.",
+        "rule": "Only the owner of the order or an administrator should be able to change its status."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: UPDATE orders, method POST",
+        "rule": "POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "limits",
+        "applies_because": "A value that the client can choose from a predefined set of options, which the server validates to ensure it is within acceptable limits.",
+        "rule": "status: The value must be one of the statuses defined in ORDER_STATUSES."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "admin",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "order_id": "selects_record",
+        "status": "needs_limits"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET/POST /register",
+    "url": "/register",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "whose_data",
+        "applies_because": "The /register route writes data to the 'users' table, which stores user-specific information.",
+        "rule": "The route inserts a new row into the 'users' table with the username, password hash, email, and address provided by the user."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT users, method GET/POST",
+        "rule": "GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password": "content",
+        "email": "content",
+        "address": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET/POST /login",
+    "url": "/login",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "csrf",
+        "applies_because": "changes state: method GET/POST, session.clear(), writes the session",
+        "rule": "GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "A URL provided by the user, used to redirect after login.",
+        "rule": "next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": true,
+      "values": {
+        "username": "content",
+        "password": "content",
+        "next": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The logout route is for any signed-in user to end their session.",
+        "rule": "Only logged-in users may call /logout."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: session.clear()",
+        "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": false,
+      "csrf": true
+    },
+    "error": null
+  },
+  {
+    "id": "GET /orders",
+    "url": "/orders",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for viewing orders made by the logged-in user, so only logged-in users should be allowed to call it.",
+        "rule": "Only logged-in users may call /orders."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'orders' table, and each order is associated with a user via the 'user_id' column, so the data belongs to the user who made the order.",
+        "rule": "The route reads data from the 'orders' table where the 'user_id' matches the logged-in user's ID."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /orders/<int:order_id>",
+    "url": "/orders/<int:order_id>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for viewing an order detail, which is a user-specific resource. It requires authentication to access.",
+        "rule": "Only logged-in users may call /orders/<int:order_id>."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'orders' table, which includes a 'user_id' column indicating who owns each order.",
+        "rule": "Only the user whose 'id' matches the 'user_id' in the 'orders' table should be able to access this route."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "order_id": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /orders/<int:order_id>/invoice",
+    "url": "/orders/<int:order_id>/invoice",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for generating and viewing an invoice for a specific order, which is a user-specific resource.",
+        "rule": "Only logged-in users may call /orders/<int:order_id>/invoice."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'orders' table, and it filters the data by the 'user_id' to ensure that only the owner of the order can access the invoice.",
+        "rule": "The route should only allow access to the invoice if the 'user_id' in the 'orders' table matches the 'id' of the currently logged-in user."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The format is a query parameter that determines the file format of the invoice.",
+        "rule": "format: The server must validate and sanitize the format to prevent malicious file format injection."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": false,
+      "values": {
+        "order_id": "selects_record",
+        "format": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /",
+    "url": "/",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false
+    },
+    "error": null
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "q": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /product/<int:product_id>",
+    "url": "/product/<int:product_id>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "product_id": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /product/<int:product_id>/review",
+    "url": "/product/<int:product_id>/review",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "This route is for adding a review to a product, which is a user-specific action. Only logged-in users should be able to add reviews.",
+        "rule": "Only logged-in users may call /product/<int:product_id>/review."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route inserts a new review into the 'reviews' table, which stores reviews for products. Each review is associated with a product and a username, indicating that the data belongs to the user who wrote the review.",
+        "rule": "The 'username' column in the 'reviews' table indicates that each review belongs to a specific user."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT reviews, method POST",
+        "rule": "POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token)."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "product_id": "selects_record",
+        "body": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /image",
+    "url": "/image",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "do_not_trust",
+        "applies_because": "The 'name' parameter is used to specify the filename of the image to be retrieved.",
+        "rule": "name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "name": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /thumbnail",
+    "url": "/thumbnail",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "name": "selects_record"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /greeting",
+    "url": "/greeting",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "name": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /cake-message/preview",
+    "url": "/cake-message/preview",
+    "methods": [
+      "GET"
+    ],
+    "rules": [],
+    "decisions": {
+      "who_may_call": "anyone",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "text": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "GET /cart",
+    "url": "/cart",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The /cart route displays the items in a user's shopping cart, which is specific to each user. Therefore, only logged-in users should be able to access this route.",
+        "rule": "Only logged-in users may call /cart."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": false,
+      "csrf": false,
+      "values": {
+        "cart": "content"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /cart/add",
+    "url": "/cart/add",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is for adding products to a user's cart, which is a user-specific action.",
+        "rule": "Only logged-in users may call /cart/add."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route modifies the cart data, which is specific to the logged-in user.",
+        "rule": "The cart data belongs to the logged-in user."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: method POST",
+        "rule": "POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The cart is a serialized and base64-encoded dictionary that stores the items in the user's cart. It is read from a cookie and deserialized to update the cart contents.",
+        "rule": "cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "product_id": "selects_record",
+        "cart": "server_decides"
+      }
+    },
+    "error": null
+  },
+  {
+    "id": "POST /checkout",
+    "url": "/checkout",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The checkout route is for users to place an order for a product, which requires authentication.",
+        "rule": "Only logged-in users may call /checkout."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The checkout route inserts a new order into the 'orders' table, which belongs to the user who is currently logged in.",
+        "rule": "The 'user_id' column in the 'orders' table should match the ID of the logged-in user."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "changes state: INSERT orders, method POST",
+        "rule": "POST /checkout changes state, so a request forged from another website must be rejected (CSRF token)."
+      },
+      {
+        "type": "limits",
+        "applies_because": "A number or a choice that must stay within bounds or within a fixed set of values.",
+        "rule": "quantity: quantity must be a positive integer."
+      },
+      {
+        "type": "limits",
+        "applies_because": "A number or a choice that must stay within bounds or within a fixed set of values.",
+        "rule": "price: price must be a positive integer."
+      }
+    ],
+    "decisions": {
+      "who_may_call": "logged_in_user",
+      "whose_data": true,
+      "csrf": true,
+      "values": {
+        "product_id": "selects_record",
+        "quantity": "needs_limits",
+        "price": "needs_limits",
+        "message": "content",
+        "note": "content"
+      }
+    },
+    "error": null
+  }
+]

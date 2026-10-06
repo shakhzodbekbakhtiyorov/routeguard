@@ -1,0 +1,117 @@
+/account   [csrf, must_not_change, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call /account.
+                      because: The route is for managing a user's account, which requires authentication. It updates user-specific data.
+   - whose_data       The route updates data for the user whose ID is stored in the session (g.user['id']).
+                      because: The route updates user-specific data stored in the 'users' table, where each row is owned by a specific user identified by 'id'.
+   - csrf             GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: UPDATE users, method GET/POST
+   - must_not_change  is_admin: The server must not allow the client to set the is_admin field through this route.
+                      because: A boolean value that determines if the user has admin privileges, which will be written to the users.is_admin field in the database.
+
+/admin/orders   [who_may_call, whose_data]
+   - who_may_call     Only administrators may call /admin/orders.
+                      because: This route is for viewing all orders, which is a task typically performed by administrators.
+   - whose_data       The 'orders' table stores records that belong to specific user accounts, identified by the 'user_id' column.
+                      because: The route retrieves data from the 'orders' table, which contains records that belong to specific user accounts.
+
+/admin/stats   [who_may_call]
+   - who_may_call     Only administrators may call /admin/stats.
+                      because: The route is for administrative purposes and should only be accessible by administrators.
+
+/admin/orders/<int:order_id>/status   [csrf, limits, who_may_call, whose_data]
+   - who_may_call     Only administrators may call /admin/orders/<int:order_id>/status.
+                      because: This route is for changing the status of an order, which is an administrative task. Only administrators should be able to perform this action.
+   - whose_data       Only the owner of the order or an administrator should be able to change its status.
+                      because: This route updates the status of an order, which belongs to a specific user. The table 'orders' stores the user_id for each order, so the route should only allow the owner of the order or an administrator to change its status.
+   - csrf             POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: UPDATE orders, method POST
+   - limits           status: The value must be one of the statuses defined in ORDER_STATUSES.
+                      because: A value that the client can choose from a predefined set of options, which the server validates to ensure it is within acceptable limits.
+
+/register   [csrf, whose_data]   MISSING: limits
+   - whose_data       The route inserts a new row into the 'users' table with the username, password hash, email, and address provided by the user.  EXTRA
+                      because: The /register route writes data to the 'users' table, which stores user-specific information.
+   - csrf             GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: INSERT users, method GET/POST
+
+/login   [csrf, do_not_trust]
+   - csrf             GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: method GET/POST, session.clear(), writes the session
+   - do_not_trust     next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.
+                      because: A URL provided by the user, used to redirect after login.
+
+/logout   [csrf, who_may_call]
+   - who_may_call     Only logged-in users may call /logout.
+                      because: The logout route is for any signed-in user to end their session.
+   - csrf             GET /logout changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: session.clear()
+
+/orders   [who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call /orders.
+                      because: The route is for viewing orders made by the logged-in user, so only logged-in users should be allowed to call it.
+   - whose_data       The route reads data from the 'orders' table where the 'user_id' matches the logged-in user's ID.
+                      because: The route reads data from the 'orders' table, and each order is associated with a user via the 'user_id' column, so the data belongs to the user who made the order.
+
+/orders/<int:order_id>   [who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call /orders/<int:order_id>.
+                      because: This route is for viewing an order detail, which is a user-specific resource. It requires authentication to access.
+   - whose_data       Only the user whose 'id' matches the 'user_id' in the 'orders' table should be able to access this route.
+                      because: The route reads data from the 'orders' table, which includes a 'user_id' column indicating who owns each order.
+
+/orders/<int:order_id>/invoice   [do_not_trust, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call /orders/<int:order_id>/invoice.
+                      because: The route is for generating and viewing an invoice for a specific order, which is a user-specific resource.
+   - whose_data       The route should only allow access to the invoice if the 'user_id' in the 'orders' table matches the 'id' of the currently logged-in user.
+                      because: The route reads data from the 'orders' table, and it filters the data by the 'user_id' to ensure that only the owner of the order can access the invoice.
+   - do_not_trust     format: The server must validate and sanitize the format to prevent malicious file format injection.
+                      because: The format is a query parameter that determines the file format of the invoice.
+
+/   [no rules]
+
+/search   [no rules]
+
+/product/<int:product_id>   [no rules]
+
+/product/<int:product_id>/review   [csrf, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call /product/<int:product_id>/review.
+                      because: This route is for adding a review to a product, which is a user-specific action. Only logged-in users should be able to add reviews.
+   - whose_data       The 'username' column in the 'reviews' table indicates that each review belongs to a specific user.  EXTRA
+                      because: The route inserts a new review into the 'reviews' table, which stores reviews for products. Each review is associated with a product and a username, indicating that the data belongs to the user who wrote the review.
+   - csrf             POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: INSERT reviews, method POST
+
+/image   [do_not_trust]
+   - do_not_trust     name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks.
+                      because: The 'name' parameter is used to specify the filename of the image to be retrieved.
+
+/thumbnail   [no rules]
+
+/greeting   [no rules]
+
+/cake-message/preview   [no rules]
+
+/cart   [who_may_call]
+   - who_may_call     Only logged-in users may call /cart.  EXTRA
+                      because: The /cart route displays the items in a user's shopping cart, which is specific to each user. Therefore, only logged-in users should be able to access this route.
+
+/cart/add   [csrf, do_not_trust, who_may_call, whose_data]
+   - who_may_call     Only logged-in users may call /cart/add.  EXTRA
+                      because: The route is for adding products to a user's cart, which is a user-specific action.
+   - whose_data       The cart data belongs to the logged-in user.  EXTRA
+                      because: The route modifies the cart data, which is specific to the logged-in user.
+   - csrf             POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: method POST
+   - do_not_trust     cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities.
+                      because: The cart is a serialized and base64-encoded dictionary that stores the items in the user's cart. It is read from a cookie and deserialized to update the cart contents.
+
+/checkout   [csrf, limits, who_may_call, whose_data]   MISSING: do_not_trust
+   - who_may_call     Only logged-in users may call /checkout.
+                      because: The checkout route is for users to place an order for a product, which requires authentication.
+   - whose_data       The 'user_id' column in the 'orders' table should match the ID of the logged-in user.
+                      because: The checkout route inserts a new order into the 'orders' table, which belongs to the user who is currently logged in.
+   - csrf             POST /checkout changes state, so a request forged from another website must be rejected (CSRF token).
+                      because: changes state: INSERT orders, method POST
+   - limits           quantity: quantity must be a positive integer.
+                      because: A number or a choice that must stay within bounds or within a fixed set of values.
+   - limits           price: price must be a positive integer.
+                      because: A number or a choice that must stay within bounds or within a fixed set of values.

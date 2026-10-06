@@ -1,0 +1,42 @@
+[
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 21,
+  "EndLine": 21,
+  "StartColumn": 6,
+  "EndColumn": 64,
+  "Match": "app.secret_key = \"aeZ1iwoh2ree2mo0Eereireong4baitixaixu5Ee\"",
+  "Secret": "aeZ1iwoh2ree2mo0Eereireong4baitixaixu5Ee",
+  "File": "flask_webgoat/__init__.py",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 4.0337834,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "flask_webgoat/__init__.py:generic-api-key:21"
+ },
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 135,
+  "EndLine": 135,
+  "StartColumn": 42,
+  "EndColumn": 93,
+  "Match": "password: 'aeZ1iwoh2ree2mo0Eereireong4baitixaixu5Ee'",
+  "Secret": "aeZ1iwoh2ree2mo0Eereireong4baitixaixu5Ee",
+  "File": "raw/bandit.json",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 4.0337834,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "raw/bandit.json:generic-api-key:135"
+ }
+]

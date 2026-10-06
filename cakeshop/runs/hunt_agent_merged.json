@@ -1,0 +1,940 @@
+[
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/account.py",
+    "line": 18,
+    "snippet": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.items()",
+      "why": "An attacker can inject SQL by providing malicious values in the form data, leading to SQL injection.",
+      "evidence": "exact",
+      "model_line": 18,
+      "model_code": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+      "where": "/account [cakeshop/account.py:account]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 18,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        18
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/admin.py",
+    "line": 13,
+    "snippet": "rows = get_db().execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "get_db().execute(...)",
+      "why": "The SQL query is hardcoded and does not include any parameterized queries, which makes it vulnerable to SQL injection attacks.",
+      "evidence": "moved",
+      "model_line": 16,
+      "model_code": "rows = get_db().execute(...).fetchall()",
+      "where": "/admin/orders [cakeshop/admin.py:all_orders]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 13,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        13
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Broken Access Control",
+    "file": "cakeshop/admin.py",
+    "line": 23,
+    "snippet": "counts = {table: count_rows(table) for table in sorted(ALLOWED_TABLES)}",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-284"
+    ],
+    "extra": {
+      "source": "ALLOWED_TABLES",
+      "why": "The attacker can manipulate the contents of `ALLOWED_TABLES` to include tables they should not be allowed to access, potentially leading to unauthorized data exposure.",
+      "evidence": "exact",
+      "model_line": 23,
+      "model_code": "counts = {table: count_rows(table) for table in sorted(ALLOWED_TABLES)}",
+      "where": "/admin/stats [cakeshop/admin.py:stats]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 23,
+          "title": "Broken Access Control",
+          "cwe": [
+            "CWE-284"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        23
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/admin.py",
+    "line": 30,
+    "snippet": "status = request.form.get(\"status\", \"\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.get(\"status\", \"\")",
+      "why": "An attacker can send a malicious status value through the form, potentially leading to SQL injection if the status value is not properly sanitized.",
+      "evidence": "exact",
+      "model_line": 30,
+      "model_code": "status = request.form.get(\"status\", \"\")",
+      "where": "/admin/orders/<int:order_id>/status [cakeshop/admin.py:set_status]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 30,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        30
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/auth.py",
+    "line": 44,
+    "snippet": "username = request.form[\"username\"].strip()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form['username']",
+      "why": "The username is not validated before being used in the SQL query, which could lead to SQL injection if an attacker provides a malicious username.",
+      "evidence": "exact",
+      "model_line": 44,
+      "model_code": "username = request.form['username'].strip()",
+      "where": "/register [cakeshop/auth.py:register]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 44,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 45,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        44,
+        45
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/auth.py",
+    "line": 51,
+    "snippet": "db.execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form.get('email')",
+      "why": "The email is not validated before being used in the SQL query, which could lead to SQL injection if an attacker provides a malicious email.",
+      "evidence": "exact",
+      "model_line": 51,
+      "model_code": "db.execute(...)",
+      "where": "/register [cakeshop/auth.py:register]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 51,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        51
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/auth.py",
+    "line": 66,
+    "snippet": "user = get_db().execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form[\"username\"]",
+      "why": "An attacker can inject SQL code into the username field, leading to SQL injection.",
+      "evidence": "moved",
+      "model_line": 67,
+      "model_code": "user = get_db().execute(\"SELECT * FROM users WHERE username = ?\", (request.form[\"username\"],)).fetchone()",
+      "where": "/login [cakeshop/auth.py:login]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 66,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        66
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Password Hash Bypass",
+    "file": "cakeshop/auth.py",
+    "line": 69,
+    "snippet": "if user is not None and check_password(user[\"password_hash\"], request.form[\"password\"]):",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-327"
+    ],
+    "extra": {
+      "source": "request.form[\"password\"]",
+      "why": "An attacker can inject a password that bypasses the password hash check, leading to unauthorized access.",
+      "evidence": "exact",
+      "model_line": 69,
+      "model_code": "if user is not None and check_password(user[\"password_hash\"], request.form[\"password\"]):",
+      "where": "/login [cakeshop/auth.py:login]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 69,
+          "title": "Password Hash Bypass",
+          "cwe": [
+            "CWE-327"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        69
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/orders.py",
+    "line": 15,
+    "snippet": "rows = get_db().execute(",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "g.user['id']",
+      "why": "The user ID is directly used in the SQL query without any validation or sanitization, which could lead to SQL injection if an attacker can control the user ID.",
+      "evidence": "moved",
+      "model_line": 16,
+      "model_code": "rows = get_db().execute('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', (g.user['id'],))",
+      "where": "/orders [cakeshop/orders.py:my_orders]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 15,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        15
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/orders.py",
+    "line": 24,
+    "snippet": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "order_id",
+      "why": "An attacker can manipulate the `order_id` parameter to execute arbitrary SQL queries, leading to SQL injection.",
+      "evidence": "exact",
+      "model_line": 24,
+      "model_code": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+      "where": "/orders/<int:order_id> [cakeshop/orders.py:order_detail]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 24,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        24
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Command Injection",
+    "file": "cakeshop/orders.py",
+    "line": 45,
+    "snippet": "os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "source": "order_id, order['total'], invoice_date()",
+      "why": "The use of `os.system` with user-controlled data can lead to command injection. An attacker could manipulate `order_id`, `order['total']`, or `invoice_date()` to execute arbitrary commands on the server.",
+      "evidence": "fuzzy",
+      "model_line": 45,
+      "model_code": "os.system(f'echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path})",
+      "where": "/orders/<int:order_id>/invoice [cakeshop/orders.py:invoice]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 45,
+          "title": "Command Injection",
+          "cwe": [
+            "CWE-78"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        45
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 29,
+    "snippet": "products = get_db().execute(\"SELECT * FROM products\").fetchall()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "database query",
+      "why": "An attacker could manipulate the database query to retrieve unintended data or execute arbitrary SQL commands.",
+      "evidence": "exact",
+      "model_line": 29,
+      "model_code": "products = get_db().execute(\"SELECT * FROM products\").fetchall()",
+      "where": "/ [cakeshop/shop.py:index]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 29,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        29
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 35,
+    "snippet": "q = request.args.get(\"q\", \"\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.args.get('q', '')",
+      "why": "An attacker can inject arbitrary SQL or OS commands into the search query, leading to SQL injection or OS command injection vulnerabilities.",
+      "evidence": "exact",
+      "model_line": 35,
+      "model_code": "q = request.args.get('q', '')",
+      "where": "/search [cakeshop/shop.py:search]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 35,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 36,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 2,
+      "lines": [
+        35,
+        36
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 43,
+    "snippet": "item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "product_id",
+      "why": "An attacker can inject SQL to manipulate the query and potentially access or modify data they should not.",
+      "evidence": "exact",
+      "model_line": 43,
+      "model_code": "item = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 43,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        43
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 46,
+    "snippet": "reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "product_id",
+      "why": "An attacker can inject SQL to manipulate the query and potentially access or modify data they should not.",
+      "evidence": "exact",
+      "model_line": 46,
+      "model_code": "reviews = db.execute(\"SELECT * FROM reviews WHERE product_id = ?\", (product_id,)).fetchall()",
+      "where": "/product/<int:product_id> [cakeshop/shop.py:product]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 46,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        46
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "SQL Injection",
+    "file": "cakeshop/shop.py",
+    "line": 56,
+    "snippet": "(product_id, g.user[\"username\"], request.form[\"body\"]),",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "request.form",
+      "why": "An attacker can inject SQL into the review body, leading to SQL injection.",
+      "evidence": "exact",
+      "model_line": 56,
+      "model_code": "request.form['body']",
+      "where": "/product/<int:product_id>/review [cakeshop/shop.py:add_review]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 56,
+          "title": "SQL Injection",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        56
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Path Traversal",
+    "file": "cakeshop/shop.py",
+    "line": 64,
+    "snippet": "filename = request.args.get(\"name\", \"\")",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "request.args.get(\"name\", \"\")",
+      "why": "An attacker can provide a malicious filename to access arbitrary files on the server, leading to path traversal attacks.",
+      "evidence": "exact",
+      "model_line": 64,
+      "model_code": "filename = request.args.get(\"name\", \"\")",
+      "where": "/image [cakeshop/shop.py:cake_image]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 64,
+          "title": "Path Traversal",
+          "cwe": [
+            "CWE-22"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        64
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Path Traversal",
+    "file": "cakeshop/shop.py",
+    "line": 70,
+    "snippet": "filename = secure_filename(request.args.get(\"name\", \"\"))",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "source": "request.args.get(\"name\", \"\")",
+      "why": "An attacker can provide a malicious filename to access arbitrary files on the server.",
+      "evidence": "exact",
+      "model_line": 70,
+      "model_code": "filename = secure_filename(request.args.get(\"name\", \"\"))",
+      "where": "/thumbnail [cakeshop/shop.py:cake_thumbnail]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 70,
+          "title": "Path Traversal",
+          "cwe": [
+            "CWE-22"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        70
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/shop.py",
+    "line": 77,
+    "snippet": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.args.get(\"name\", \"friend\")",
+      "why": "An attacker can inject arbitrary HTML or JavaScript into the greeting message by providing a malicious value for the 'name' parameter in the URL. This can lead to Cross-Site Scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 77,
+      "model_code": "return render_template_string(\"<p>Happy birthday, {{ name }}!</p>\", name=name)",
+      "where": "/greeting [cakeshop/shop.py:greeting]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 77,
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        77
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Cross-Site Scripting (XSS)",
+    "file": "cakeshop/shop.py",
+    "line": 83,
+    "snippet": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-79"
+    ],
+    "extra": {
+      "source": "request.args.get(\"text\", \"\")",
+      "why": "An attacker can inject arbitrary HTML into the `text` parameter, which will be rendered directly in the HTML response. This can lead to Cross-Site Scripting (XSS) attacks.",
+      "evidence": "exact",
+      "model_line": 83,
+      "model_code": "template = \"<div class='cake-top'>\" + text + \"</div>\"",
+      "where": "/cake-message/preview [cakeshop/shop.py:preview_message]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 83,
+          "title": "Cross-Site Scripting (XSS)",
+          "cwe": [
+            "CWE-79"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        83
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+    "file": "cakeshop/shop.py",
+    "line": 100,
+    "snippet": "cart = _load_cart()",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "source": "user-controlled data",
+      "why": "If `_load_cart` does not properly sanitize or validate the cart data, an attacker could manipulate the cart contents to include invalid or malicious data.",
+      "evidence": "exact",
+      "model_line": 100,
+      "model_code": "cart = _load_cart()",
+      "where": "/cart [cakeshop/shop.py:view_cart]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 100,
+          "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+          "cwe": [
+            "CWE-78"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        100
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+    "file": "cakeshop/shop.py",
+    "line": 104,
+    "snippet": "row = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-89"
+    ],
+    "extra": {
+      "source": "user-controlled data",
+      "why": "The `product_id` is directly used in the SQL query without proper sanitization, which could lead to SQL injection if an attacker provides a malicious `product_id`.",
+      "evidence": "exact",
+      "model_line": 104,
+      "model_code": "row = db.execute(\"SELECT * FROM products WHERE id = ?\", (product_id,)).fetchone()",
+      "where": "/cart [cakeshop/shop.py:view_cart]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 104,
+          "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+          "cwe": [
+            "CWE-89"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        104
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Integer Conversion Error",
+    "file": "cakeshop/shop.py",
+    "line": 113,
+    "snippet": "product_id = int(request.form[\"product_id\"])",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "request.form['product_id']",
+      "why": "An attacker can provide a non-integer value for 'product_id', leading to a ValueError when attempting to convert it to an integer.",
+      "evidence": "exact",
+      "model_line": 113,
+      "model_code": "product_id = int(request.form['product_id'])",
+      "where": "/cart/add [cakeshop/shop.py:add_to_cart]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 113,
+          "title": "Integer Conversion Error",
+          "cwe": [
+            "CWE-190"
+          ]
+        }
+      ],
+      "n_warnings": 1,
+      "lines": [
+        113
+      ]
+    }
+  },
+  {
+    "tool": "llm-hunt",
+    "rule_id": [
+      "agent"
+    ],
+    "title": "Integer Overflow",
+    "file": "cakeshop/shop.py",
+    "line": 123,
+    "snippet": "product_id = int(request.form[\"product_id\"])",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-190"
+    ],
+    "extra": {
+      "source": "request.form['product_id']",
+      "why": "An attacker can provide a non-integer value for 'product_id', leading to a ValueError.",
+      "evidence": "exact",
+      "model_line": 123,
+      "model_code": "product_id = int(request.form['product_id'])",
+      "where": "/checkout [cakeshop/shop.py:checkout]",
+      "merged_from": [
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 123,
+          "title": "Integer Overflow",
+          "cwe": [
+            "CWE-190"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 124,
+          "title": "Integer Overflow",
+          "cwe": [
+            "CWE-190"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 125,
+          "title": "Integer Overflow",
+          "cwe": [
+            "CWE-190"
+          ]
+        },
+        {
+          "tool": "llm-hunt",
+          "rule_id": "agent",
+          "line": 126,
+          "title": "Integer Overflow",
+          "cwe": [
+            "CWE-190"
+          ]
+        }
+      ],
+      "n_warnings": 4,
+      "lines": [
+        123,
+        124,
+        125,
+        126
+      ]
+    }
+  }
+]

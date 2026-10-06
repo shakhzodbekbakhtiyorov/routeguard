@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<h1>My Bookings</h1>
+{% if bookings %}
+<table>
+  <thead>
+    <tr>
+      <th>Workshop</th>
+      <th>Date</th>
+      <th>Seats</th>
+      <th>Total</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in bookings %}
+    <tr>
+      <td>{{ b['workshop_title'] }}</td>
+      <td>{{ b['scheduled_at'] }}</td>
+      <td>{{ b['seats'] }}</td>
+      <td>&pound;{{ "%.2f"|format(b['total_cost']) }}</td>
+      <td>{{ b['status'] }}</td>
+      <td>
+        <a href="{{ url_for('bookings.detail', rid=b['id']) }}">View</a>
+        &middot;
+        <a href="{{ url_for('bookings.receipt', rid=b['id']) }}">Receipt</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>You have no bookings yet. <a href="{{ url_for('workshops.listing') }}">Browse workshops</a>.</p>
+{% endif %}
+{% endblock %}

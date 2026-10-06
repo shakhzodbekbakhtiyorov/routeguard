@@ -1,0 +1,22 @@
+{
+  "must_found": 8,
+  "must_total": 9,
+  "must": {
+    "V11 /account": true,
+    "V10 /admin/orders": true,
+    "D05 /admin/stats": true,
+    "V12 /login": true,
+    "V08 /orders/<int:order_id>": true,
+    "D07 /orders/<int:order_id>/invoice": true,
+    "V05 /checkout": false,
+    "V06 /checkout": true
+  },
+  "csrf_routes": [
+    7,
+    7
+  ],
+  "required_hit": 23,
+  "required_total": 25,
+  "extra": 5,
+  "n_rules": 38
+}

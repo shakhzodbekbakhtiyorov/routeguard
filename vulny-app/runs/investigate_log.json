@@ -1,0 +1,490 @@
+[
+  {
+    "route": "POST /login",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to one particular user account based on the username provided.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "GET /logout",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /logout.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "anon is blocked (302 -> /login) -- the access check holds",
+    "test": {
+      "plan": {
+        "actor": "anon",
+        "use_victim_record": false,
+        "reason": "The rule 'who_may_call' states that only a 'logged_in_user' caller may use this route. 'anon' is not logged in and therefore should be blocked."
+      },
+      "actor": "anon",
+      "method": "GET",
+      "url": "/logout",
+      "need": "logged_in_user",
+      "result": "302 -> /login"
+    }
+  },
+  {
+    "route": "GET /logout",
+    "rule_type": "csrf",
+    "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the forged GET only rewrote the session cookie (302 -> /login): a real change or bookkeeping; keep for a human",
+    "test": {
+      "plan": {
+        "method": "GET",
+        "values": [
+          {
+            "field": "_csrf",
+            "value": "invalid_token"
+          }
+        ],
+        "reason": "The route does not check for a CSRF token, so a GET request with an invalid CSRF token should be rejected."
+      },
+      "actor": "anon",
+      "method": "GET",
+      "url": "/logout",
+      "result": "302 -> /login",
+      "changed": []
+    }
+  },
+  {
+    "route": "GET /bookings/<int:rid>",
+    "rule_type": "whose_data",
+    "rule": "The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob read alice's reservations #1; response shows owner-only data 'confirmed'",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "read",
+        "reason": "bob is not authorized to access alice's booking records"
+      },
+      "actor": "bob",
+      "method": "GET",
+      "url": "/bookings/1",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/bookings.py",
+      "line": 31,
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /bookings/<int:rid>/cancel",
+    "rule_type": "whose_data",
+    "rule": "Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob changed status of alice's reservations #1 (302 -> /bookings/)",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "modify",
+        "reason": "bob should not be allowed to cancel alice's booking"
+      },
+      "actor": "bob",
+      "method": "POST",
+      "url": "/bookings/1/cancel",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/bookings.py",
+      "line": 59,
+      "result": "302 -> /bookings/"
+    }
+  },
+  {
+    "route": "POST /bookings/<int:rid>/cancel",
+    "rule_type": "csrf",
+    "rule": "POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table reservations (302 -> /bookings/)",
+    "test": {
+      "plan": {
+        "method": "POST",
+        "values": [
+          {
+            "field": "rid",
+            "value": "1"
+          }
+        ],
+        "reason": "The route does not include CSRF protection, allowing an attacker to forge a request to cancel a booking without a valid CSRF token."
+      },
+      "actor": "bob",
+      "method": "POST",
+      "url": "/bookings/1/cancel",
+      "result": "302 -> /bookings/",
+      "changed": [
+        "table reservations"
+      ]
+    }
+  },
+  {
+    "route": "GET /bookings/<int:rid>/receipt",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /bookings/<int:rid>/receipt.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "anon (below 'logged_in_user') received alice's data '2026-10-06 15:21:24' -- no access check",
+    "test": {
+      "plan": {
+        "actor": "anon",
+        "use_victim_record": false,
+        "reason": "The route enforces that only a 'logged_in_user' caller may use this route. 'anon' is not logged in and therefore should be blocked."
+      },
+      "actor": "anon",
+      "method": "GET",
+      "url": "/bookings/1/receipt",
+      "need": "logged_in_user",
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /profile",
+    "rule_type": "csrf",
+    "rule": "POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table accounts (302 -> /profile)",
+    "test": {
+      "plan": {
+        "method": "POST",
+        "values": [
+          {
+            "field": "display_name",
+            "value": "Hacked"
+          },
+          {
+            "field": "email",
+            "value": "hacked@example.com"
+          },
+          {
+            "field": "role",
+            "value": "admin"
+          },
+          {
+            "field": "credit_balance",
+            "value": "1000.00"
+          }
+        ],
+        "reason": "This test attempts to bypass the CSRF protection by sending a POST request without a CSRF token. The values are chosen to update the display name, email, role, and credit balance of the logged-in user."
+      },
+      "actor": "bob",
+      "method": "POST",
+      "url": "/profile",
+      "result": "302 -> /profile",
+      "changed": [
+        "table accounts"
+      ]
+    }
+  },
+  {
+    "route": "POST /profile",
+    "rule_type": "do_not_trust",
+    "rule": "credit_balance: The server must validate and sanitize the credit balance to prevent unauthorized changes.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the expression {{7*7}} was not evaluated -- not injectable",
+    "test": {
+      "plan": {
+        "field": "credit_balance",
+        "sink_kind": "template",
+        "reason": "The credit_balance is used in a SQL query, which is then executed. This could potentially lead to SQL injection if not properly sanitized."
+      },
+      "actor": "bob",
+      "method": "POST",
+      "field": "credit_balance",
+      "sink_kind": "template",
+      "result": "302 -> /profile"
+    }
+  },
+  {
+    "route": "POST /admin/members/<int:mid>/update",
+    "rule_type": "limits",
+    "rule": "credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "value accepted but no row of the caller's was found to check",
+    "test": {
+      "plan": {
+        "field": "credit_balance",
+        "value": "-1000.00",
+        "reason": "This value is negative and should be rejected by the server."
+      },
+      "actor": "bob",
+      "method": "POST",
+      "field": "credit_balance",
+      "value": "-1000.00",
+      "type": "limits",
+      "result": "302 -> /workshops/"
+    }
+  },
+  {
+    "route": "POST /workshops/create",
+    "rule_type": "limits",
+    "rule": "price_per_seat: The server must ensure that the price per seat is a non-negative number.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the out-of-range value -1.00 was not stored",
+    "test": {
+      "plan": {
+        "field": "price_per_seat",
+        "value": "-1.00",
+        "reason": "The server should reject negative values for the price per seat."
+      },
+      "actor": "admin",
+      "method": "POST",
+      "field": "price_per_seat",
+      "value": "-1.00",
+      "type": "limits",
+      "result": "302 -> /workshops/create"
+    }
+  },
+  {
+    "route": "GET /workshops/<int:wid>/edit",
+    "rule_type": "whose_data",
+    "rule": "Only the staff member who created the workshop can edit it.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "POST /workshops/<int:wid>/edit",
+    "rule_type": "whose_data",
+    "rule": "The workshop record belongs to the user with the ID stored in the 'created_by' column.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "POST /workshops/<int:wid>/edit",
+    "rule_type": "limits",
+    "rule": "capacity: The server must validate and sanitize the capacity to ensure it is a non-negative integer.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the out-of-range value -5 was not stored",
+    "test": {
+      "plan": {
+        "field": "capacity",
+        "value": "-5",
+        "reason": "This is a negative integer, which should be rejected by the server as it violates the rule that capacity must be a non-negative integer."
+      },
+      "actor": "admin",
+      "method": "POST",
+      "field": "capacity",
+      "value": "-5",
+      "type": "limits",
+      "result": "302 -> /workshops/1/edit"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/edit",
+    "rule_type": "limits",
+    "rule": "price_per_seat: The server must validate and sanitize the price per seat to ensure it is a non-negative floating-point number.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the out-of-range value -1.00 was not stored",
+    "test": {
+      "plan": {
+        "field": "price_per_seat",
+        "value": "-1.00",
+        "reason": "This value is negative and should be rejected by the server."
+      },
+      "actor": "admin",
+      "method": "POST",
+      "field": "price_per_seat",
+      "value": "-1.00",
+      "type": "limits",
+      "result": "302 -> /workshops/1/edit"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/book",
+    "rule_type": "whose_data",
+    "rule": "The reservations table stores records that belong to one particular user account, identified by the owner_id column.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "bob got 302 -> /bookings/ but alice's data was not disclosed",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "read",
+        "reason": "bob should not be allowed to read alice's records"
+      },
+      "actor": "bob",
+      "method": "POST",
+      "url": "/workshops/1/book",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/workshops.py",
+      "line": 159,
+      "result": "302 -> /bookings/"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/book",
+    "rule_type": "limits",
+    "rule": "seats: The server must ensure that the number of seats is a non-negative integer and does not exceed the available capacity of the workshop.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the out-of-range value :999999 was not stored",
+    "test": {
+      "plan": {
+        "field": "seats",
+        "value": ":999999",
+        "reason": "This value is a string that does not represent a valid non-negative integer, which the server should reject."
+      },
+      "actor": "bob",
+      "method": "POST",
+      "field": "seats",
+      "value": ":999999",
+      "type": "limits",
+      "result": "302 -> /bookings/"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/book",
+    "rule_type": "do_not_trust",
+    "rule": "total_cost: The server must calculate the total cost based on the number of seats and the workshop's price per seat.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the request errored before the template rendered (IntegrityError: NOT NULL constraint failed: reservations.total_cost)",
+    "test": {
+      "plan": {
+        "field": "total_cost",
+        "sink_kind": "template",
+        "reason": "The total_cost is concatenated into a flash message, which could be used for template injection."
+      },
+      "actor": "bob",
+      "method": "POST",
+      "field": "total_cost",
+      "sink_kind": "template",
+      "result": "IntegrityError: NOT NULL constraint failed: reservations.total_cost"
+    }
+  },
+  {
+    "route": "GET /bookings/",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to the logged-in user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "POST /bookings/<int:rid>/note",
+    "rule_type": "whose_data",
+    "rule": "The reservation_id in the notes table must match the reservation_id in the reservations table where the owner_id matches the logged-in user's id.",
+    "from_finding": false,
+    "verdict": "dropped",
+    "why": "bob got 302 -> /bookings/1 but alice's data was not disclosed",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "modify",
+        "reason": "bob should not be allowed to modify alice's booking notes"
+      },
+      "actor": "bob",
+      "method": "POST",
+      "url": "/bookings/1/note",
+      "targets": "alice's notes #1",
+      "file": "workshophub/bookings.py",
+      "line": 85,
+      "result": "302 -> /bookings/1"
+    }
+  },
+  {
+    "route": "GET /bookings/<int:rid>/receipt",
+    "rule_type": "whose_data",
+    "rule": "The route should only allow access to the receipt of bookings made by the logged-in user.",
+    "from_finding": false,
+    "verdict": "confirmed",
+    "why": "bob read alice's reservations #1; response shows owner-only data 'confirmed'",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "read",
+        "reason": "bob should not be allowed to access alice's booking receipt"
+      },
+      "actor": "bob",
+      "method": "GET",
+      "url": "/bookings/1/receipt",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/bookings.py",
+      "line": 98,
+      "result": "200"
+    }
+  },
+  {
+    "route": "GET /profile",
+    "rule_type": "whose_data",
+    "rule": "The route reads and allows changes to a record where the 'id' column matches the 'account_id' in the session.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "POST /profile",
+    "rule_type": "whose_data",
+    "rule": "The route updates the 'accounts' table where the 'id' column matches the 'id' of the currently logged-in user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "GET /admin/members/<int:mid>",
+    "rule_type": "whose_data",
+    "rule": "Only administrators should be able to access and view details of any member.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no accounts row owned by alice to target",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "read",
+        "reason": "bob is not authorized to access alice's record"
+      }
+    }
+  },
+  {
+    "route": "POST /admin/members/<int:mid>/update",
+    "rule_type": "whose_data",
+    "rule": "The route updates a record in the 'accounts' table where the 'id' column matches the 'mid' parameter in the URL.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no accounts row owned by alice to target",
+    "test": {
+      "plan": {
+        "victim": "alice",
+        "action": "modify",
+        "reason": "bob is not an admin and should not be able to modify alice's record"
+      }
+    }
+  },
+  {
+    "route": "POST /workshops/create",
+    "rule_type": "whose_data",
+    "rule": "The 'created_by' column in the 'workshops' table stores the user ID of the account that created the row.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  },
+  {
+    "route": "GET /workshops/manage",
+    "rule_type": "whose_data",
+    "rule": "The 'created_by' column in the 'workshops' table links each workshop to its creator, who is a user in the 'accounts' table.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "test": {}
+  }
+]

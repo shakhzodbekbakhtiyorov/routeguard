@@ -1,0 +1,32 @@
+{
+  "note": "Hand check of the findings the automatic scorer does not credit (tools/score.py --hand applies it). Each entry: a finding (matched by tool, file, line, and route or package when needed) and the verdict after reading the code and the replay log: a bug id from ground_truth.json, 'real' (a real problem the answer key does not list), or 'false_alarm'. Findings not listed keep the automatic verdict.",
+  "findings": [
+    {
+      "tool": "semgrep",
+      "file": "flask_webgoat/actions.py",
+      "line": 22,
+      "verdict": "false_alarm",
+      "why": "flags reading the 'text' field that is written to a file; the real problem on this route is the file name (V05), reported separately"
+    },
+    {
+      "tool": "pip-audit",
+      "package": "click",
+      "verdict": "real",
+      "why": "click 7.1.2 has a published advisory; pinned versions with advisories count as real"
+    },
+    {
+      "tool": "rule-check",
+      "file": "flask_webgoat/actions.py",
+      "line": 40,
+      "verdict": "V01",
+      "why": "the same command injection, reported on the route's def line (more than 2 lines from the label anchor); confirmed by replay"
+    },
+    {
+      "tool": "rule-check",
+      "file": "flask_webgoat/auth.py",
+      "line": 32,
+      "verdict": "V06",
+      "why": "the open redirect, reported on the line that reads 'url' (more than 2 lines from the label anchor)"
+    }
+  ]
+}

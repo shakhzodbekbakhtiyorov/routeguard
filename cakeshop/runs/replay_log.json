@@ -1,0 +1,434 @@
+[
+  {
+    "route": "GET/POST /account",
+    "rule_type": "csrf",
+    "rule": "GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table users (302 -> /account)",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/account",
+      "result": "302 -> /account",
+      "changed": [
+        "table users"
+      ]
+    }
+  },
+  {
+    "route": "GET/POST /account",
+    "rule_type": "must_not_change",
+    "rule": "is_admin: The server must not allow the client to set the is_admin field through this route.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob set users.is_admin=1 on their own row \u2014 privilege change",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/account",
+      "value": "is_admin",
+      "type": "must_not_change",
+      "result": "302 -> /account"
+    }
+  },
+  {
+    "route": "GET /admin/orders",
+    "rule_type": "who_may_call",
+    "rule": "Only administrators may call /admin/orders.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob (below 'admin') received alice's data 'Chilonzor 12, Tashkent' \u2014 no access check",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/admin/orders",
+      "need": "admin",
+      "result": "200"
+    }
+  },
+  {
+    "route": "GET /admin/orders",
+    "rule_type": "whose_data",
+    "rule": "The 'orders' table stores records that belong to specific user accounts, identified by the 'user_id' column.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /admin/orders/<int:order_id>/status",
+    "rule_type": "csrf",
+    "rule": "POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the forged POST changed nothing (400)",
+    "request": {
+      "actor": "admin",
+      "method": "POST",
+      "url": "/admin/orders/1/status",
+      "result": "400",
+      "changed": []
+    }
+  },
+  {
+    "route": "POST /admin/orders/<int:order_id>/status",
+    "rule_type": "limits",
+    "rule": "status: The value must be one of the statuses defined in ORDER_STATUSES.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "the server rejected the out-of-range value -5 (400)",
+    "request": {
+      "actor": "admin",
+      "method": "POST",
+      "url": "/admin/orders/1/status",
+      "value": "status",
+      "type": "limits",
+      "result": "400"
+    }
+  },
+  {
+    "route": "GET/POST /register",
+    "rule_type": "csrf",
+    "rule": "GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the forged POST only rewrote the session cookie (200): a real change (log in/out) or bookkeeping (a flash message, a token); keep for a human",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/register",
+      "result": "200",
+      "changed": []
+    }
+  },
+  {
+    "route": "GET/POST /login",
+    "rule_type": "csrf",
+    "rule": "GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the forged POST only rewrote the session cookie (302 -> x): a real change (log in/out) or bookkeeping (a flash message, a token); keep for a human",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/login",
+      "result": "302 -> x",
+      "changed": []
+    }
+  },
+  {
+    "route": "GET/POST /login",
+    "rule_type": "do_not_trust",
+    "rule": "next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "the response redirects to the attacker URL 'http://replay.invalid/pwned' \u2014 open redirect",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/login",
+      "value": "next",
+      "type": "do_not_trust",
+      "result": "302 -> http://replay.invalid/pwned"
+    }
+  },
+  {
+    "route": "GET /logout",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /logout.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "anon not blocked (302 -> /) but saw no one's private data",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/logout",
+      "need": "logged_in_user",
+      "result": "302 -> /"
+    }
+  },
+  {
+    "route": "GET /logout",
+    "rule_type": "csrf",
+    "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the forged GET only rewrote the session cookie (302 -> /): a real change (log in/out) or bookkeeping (a flash message, a token); keep for a human",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/logout",
+      "result": "302 -> /",
+      "changed": []
+    }
+  },
+  {
+    "route": "GET /orders/<int:order_id>",
+    "rule_type": "whose_data",
+    "rule": "Only the user whose 'id' matches the 'user_id' in the 'orders' table should be able to access this route.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob read alice's orders #1; response shows owner-only data 'Happy birthday, Mom!'",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/orders/1",
+      "targets": "alice's orders #1",
+      "file": "cakeshop/orders.py",
+      "line": 24,
+      "result": "200"
+    }
+  },
+  {
+    "route": "GET /orders/<int:order_id>/invoice",
+    "rule_type": "whose_data",
+    "rule": "The route should only allow access to the invoice if the 'user_id' in the 'orders' table matches the 'id' of the currently logged-in user.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "bob is blocked from alice's orders #1 (404) \u2014 ownership checked",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/orders/1/invoice",
+      "targets": "alice's orders #1",
+      "file": "cakeshop/orders.py",
+      "line": 39,
+      "result": "404"
+    }
+  },
+  {
+    "route": "GET /orders/<int:order_id>/invoice",
+    "rule_type": "do_not_trust",
+    "rule": "format: The server must validate and sanitize the format to prevent malicious file format injection.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a shell metacharacter payload ran a command (wrote a marker file) \u2014 command injection",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/orders/2/invoice",
+      "value": "format",
+      "type": "do_not_trust",
+      "result": "view raised FileNotFoundError after the command ran"
+    }
+  },
+  {
+    "route": "POST /product/<int:product_id>/review",
+    "rule_type": "csrf",
+    "rule": "POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table sqlite_sequence, table reviews (302 -> /product/1)",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/product/1/review",
+      "result": "302 -> /product/1",
+      "changed": [
+        "table sqlite_sequence",
+        "table reviews"
+      ]
+    }
+  },
+  {
+    "route": "GET /image",
+    "rule_type": "do_not_trust",
+    "rule": "name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "reading '../../shop.py' returned source code ('from flask import (') \u2014 path traversal",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/image",
+      "value": "name",
+      "type": "do_not_trust",
+      "result": "200"
+    }
+  },
+  {
+    "route": "GET /cart",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /cart.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "anon not blocked (200) but saw no one's private data",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/cart",
+      "need": "logged_in_user",
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /cart/add",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /cart/add.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "anon not blocked (302 -> /cart) but saw no one's private data",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/cart/add",
+      "need": "logged_in_user",
+      "result": "302 -> /cart"
+    }
+  },
+  {
+    "route": "POST /cart/add",
+    "rule_type": "csrf",
+    "rule": "POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed cookies cart (302 -> /cart)",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/cart/add",
+      "result": "302 -> /cart",
+      "changed": [
+        "cookies cart"
+      ]
+    }
+  },
+  {
+    "route": "POST /cart/add",
+    "rule_type": "do_not_trust",
+    "rule": "cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a crafted object in the cookie ran code (wrote a marker file) on deserialisation \u2014 RCE",
+    "request": {
+      "actor": "anon",
+      "method": "POST",
+      "url": "/cart/add",
+      "value": "cart",
+      "type": "do_not_trust",
+      "result": "view raised AttributeError after the payload ran"
+    }
+  },
+  {
+    "route": "POST /checkout",
+    "rule_type": "csrf",
+    "rule": "POST /checkout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table sqlite_sequence, table orders (302 -> /orders/3)",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/checkout",
+      "result": "302 -> /orders/3",
+      "changed": [
+        "table sqlite_sequence",
+        "table orders"
+      ]
+    }
+  },
+  {
+    "route": "POST /checkout",
+    "rule_type": "limits",
+    "rule": "quantity: quantity must be a positive integer.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "the server accepted quantity=-5 and stored quantity=-5, total=-5",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/checkout",
+      "value": "quantity",
+      "type": "limits",
+      "result": "302 -> /orders/3"
+    }
+  },
+  {
+    "route": "POST /checkout",
+    "rule_type": "limits",
+    "rule": "price: price must be a positive integer.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "the server accepted price=-5 and stored total=-5",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/checkout",
+      "value": "price",
+      "type": "limits",
+      "result": "302 -> /orders/3"
+    }
+  },
+  {
+    "route": "GET/POST /account",
+    "rule_type": "whose_data",
+    "rule": "The route updates data for the user whose ID is stored in the session (g.user['id']).",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /admin/orders/<int:order_id>/status",
+    "rule_type": "whose_data",
+    "rule": "Only the owner of the order or an administrator should be able to change its status.",
+    "from_finding": false,
+    "verdict": "dropped",
+    "why": "bob is blocked from alice's orders #1 (403) \u2014 ownership checked",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/admin/orders/1/status",
+      "targets": "alice's orders #1",
+      "file": "cakeshop/admin.py",
+      "line": 34,
+      "result": "403"
+    }
+  },
+  {
+    "route": "GET/POST /register",
+    "rule_type": "whose_data",
+    "rule": "The route inserts a new row into the 'users' table with the username, password hash, email, and address provided by the user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "GET /orders",
+    "rule_type": "whose_data",
+    "rule": "The route reads data from the 'orders' table where the 'user_id' matches the logged-in user's ID.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /product/<int:product_id>/review",
+    "rule_type": "whose_data",
+    "rule": "The 'username' column in the 'reviews' table indicates that each review belongs to a specific user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no reviews row owned by the victim to target",
+    "request": {}
+  },
+  {
+    "route": "POST /cart/add",
+    "rule_type": "whose_data",
+    "rule": "The cart data belongs to the logged-in user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /checkout",
+    "rule_type": "whose_data",
+    "rule": "The 'user_id' column in the 'orders' table should match the ID of the logged-in user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "label": "enforce",
+  "strict": true,
+  "n_findings": 23,
+  "n_vuln": 19,
+  "detected": 8,
+  "recall": 0.421,
+  "cwe_exact": 8,
+  "cwe_related": 8,
+  "tp_findings": 16,
+  "precision": 0.696,
+  "code_precision": 0.696,
+  "decoys_flagged": [],
+  "decoy_findings": 0,
+  "other": 7,
+  "real_unlabelled": 0,
+  "hand": false,
+  "missed": [
+    "V01",
+    "V02",
+    "V04",
+    "V05",
+    "V07",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18"
+  ],
+  "detected_ids": [
+    "V03",
+    "V06",
+    "V08",
+    "V09",
+    "V10",
+    "V11",
+    "V12",
+    "V19"
+  ]
+}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Order #{{ order['id'] }}</h1>
+<p>Quantity: {{ order['quantity'] }}</p>
+<p>Total: {{ order['total'] }} UZS</p>
+<p>Message on the cake: {{ order['message'] }}</p>
+<p>Delivery note: {{ order['note'] }}</p>
+<p>Status: {{ order['status'] }}</p>
+<p><a href="{{ url_for('orders.invoice', order_id=order['id']) }}">Download invoice</a></p>
+{% endblock %}

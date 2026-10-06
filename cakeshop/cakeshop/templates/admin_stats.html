@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Stats</h1>
+<ul>
+  {% for table, n in counts.items() %}<li>{{ table }}: {{ n }}</li>{% endfor %}
+</ul>
+{% endblock %}

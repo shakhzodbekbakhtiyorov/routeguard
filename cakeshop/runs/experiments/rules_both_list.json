@@ -1,0 +1,675 @@
+[
+  {
+    "id": "GET/POST /account",
+    "url": "/account",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is decorated with @login_required, which ensures that only logged-in users can access it.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route updates the user's data based on the current user's ID.",
+        "rule": "The route reads and changes a record that belongs to the current user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route updates the user's data, but does not allow changing the 'is_admin' field.",
+        "rule": "Users must not be able to set or change their own 'is_admin' status through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route updates the user's data based on user input, which the server must validate.",
+        "rule": "Values sent by the client that the server must decide, look up or check itself include the fields in USER_COLUMNS."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route updates the user's data, and some fields may have specific limits or choices.",
+        "rule": "Values for the fields in USER_COLUMNS must be within allowed bounds or choices."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /admin/orders",
+    "url": "/admin/orders",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is accessible to anyone, but it only shows data if the user is logged in.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route displays data from the 'orders' and 'users' tables.",
+        "rule": "The route displays data that belongs to any user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route only reads data and does not allow any changes.",
+        "rule": "No fields can be changed through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route does not accept any input from the client.",
+        "rule": "No client inputs are trusted and must be validated or checked by the server."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not have any specific limits on the data it handles.",
+        "rule": "No specific limits are applied to the data handled by this route."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route does not change any data.",
+        "rule": "This route does not require CSRF protection."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /admin/stats",
+    "url": "/admin/stats",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @admin_required decorator, which ensures only logged-in users with admin privileges can access it.",
+        "rule": "Only admin users may call this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route does not accept any user input, but it uses a dynamic table name from the ALLOWED_TABLES constant, which the server must check.",
+        "rule": "The server must verify the table name against a predefined set of allowed tables."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route uses a dynamic table name from the ALLOWED_TABLES constant, which the server must check against a fixed set of allowed values.",
+        "rule": "The table name must be one of the following: 'products', 'orders', 'users', 'reviews'."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route does not change any data, so it does not need to be protected against CSRF attacks.",
+        "rule": "This route does not change any data, so it does not require CSRF protection."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "POST /admin/orders/<int:order_id>/status",
+    "url": "/admin/orders/<int:order_id>/status",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @admin_required decorator, which ensures only logged-in admin users can access it.",
+        "rule": "Only logged-in admin users may call this route."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route checks if the provided status is in the set of allowed statuses (ORDER_STATUSES).",
+        "rule": "The status must be one of the following: 'new', 'baking', 'out_for_delivery', 'delivered', 'cancelled'."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The status is directly taken from the request form and not validated further.",
+        "rule": "The server must validate the status to ensure it is one of the allowed values."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes data, but there is no CSRF protection mechanism in place.",
+        "rule": "A CSRF token must be included in the request to prevent cross-site request forgery."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET/POST /register",
+    "url": "/register",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is publicly accessible and does not require authentication.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route inserts a new user record, and the user should not be able to set their own role or another user's id.",
+        "rule": "The 'is_admin' field must not be set or changed through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route inserts user-provided data into the database, which the server must verify or sanitize.",
+        "rule": "The 'username', 'password', 'email', and 'address' fields must be validated and sanitized by the server."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route inserts user-provided data into the database, which may have length or format constraints.",
+        "rule": "The 'username' field must be between 4 and 20 characters in length."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes data, and CSRF protection is not implemented.",
+        "rule": "CSRF protection must be implemented to prevent cross-site request forgery."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET/POST /login",
+    "url": "/login",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is publicly accessible and does not require authentication.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route accepts user-provided input for username and password.",
+        "rule": "The server must verify the username and password provided by the client."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route expects a username and password to be provided.",
+        "rule": "The username and password must not be empty."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes data (logs in a user), but CSRF protection is not implemented.",
+        "rule": "CSRF protection must be implemented to prevent cross-site request forgery."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any decorators or checks to restrict access, allowing anyone to call it.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes data (clears the session), so a request forged from another website must be rejected.",
+        "rule": "A CSRF token must be included in the request to prevent cross-site request forgery."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /orders",
+    "url": "/orders",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves orders for the current user from the database using the user_id from the session.",
+        "rule": "The route reads data that belongs to the current user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route only retrieves data and does not allow any changes to the database.",
+        "rule": "No fields can be changed through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route does not accept any input from the client and only uses data from the database and session.",
+        "rule": "No client-provided values are used or trusted by this route."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not have any specific limits on the input or output.",
+        "rule": "No specific limits are enforced on the data processed by this route."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route does not change any data in the database.",
+        "rule": "This route does not require CSRF protection as it does not change any data."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /orders/<int:order_id>",
+    "url": "/orders/<int:order_id>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route retrieves an order by its ID, which is a foreign key to the user's ID, and displays it.",
+        "rule": "The route reads data that belongs to the user who placed the order."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route only retrieves data and does not allow any changes to the order.",
+        "rule": "Users must not be able to change any fields through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route uses the order ID provided by the client, which it must validate and check.",
+        "rule": "The server must decide, look up, or check the order ID itself."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route expects an integer order ID, which should be within a reasonable range.",
+        "rule": "The order ID must be a valid integer."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /orders/<int:order_id>/invoice",
+    "url": "/orders/<int:order_id>/invoice",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route fetches an order based on the order_id and the user_id of the current logged-in user.",
+        "rule": "The route reads a record that belongs to the current logged-in user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route does not allow changing any fields of the order record.",
+        "rule": "Users must not be able to set or change any fields of the order record through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route uses the format parameter from the request.args, which the server must decide, look up, or check itself.",
+        "rule": "The server must decide, look up, or check the format parameter sent by the client."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route uses the format parameter, which should be limited to specific values (e.g., 'txt', 'pdf').",
+        "rule": "The format parameter should be limited to specific values."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes data (generates an invoice file), so a request forged from another website must be rejected.",
+        "rule": "A request forged from another website must be rejected."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /",
+    "url": "/",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is publicly accessible with no authentication required.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'products' table, which does not belong to any specific user.",
+        "rule": "The route reads data that belongs to no specific user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route only reads data and does not allow any changes to the database.",
+        "rule": "No fields may be changed through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route does not accept any user input that it must decide, look up, or check itself.",
+        "rule": "No values sent by the client that the server must decide, look up, or check itself."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not have any specific limits on the values it processes.",
+        "rule": "No specific limits on the values processed by this route."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route does not change any data, so it does not need CSRF protection.",
+        "rule": "This route does not need CSRF protection."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any authentication or authorization checks.",
+        "rule": "Anyone can call this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The search term is directly used in the SQL query without any sanitization or parameterized queries.",
+        "rule": "The search term must be sanitized or use parameterized queries to prevent SQL injection."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The search term is not limited in length.",
+        "rule": "The search term should have a maximum length to prevent denial of service attacks."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /product/<int:product_id>",
+    "url": "/product/<int:product_id>",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any decorators, so it is accessible to anyone.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'products' and 'reviews' tables based on the 'product_id' parameter.",
+        "rule": "The route reads data that belongs to the product with the given 'product_id'."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route only reads data and does not allow any changes to the database.",
+        "rule": "No fields may be changed through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route does not accept any user input that it must decide, look up, or check itself.",
+        "rule": "No values sent by the client that the server must decide, look up, or check itself."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not have any specific limits on the values it accepts.",
+        "rule": "No specific limits on the values accepted by this route."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route does not change any data, so it does not need CSRF protection.",
+        "rule": "This route does not need CSRF protection."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "POST /product/<int:product_id>/review",
+    "url": "/product/<int:product_id>/review",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route inserts a new record into the 'reviews' table, which belongs to a user.",
+        "rule": "The route reads or changes a record that belongs to a user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route inserts a new record into the 'reviews' table, and the 'product_id' and 'username' fields are set by the server based on the request and the current user.",
+        "rule": "Users must not be able to set or change the 'product_id' or 'username' fields through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route inserts a new record into the 'reviews' table, and the 'body' field is provided by the client.",
+        "rule": "Values sent by the client that the server must decide, look up or check itself (for example, the 'body' field)."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route inserts a new record into the 'reviews' table, and the 'body' field has a limit on its length.",
+        "rule": "The 'body' field must not exceed a certain length."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /image",
+    "url": "/image",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route reads a filename from the client's input without validation.",
+        "rule": "The filename parameter must be validated to prevent directory traversal attacks."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not limit the length of the filename parameter.",
+        "rule": "The filename parameter must have a maximum length to prevent excessive resource consumption."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /thumbnail",
+    "url": "/thumbnail",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route reads a filename from the client's input without validation.",
+        "rule": "The filename parameter must be validated to prevent directory traversal attacks."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not limit the length of the filename parameter.",
+        "rule": "The filename parameter must have a maximum length to prevent excessive resource consumption."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /greeting",
+    "url": "/greeting",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any authentication or authorization checks.",
+        "rule": "Anyone can call this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route uses a value from the client (request.args.get('name')) without any validation or sanitization.",
+        "rule": "The server must decide, look up, or check the 'name' value itself."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /cake-message/preview",
+    "url": "/cake-message/preview",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any decorators or checks to restrict access, allowing anyone to call it.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route uses user-provided input (`text`) directly in the response without any validation or sanitization.",
+        "rule": "The server must decide, look up, or check the `text` value itself."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "GET /cart",
+    "url": "/cart",
+    "methods": [
+      "GET"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any decorators or checks to restrict access based on user roles or authentication status.",
+        "rule": "Anyone can call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route reads data from the 'cart' cookie, which is not tied to any specific user.",
+        "rule": "The route reads data that belongs to the user who set the 'cart' cookie."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route only reads data and does not allow any changes to the database.",
+        "rule": "No fields can be changed through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route reads data from the 'cart' cookie, which is not validated or sanitized.",
+        "rule": "Values sent by the client that the server must decide, look up or check itself."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not have any checks on the number of items in the cart or the quantity of each item.",
+        "rule": "There are no limits on the number of items or the quantity of each item in the cart."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route does not change any data in the database.",
+        "rule": "This route does not need CSRF protection."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "POST /cart/add",
+    "url": "/cart/add",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route does not have any decorators or checks to restrict access, so anyone can call it.",
+        "rule": "Anyone may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route modifies the cart data, which belongs to the user who is logged in.",
+        "rule": "Only the user who is logged in may modify their own cart data."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route does not allow changing the product_id or quantity directly through the request form.",
+        "rule": "Users must not be able to set or change the product_id or quantity through this route."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route uses the product_id directly from the request form without any validation or sanitization.",
+        "rule": "The server must validate and sanitize the product_id before using it."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route does not have any limits on the product_id or quantity.",
+        "rule": "The product_id and quantity must be within a valid range."
+      },
+      {
+        "type": "csrf",
+        "applies_because": "The route changes data, but there is no CSRF protection.",
+        "rule": "A request forged from another website must be rejected."
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "POST /checkout",
+    "url": "/checkout",
+    "methods": [
+      "POST"
+    ],
+    "rules": [
+      {
+        "type": "who_may_call",
+        "applies_because": "The route is protected by the @login_required decorator, which ensures that only logged-in users can access it.",
+        "rule": "Only logged-in users may call this route."
+      },
+      {
+        "type": "whose_data",
+        "applies_because": "The route inserts data into the 'orders' table, which belongs to the user making the request.",
+        "rule": "The route reads or changes a record that belongs to the current user."
+      },
+      {
+        "type": "must_not_change",
+        "applies_because": "The route inserts data into the 'orders' table, and the 'user_id' field is set to the current user's ID, which should not be changed by the user.",
+        "rule": "The user must not be able to set or change their own role or another user's ID."
+      },
+      {
+        "type": "do_not_trust",
+        "applies_because": "The route inserts data into the 'orders' table, and the 'product_id', 'quantity', and 'price' fields are directly taken from the user's input without further validation.",
+        "rule": "Values sent by the client that the server must decide, look up or check itself (e.g., product_id, quantity, price)."
+      },
+      {
+        "type": "limits",
+        "applies_because": "The route inserts data into the 'orders' table, and the 'quantity' field is directly taken from the user's input without any bounds checking.",
+        "rule": "Values that need bounds or a fixed set of allowed values (e.g., quantity)."
+      }
+    ],
+    "error": null
+  }
+]

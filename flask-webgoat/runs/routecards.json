@@ -1,0 +1,416 @@
+[
+  {
+    "id": "POST /message",
+    "url": "/message",
+    "methods": [
+      "POST"
+    ],
+    "function": "log_entry",
+    "file": "flask_webgoat/actions.py",
+    "lines": [
+      11,
+      36
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "filename",
+        "line": 19,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "text",
+        "line": 22,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "GET /grep_processes",
+    "url": "/grep_processes",
+    "methods": [
+      "GET"
+    ],
+    "function": "grep_processes",
+    "file": "flask_webgoat/actions.py",
+    "lines": [
+      39,
+      51
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "name",
+        "line": 41,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "POST /deserialized_descr",
+    "url": "/deserialized_descr",
+    "methods": [
+      "POST"
+    ],
+    "function": "deserialized_descr",
+    "file": "flask_webgoat/actions.py",
+    "lines": [
+      54,
+      59
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "pickled",
+        "line": 56,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "POST /login",
+    "url": "/login",
+    "methods": [
+      "POST"
+    ],
+    "function": "login",
+    "file": "flask_webgoat/auth.py",
+    "lines": [
+      7,
+      25
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "username",
+        "line": 9,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "password",
+        "line": 10,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "session['user_info']",
+        "line": 24,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 18,
+        "text": "SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'",
+        "verb": "SELECT",
+        "table": "user",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "flask_webgoat/auth.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "query_db",
+        "where": "flask_webgoat/__init__.py:10"
+      }
+    ],
+    "constants": [
+      "DB_FILENAME"
+    ],
+    "templates": [],
+    "tables": {
+      "user": null
+    },
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "GET /login_and_redirect",
+    "url": "/login_and_redirect",
+    "methods": [
+      "GET"
+    ],
+    "function": "login_and_redirect",
+    "file": "flask_webgoat/auth.py",
+    "lines": [
+      28,
+      46
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "username",
+        "line": 30,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "args",
+        "key": "password",
+        "line": 31,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "args",
+        "key": "url",
+        "line": 32,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "session['user_info']",
+        "line": 45,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 41,
+        "text": "SELECT id, username, access_level FROM user WHERE username = ? AND password = ?",
+        "verb": "SELECT",
+        "table": "user",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "flask_webgoat/auth.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "query_db",
+        "where": "flask_webgoat/__init__.py:10"
+      }
+    ],
+    "constants": [
+      "DB_FILENAME"
+    ],
+    "templates": [],
+    "tables": {
+      "user": null
+    },
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "GET /status",
+    "url": "/status",
+    "methods": [
+      "GET"
+    ],
+    "function": "status",
+    "file": "flask_webgoat/status.py",
+    "lines": [
+      6,
+      8
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "GET /ping",
+    "url": "/ping",
+    "methods": [
+      "GET"
+    ],
+    "function": "ping",
+    "file": "flask_webgoat/status.py",
+    "lines": [
+      11,
+      13
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "GET /search",
+    "url": "/search",
+    "methods": [
+      "GET"
+    ],
+    "function": "search",
+    "file": "flask_webgoat/ui.py",
+    "lines": [
+      9,
+      24
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "args",
+        "key": "query",
+        "line": 11,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 17,
+        "text": "SELECT username, access_level FROM user WHERE username LIKE ?;",
+        "verb": "SELECT",
+        "table": "user",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "flask_webgoat/ui.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "query_db",
+        "where": "flask_webgoat/__init__.py:10"
+      }
+    ],
+    "constants": [
+      "DB_FILENAME"
+    ],
+    "templates": [
+      "flask_webgoat/templates/error.html",
+      "flask_webgoat/templates/search.html",
+      "flask_webgoat/templates/error.html"
+    ],
+    "tables": {
+      "user": null
+    },
+    "related_tables": [],
+    "app_hooks": []
+  },
+  {
+    "id": "POST /create_user",
+    "url": "/create_user",
+    "methods": [
+      "POST"
+    ],
+    "function": "create_user",
+    "file": "flask_webgoat/users.py",
+    "lines": [
+      10,
+      46
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "username",
+        "line": 19,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "password",
+        "line": 20,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "access_level",
+        "line": 21,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 38,
+        "text": "INSERT INTO user (username, password, access_level) VALUES ('%s', '%s', %d)",
+        "verb": "INSERT",
+        "table": "user",
+        "joins": [],
+        "writes": [
+          "username",
+          "password",
+          "access_level"
+        ],
+        "via": null,
+        "file": "flask_webgoat/users.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "query_db",
+        "where": "flask_webgoat/__init__.py:10"
+      }
+    ],
+    "constants": [
+      "DB_FILENAME"
+    ],
+    "templates": [],
+    "tables": {
+      "user": null
+    },
+    "related_tables": [],
+    "app_hooks": []
+  }
+]

@@ -1,0 +1,325 @@
+[
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /message.",
+    "file": "flask_webgoat/actions.py",
+    "line": 12,
+    "snippet": "def log_entry():",
+    "cwe": [
+      "CWE-306"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /message",
+      "rule": "Only logged-in users may call /message.",
+      "verdict": "not_enforced",
+      "reason": "The route is accessible via POST method without any authentication check.",
+      "attack": "A user who is not logged in can still call the /message route by sending a POST request with the required parameters (filename and text). The server will not check if the user is logged in, and the request will be processed successfully, leading to potential security issues such as unauthorized file creation or data manipulation."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route writes data to a file in a directory specific to the user, ensuring that each user can only access and modify their own data.",
+    "file": "flask_webgoat/actions.py",
+    "line": 30,
+    "snippet": "user_dir_path.mkdir()",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /message",
+      "rule": "The route writes data to a file in a directory specific to the user, ensuring that each user can only access and modify their own data.",
+      "verdict": "not_enforced",
+      "reason": "The code creates a directory for the user, but it does not check if the directory already exists before creating it. This could lead to an error if the directory already exists.",
+      "attack": "An attacker could exploit this by creating a directory for another user and then attempting to write to a file in that directory. The attacker would need to know the user ID of another user, but this could be obtained through other means. Once the directory is created, the attacker could write to a file in that directory, potentially overwriting or appending data to files that belong to other users. This could lead to data corruption or loss, or to the attacker gaining access to sensitive data."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /message changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "flask_webgoat/actions.py",
+    "line": 12,
+    "snippet": "def log_entry():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /message",
+      "rule": "POST /message changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "attack": "An attacker can forge a POST request to /message from another website. They can provide any values for filename and text, and the server will process the request without any checks for a CSRF token. This allows the attacker to perform actions on behalf of the authenticated user, such as logging arbitrary messages."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: filename: The server must sanitize the filename to prevent directory traversal attacks.",
+    "file": "flask_webgoat/actions.py",
+    "line": 32,
+    "snippet": "filename = filename_param + \".txt\"",
+    "cwe": [
+      "CWE-78"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /message",
+      "rule": "filename: The server must sanitize the filename to prevent directory traversal attacks.",
+      "verdict": "not_enforced",
+      "reason": "The filename is directly concatenated with the user-provided filename_param, which can lead to directory traversal attacks.",
+      "attack": "An attacker can exploit this by providing a filename like `../../etc/passwd.txt`. This would allow the attacker to read sensitive system files. The user is logged in, the method is POST, the URL is `/message`, and the values are `filename=../../etc/passwd.txt` and `text=any_text`. The server will write the text to `/data/user_id/../../etc/passwd.txt`, which could potentially lead to unauthorized access to system files."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only administrators may call /grep_processes.",
+    "file": "flask_webgoat/actions.py",
+    "line": 40,
+    "snippet": "def grep_processes():",
+    "cwe": [
+      "CWE-862"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /grep_processes",
+      "rule": "Only administrators may call /grep_processes.",
+      "verdict": "not_enforced",
+      "reason": "The route is accessible to anyone who makes a GET request to /grep_processes.",
+      "attack": "An attacker can call /grep_processes without being logged in. Method: GET, URL: /grep_processes, Values: None, What happens: The attacker can execute arbitrary commands on the server by manipulating the 'name' parameter in the GET request. This can lead to privilege escalation or other security issues."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+    "file": "flask_webgoat/actions.py",
+    "line": 40,
+    "snippet": "def grep_processes():",
+    "cwe": [
+      "CWE-78"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /grep_processes",
+      "rule": "name: The 'name' parameter must be sanitized to prevent command injection attacks.",
+      "verdict": "not_enforced",
+      "reason": "The 'name' parameter is directly concatenated into the command string without sanitization, making it vulnerable to command injection attacks.",
+      "attack": "An attacker can inject malicious commands into the 'name' parameter. For example, if the attacker sets 'name' to 'root; rm -rf /', the command executed will be 'ps aux | grep root; rm -rf / | awk \\'{print $11}\\''. This will result in the deletion of all files on the server, leading to a complete system compromise."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /deserialized_descr changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "flask_webgoat/actions.py",
+    "line": 55,
+    "snippet": "def deserialized_descr():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /deserialized_descr",
+      "rule": "POST /deserialized_descr changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "attack": "An attacker can forge a POST request to /deserialized_descr from another website. They can provide any pickled data they want, and the server will deserialize it without any validation. This could lead to arbitrary code execution or other security issues. The attacker does not need to be logged in; any user can perform this attack."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+    "file": "flask_webgoat/actions.py",
+    "line": 58,
+    "snippet": "deserialized = pickle.loads(data)",
+    "cwe": [
+      "CWE-502"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /deserialized_descr",
+      "rule": "pickled: The server must ensure that the deserialized object does not contain any malicious code or data that could harm the system.",
+      "verdict": "not_enforced",
+      "reason": "The code uses the `pickle` module to deserialize data directly from the user input without any validation or sanitization.",
+      "attack": "An attacker could provide a maliciously crafted pickled object that, when deserialized, could execute arbitrary code on the server. For example, an attacker could send a pickled object that contains a `subprocess.Popen` call to execute a harmful command. The server would execute this command, potentially leading to a remote code execution vulnerability."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data that belongs to any user account, as it authenticates users based on their username and password.",
+    "file": "flask_webgoat/auth.py",
+    "line": 17,
+    "snippet": "query = (",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /login",
+      "rule": "The route reads data that belongs to any user account, as it authenticates users based on their username and password.",
+      "verdict": "not_enforced",
+      "reason": "The query directly uses user-provided input (username and password) in the SQL query without any sanitization or parameterization, which can lead to SQL injection attacks.",
+      "attack": "An attacker can provide a username and password that includes SQL code to manipulate the query. For example, if the attacker provides the username 'admin' and the password \"' OR '1'='1\", the query will become: SELECT id, username, access_level FROM user WHERE username = 'admin' AND password = '' OR '1'='1'. This will return all user records, potentially allowing the attacker to bypass authentication or gain unauthorized access to user data."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "flask_webgoat/auth.py",
+    "line": 8,
+    "snippet": "def login():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /login",
+      "rule": "POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The code does not include a CSRF token check.",
+      "attack": "An attacker can forge a POST request to /login from another website. They can provide any username and password, and if the credentials are correct, they will be logged in. No CSRF token is required or checked, making it easy for attackers to perform unauthorized actions on behalf of users."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+    "file": "flask_webgoat/auth.py",
+    "line": 17,
+    "snippet": "query = (",
+    "cwe": [
+      "CWE-89"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /login",
+      "rule": "password: The server must verify the password against the stored hash to ensure the user is authenticated.",
+      "verdict": "not_enforced",
+      "reason": "The password is being directly inserted into the SQL query without any form of hashing or verification.",
+      "attack": "An attacker can bypass the authentication by providing a username and a password that matches the SQL query syntax. For example, if the attacker provides the username 'admin' and the password 'admin' (or any other string that is not a valid password but matches the SQL syntax), the query will still execute successfully, and the attacker will be authenticated. This is because the password is being directly inserted into the SQL query without any form of hashing or verification."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data that belongs to one particular user account based on the username provided.",
+    "file": "flask_webgoat/auth.py",
+    "line": 29,
+    "snippet": "def login_and_redirect():",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /login_and_redirect",
+      "rule": "The route reads data that belongs to one particular user account based on the username provided.",
+      "verdict": "not_enforced",
+      "reason": "The route does not check if the user is authorized to access the data of another user.",
+      "attack": "An attacker can provide a different username in the 'username' parameter and attempt to access the data of another user. If the attacker's credentials are correct, they will be logged in as that user and their data will be accessible. This is a potential security risk as it allows unauthorized access to other users' data."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET /login_and_redirect changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "flask_webgoat/auth.py",
+    "line": 29,
+    "snippet": "def login_and_redirect():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /login_and_redirect",
+      "rule": "GET /login_and_redirect changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The route does not include any CSRF protection mechanism.",
+      "attack": "An attacker can forge a request to /login_and_redirect from another website. They can provide any username, password, and URL, and the server will process the request as if it were legitimate. The attacker can log in as any user and redirect to any URL they choose, potentially compromising the security of the application. The lack of CSRF protection allows this attack to succeed."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+    "file": "flask_webgoat/auth.py",
+    "line": 32,
+    "snippet": "url = request.args.get(\"url\")",
+    "cwe": [
+      "CWE-601"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /login_and_redirect",
+      "rule": "url: The server must validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+      "verdict": "not_enforced",
+      "reason": "The code does not validate the URL to ensure it is safe and does not redirect to an external or malicious site.",
+      "attack": "An attacker can provide a malicious URL as the 'url' parameter. For example, the attacker could use a URL like 'http://malicious-site.com' to redirect the user to a malicious site. This would bypass the intended functionality of the login and redirect route."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data that belongs to any user, not just the logged-in user.",
+    "file": "flask_webgoat/ui.py",
+    "line": 17,
+    "snippet": "query = \"SELECT username, access_level FROM user WHERE username LIKE ?;\"",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "GET /search",
+      "rule": "The route reads data that belongs to any user, not just the logged-in user.",
+      "verdict": "not_enforced",
+      "reason": "The query does not filter results based on the logged-in user's username.",
+      "attack": "A user can search for any username by providing a different username in the query parameter. For example, if the logged-in user is 'admin', they can search for 'user1' by accessing /search?query=user1. This will return the username and access level of 'user1', which is not allowed for the logged-in user 'admin'."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route inserts a new row into the 'user' table with a username, password, and access level.",
+    "file": "flask_webgoat/users.py",
+    "line": 37,
+    "snippet": "query = (",
+    "cwe": [
+      "CWE-639"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /create_user",
+      "rule": "The route inserts a new row into the 'user' table with a username, password, and access level.",
+      "verdict": "not_enforced",
+      "reason": "The code uses string formatting to construct the SQL query, which is vulnerable to SQL injection.",
+      "attack": "An attacker can provide a username, password, and access level that includes SQL code. For example, if the attacker provides the username 'admin', password 'admin' and access level '0; DROP TABLE user;', the SQL query will become 'INSERT INTO user (username, password, access_level) VALUES ('admin', 'admin', 0; DROP TABLE user;)', which will drop the 'user' table. The attacker is logged in as an admin, the method is POST, the URL is /create_user, and the values are username=admin, password=admin, access_level=0; DROP TABLE user;."
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /create_user changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "flask_webgoat/users.py",
+    "line": 11,
+    "snippet": "def create_user():",
+    "cwe": [
+      "CWE-352"
+    ],
+    "confidence": "unverified",
+    "extra": {
+      "route": "POST /create_user",
+      "rule": "POST /create_user changes state, so a request forged from another website must be rejected (CSRF token).",
+      "verdict": "not_enforced",
+      "reason": "The rule (CSRF) is not enforced in the provided code.",
+      "attack": "An attacker can forge a POST request to /create_user from another website. The request does not include a CSRF token, which is required to prevent CSRF attacks. The attacker can provide any username, password, and access level, and the request will be processed without any checks on the CSRF token. This can lead to unauthorized creation of user accounts."
+    }
+  }
+]

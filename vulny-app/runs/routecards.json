@@ -1,0 +1,1845 @@
+[
+  {
+    "id": "GET /login",
+    "url": "/login",
+    "methods": [
+      "GET"
+    ],
+    "function": "login_page",
+    "file": "workshophub/auth.py",
+    "lines": [
+      56,
+      58
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/login.html"
+    ],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /login",
+    "url": "/login",
+    "methods": [
+      "POST"
+    ],
+    "function": "login",
+    "file": "workshophub/auth.py",
+    "lines": [
+      61,
+      83
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "username",
+        "line": 63,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "password",
+        "line": 64,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "_csrf",
+        "line": 66,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [
+      {
+        "use": "session['account_id']",
+        "line": 80,
+        "via": null
+      },
+      {
+        "use": "session['account_role']",
+        "line": 81,
+        "via": null
+      }
+    ],
+    "sql": [
+      {
+        "line": 72,
+        "text": "SELECT * FROM accounts WHERE username = ?",
+        "verb": "SELECT",
+        "table": "accounts",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/auth.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      },
+      {
+        "name": "valid_csrf",
+        "where": "workshophub/auth.py:52"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /logout",
+    "url": "/logout",
+    "methods": [
+      "GET"
+    ],
+    "function": "logout",
+    "file": "workshophub/auth.py",
+    "lines": [
+      86,
+      90
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /bookings/",
+    "url": "/bookings/",
+    "methods": [
+      "GET"
+    ],
+    "function": "my_bookings",
+    "file": "workshophub/bookings.py",
+    "lines": [
+      11,
+      23
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 16,
+        "text": "SELECT r.*, w.title AS workshop_title, w.scheduled_at FROM reservations r JOIN workshops w ON r.workshop_id = w.id WHERE r.owner_id = ? ORDER BY r.reserved_at DESC",
+        "verb": "SELECT",
+        "table": "reservations",
+        "joins": [
+          "workshops"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/bookings.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/booking_list.html"
+    ],
+    "tables": {
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ],
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /bookings/<int:rid>",
+    "url": "/bookings/<int:rid>",
+    "methods": [
+      "GET"
+    ],
+    "function": "detail",
+    "file": "workshophub/bookings.py",
+    "lines": [
+      26,
+      51
+    ],
+    "url_params": [
+      {
+        "name": "rid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 31,
+        "text": "SELECT r.*, w.title AS workshop_title, w.scheduled_at, w.price_per_seat FROM reservations r JOIN workshops w ON r.workshop_id = w.id WHERE r.id = ?",
+        "verb": "SELECT",
+        "table": "reservations",
+        "joins": [
+          "workshops"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/bookings.py"
+      },
+      {
+        "line": 43,
+        "text": "SELECT n.*, a.display_name AS author_name FROM notes n JOIN accounts a ON n.author_id = a.id WHERE n.reservation_id = ? ORDER BY n.created_at",
+        "verb": "SELECT",
+        "table": "notes",
+        "joins": [
+          "accounts"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/bookings.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/booking_detail.html"
+    ],
+    "tables": {
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ],
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ],
+      "notes": [
+        "id",
+        "reservation_id",
+        "author_id",
+        "body",
+        "created_at"
+      ],
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /bookings/<int:rid>/cancel",
+    "url": "/bookings/<int:rid>/cancel",
+    "methods": [
+      "POST"
+    ],
+    "function": "cancel",
+    "file": "workshophub/bookings.py",
+    "lines": [
+      54,
+      64
+    ],
+    "url_params": [
+      {
+        "name": "rid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 59,
+        "text": "UPDATE reservations SET status = 'cancelled' WHERE id = ?",
+        "verb": "UPDATE",
+        "table": "reservations",
+        "joins": [],
+        "writes": [
+          "status"
+        ],
+        "via": null,
+        "file": "workshophub/bookings.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /bookings/<int:rid>/note",
+    "url": "/bookings/<int:rid>/note",
+    "methods": [
+      "POST"
+    ],
+    "function": "add_note",
+    "file": "workshophub/bookings.py",
+    "lines": [
+      67,
+      91
+    ],
+    "url_params": [
+      {
+        "name": "rid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "_csrf",
+        "line": 70,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "body",
+        "line": 78,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 85,
+        "text": "INSERT INTO notes (reservation_id, author_id, body) VALUES (?, ?, ?)",
+        "verb": "INSERT",
+        "table": "notes",
+        "joins": [],
+        "writes": [
+          "reservation_id",
+          "author_id",
+          "body"
+        ],
+        "via": null,
+        "file": "workshophub/bookings.py"
+      },
+      {
+        "line": 158,
+        "text": "SELECT id FROM reservations WHERE id = ? AND owner_id = ?",
+        "verb": "SELECT",
+        "table": "reservations",
+        "joins": [],
+        "writes": [],
+        "via": "verify_reservation_owner",
+        "file": "workshophub/db.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      },
+      {
+        "name": "valid_csrf",
+        "where": "workshophub/auth.py:52"
+      },
+      {
+        "name": "verify_reservation_owner",
+        "where": "workshophub/db.py:155"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "notes": [
+        "id",
+        "reservation_id",
+        "author_id",
+        "body",
+        "created_at"
+      ],
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /bookings/<int:rid>/receipt",
+    "url": "/bookings/<int:rid>/receipt",
+    "methods": [
+      "GET"
+    ],
+    "function": "receipt",
+    "file": "workshophub/bookings.py",
+    "lines": [
+      94,
+      110
+    ],
+    "url_params": [
+      {
+        "name": "rid",
+        "type": "int"
+      }
+    ],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 98,
+        "text": "SELECT r.*, w.title AS workshop_title, w.scheduled_at, w.price_per_seat, a.display_name AS member_name, a.email AS member_email FROM reservations r JOIN workshops w ON r.workshop_id = w.id JOIN acc...",
+        "verb": "SELECT",
+        "table": "reservations",
+        "joins": [
+          "workshops",
+          "accounts"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/bookings.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/booking_receipt.html"
+    ],
+    "tables": {
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ],
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ],
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /profile",
+    "url": "/profile",
+    "methods": [
+      "GET"
+    ],
+    "function": "view_profile",
+    "file": "workshophub/members.py",
+    "lines": [
+      11,
+      14
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/profile.html"
+    ],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /profile",
+    "url": "/profile",
+    "methods": [
+      "POST"
+    ],
+    "function": "update_profile",
+    "file": "workshophub/members.py",
+    "lines": [
+      17,
+      35
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "display_name",
+        "line": 20,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "email",
+        "line": 21,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "role",
+        "line": 22,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "credit_balance",
+        "line": 23,
+        "as": "float",
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 29,
+        "text": "UPDATE accounts SET display_name = ?, email = ?, role = ?, credit_balance = ? WHERE id = ?",
+        "verb": "UPDATE",
+        "table": "accounts",
+        "joins": [],
+        "writes": [
+          "display_name",
+          "email",
+          "role",
+          "credit_balance"
+        ],
+        "via": null,
+        "file": "workshophub/members.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /admin/members",
+    "url": "/admin/members",
+    "methods": [
+      "GET"
+    ],
+    "function": "admin_list",
+    "file": "workshophub/members.py",
+    "lines": [
+      38,
+      50
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 47,
+        "text": "SELECT id, username, display_name, email, role, credit_balance FROM accounts ORDER BY username",
+        "verb": "SELECT",
+        "table": "accounts",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/members.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/admin_members.html"
+    ],
+    "tables": {
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /admin/members/<int:mid>",
+    "url": "/admin/members/<int:mid>",
+    "methods": [
+      "GET"
+    ],
+    "function": "admin_detail",
+    "file": "workshophub/members.py",
+    "lines": [
+      53,
+      67
+    ],
+    "url_params": [
+      {
+        "name": "mid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 62,
+        "text": "SELECT * FROM accounts WHERE id = ?",
+        "verb": "SELECT",
+        "table": "accounts",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/members.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/admin_member_detail.html"
+    ],
+    "tables": {
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /admin/members/<int:mid>/update",
+    "url": "/admin/members/<int:mid>/update",
+    "methods": [
+      "POST"
+    ],
+    "function": "admin_update",
+    "file": "workshophub/members.py",
+    "lines": [
+      70,
+      95
+    ],
+    "url_params": [
+      {
+        "name": "mid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "_csrf",
+        "line": 77,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "display_name",
+        "line": 86,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "email",
+        "line": 87,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "role",
+        "line": 88,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "credit_balance",
+        "line": 89,
+        "as": "float",
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 83,
+        "text": "UPDATE accounts SET display_name = ?, email = ?, role = ?, credit_balance = ? WHERE id = ?",
+        "verb": "UPDATE",
+        "table": "accounts",
+        "joins": [],
+        "writes": [
+          "display_name",
+          "email",
+          "role",
+          "credit_balance"
+        ],
+        "via": null,
+        "file": "workshophub/members.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      },
+      {
+        "name": "valid_csrf",
+        "where": "workshophub/auth.py:52"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /workshops/",
+    "url": "/workshops/",
+    "methods": [
+      "GET"
+    ],
+    "function": "listing",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      11,
+      19
+    ],
+    "url_params": [],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 15,
+        "text": "SELECT w.*, a.display_name AS organiser FROM workshops w JOIN accounts a ON w.created_by = a.id ORDER BY w.scheduled_at",
+        "verb": "SELECT",
+        "table": "workshops",
+        "joins": [
+          "accounts"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/workshop_list.html"
+    ],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ],
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /workshops/<int:wid>",
+    "url": "/workshops/<int:wid>",
+    "methods": [
+      "GET"
+    ],
+    "function": "detail",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      22,
+      43
+    ],
+    "url_params": [
+      {
+        "name": "wid",
+        "type": "int"
+      }
+    ],
+    "decorators": [],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 26,
+        "text": "SELECT w.*, a.display_name AS organiser FROM workshops w JOIN accounts a ON w.created_by = a.id WHERE w.id = ?",
+        "verb": "SELECT",
+        "table": "workshops",
+        "joins": [
+          "accounts"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      },
+      {
+        "line": 36,
+        "text": "SELECT COALESCE(SUM(seats), 0) FROM reservations WHERE workshop_id = ? AND status = 'confirmed'",
+        "verb": "SELECT",
+        "table": "reservations",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/workshop_detail.html"
+    ],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ],
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ],
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /workshops/create",
+    "url": "/workshops/create",
+    "methods": [
+      "GET"
+    ],
+    "function": "create_form",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      46,
+      49
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "staff_only",
+        "checks": [
+          {
+            "line": 45,
+            "if": "g.account['role'] not in ('staff', 'admin')",
+            "then": "return redirect(url_for('workshops.listing'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [],
+    "calls": [],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/workshop_form.html"
+    ],
+    "tables": {},
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /workshops/create",
+    "url": "/workshops/create",
+    "methods": [
+      "POST"
+    ],
+    "function": "create",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      52,
+      78
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "staff_only",
+        "checks": [
+          {
+            "line": 45,
+            "if": "g.account['role'] not in ('staff', 'admin')",
+            "then": "return redirect(url_for('workshops.listing'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "_csrf",
+        "line": 55,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "title",
+        "line": 59,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "description",
+        "line": 60,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "capacity",
+        "line": 61,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "price_per_seat",
+        "line": 62,
+        "as": "float",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "scheduled_at",
+        "line": 63,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 71,
+        "text": "INSERT INTO workshops (title, description, capacity, price_per_seat, scheduled_at, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+        "verb": "INSERT",
+        "table": "workshops",
+        "joins": [],
+        "writes": [
+          "title",
+          "description",
+          "capacity",
+          "price_per_seat",
+          "scheduled_at",
+          "created_by"
+        ],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      },
+      {
+        "name": "valid_csrf",
+        "where": "workshophub/auth.py:52"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /workshops/<int:wid>/edit",
+    "url": "/workshops/<int:wid>/edit",
+    "methods": [
+      "GET"
+    ],
+    "function": "edit_form",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      81,
+      91
+    ],
+    "url_params": [
+      {
+        "name": "wid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "staff_only",
+        "checks": [
+          {
+            "line": 45,
+            "if": "g.account['role'] not in ('staff', 'admin')",
+            "then": "return redirect(url_for('workshops.listing'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 86,
+        "text": "SELECT * FROM workshops WHERE id = ?",
+        "verb": "SELECT",
+        "table": "workshops",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/workshop_form.html"
+    ],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /workshops/<int:wid>/edit",
+    "url": "/workshops/<int:wid>/edit",
+    "methods": [
+      "POST"
+    ],
+    "function": "edit",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      94,
+      118
+    ],
+    "url_params": [
+      {
+        "name": "wid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "staff_only",
+        "checks": [
+          {
+            "line": 45,
+            "if": "g.account['role'] not in ('staff', 'admin')",
+            "then": "return redirect(url_for('workshops.listing'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "_csrf",
+        "line": 97,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "title",
+        "line": 108,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "description",
+        "line": 109,
+        "as": null,
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "capacity",
+        "line": 110,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "price_per_seat",
+        "line": 111,
+        "as": "float",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "scheduled_at",
+        "line": 112,
+        "as": null,
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 103,
+        "text": "UPDATE workshops SET title = ?, description = ?, capacity = ?, price_per_seat = ?, scheduled_at = ? WHERE id = ?",
+        "verb": "UPDATE",
+        "table": "workshops",
+        "joins": [],
+        "writes": [
+          "title",
+          "description",
+          "capacity",
+          "price_per_seat",
+          "scheduled_at"
+        ],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      },
+      {
+        "name": "valid_csrf",
+        "where": "workshophub/auth.py:52"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "GET /workshops/manage",
+    "url": "/workshops/manage",
+    "methods": [
+      "GET"
+    ],
+    "function": "manage",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      121,
+      141
+    ],
+    "url_params": [],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [],
+    "identity": [],
+    "sql": [
+      {
+        "line": 126,
+        "text": "SELECT w.*, a.display_name AS organiser FROM workshops w JOIN accounts a ON w.created_by = a.id ORDER BY w.scheduled_at",
+        "verb": "SELECT",
+        "table": "workshops",
+        "joins": [
+          "accounts"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      },
+      {
+        "line": 131,
+        "text": "SELECT r.*, a.display_name AS member_name, w.title AS workshop_title FROM reservations r JOIN accounts a ON r.owner_id = a.id JOIN workshops w ON r.workshop_id = w.id ORDER BY r.reserved_at DESC",
+        "verb": "SELECT",
+        "table": "reservations",
+        "joins": [
+          "accounts",
+          "workshops"
+        ],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [
+      "workshophub/templates/workshop_manage.html"
+    ],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ],
+      "accounts": [
+        "id",
+        "username",
+        "passhash",
+        "display_name",
+        "email",
+        "role",
+        "credit_balance"
+      ],
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  },
+  {
+    "id": "POST /workshops/<int:wid>/book",
+    "url": "/workshops/<int:wid>/book",
+    "methods": [
+      "POST"
+    ],
+    "function": "book",
+    "file": "workshophub/workshops.py",
+    "lines": [
+      144,
+      166
+    ],
+    "url_params": [
+      {
+        "name": "wid",
+        "type": "int"
+      }
+    ],
+    "decorators": [
+      {
+        "name": "members_only",
+        "checks": [
+          {
+            "line": 35,
+            "if": "g.account is None",
+            "then": "return redirect(url_for('auth.login_page'))"
+          }
+        ],
+        "uses": []
+      }
+    ],
+    "inputs": [
+      {
+        "part": "form",
+        "key": "seats",
+        "line": 155,
+        "as": "int",
+        "via": null
+      },
+      {
+        "part": "form",
+        "key": "total_cost",
+        "line": 156,
+        "as": "float",
+        "via": null
+      }
+    ],
+    "identity": [],
+    "sql": [
+      {
+        "line": 149,
+        "text": "SELECT * FROM workshops WHERE id = ?",
+        "verb": "SELECT",
+        "table": "workshops",
+        "joins": [],
+        "writes": [],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      },
+      {
+        "line": 159,
+        "text": "INSERT INTO reservations (workshop_id, owner_id, seats, total_cost, status) VALUES (?, ?, ?, ?, 'confirmed')",
+        "verb": "INSERT",
+        "table": "reservations",
+        "joins": [],
+        "writes": [
+          "workshop_id",
+          "owner_id",
+          "seats",
+          "total_cost",
+          "status"
+        ],
+        "via": null,
+        "file": "workshophub/workshops.py"
+      }
+    ],
+    "calls": [
+      {
+        "name": "get_db",
+        "where": "workshophub/db.py:7"
+      }
+    ],
+    "constants": [],
+    "templates": [],
+    "tables": {
+      "workshops": [
+        "id",
+        "title",
+        "description",
+        "capacity",
+        "price_per_seat",
+        "scheduled_at",
+        "created_by"
+      ],
+      "reservations": [
+        "id",
+        "workshop_id",
+        "owner_id",
+        "seats",
+        "total_cost",
+        "status",
+        "reserved_at"
+      ]
+    },
+    "related_tables": [],
+    "app_hooks": [
+      {
+        "function": "load_signed_in_account",
+        "where": "workshophub/auth.py:15"
+      },
+      {
+        "function": "provide_csrf_token",
+        "where": "workshophub/auth.py:26"
+      }
+    ]
+  }
+]

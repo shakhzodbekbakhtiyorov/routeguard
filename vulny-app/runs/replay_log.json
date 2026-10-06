@@ -1,0 +1,366 @@
+[
+  {
+    "route": "POST /login",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to one particular user account based on the username provided.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "GET /logout",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /logout.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "anon is blocked (302 -> /login) \u2014 the access check holds",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/logout",
+      "need": "logged_in_user",
+      "result": "302 -> /login"
+    }
+  },
+  {
+    "route": "GET /logout",
+    "rule_type": "csrf",
+    "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the forged GET only rewrote the session cookie (302 -> /login): a real change (log in/out) or bookkeeping (a flash message, a token); keep for a human",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/logout",
+      "result": "302 -> /login",
+      "changed": []
+    }
+  },
+  {
+    "route": "GET /bookings/<int:rid>",
+    "rule_type": "whose_data",
+    "rule": "The booking detail can only be accessed by the user whose 'owner_id' matches the logged-in user's ID or by an administrator.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob read alice's reservations #1; response shows owner-only data 'confirmed'",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/bookings/1",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/bookings.py",
+      "line": 31,
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /bookings/<int:rid>/cancel",
+    "rule_type": "whose_data",
+    "rule": "Only the user with the 'owner_id' matching the logged-in user's ID should be able to cancel the booking.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "bob changed status of alice's reservations #1 (302 -> /bookings/)",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/bookings/1/cancel",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/bookings.py",
+      "line": 59,
+      "result": "302 -> /bookings/"
+    }
+  },
+  {
+    "route": "POST /bookings/<int:rid>/cancel",
+    "rule_type": "csrf",
+    "rule": "POST /bookings/<int:rid>/cancel changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table reservations (302 -> /bookings/)",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/bookings/1/cancel",
+      "result": "302 -> /bookings/",
+      "changed": [
+        "table reservations"
+      ]
+    }
+  },
+  {
+    "route": "GET /bookings/<int:rid>/receipt",
+    "rule_type": "who_may_call",
+    "rule": "Only logged-in users may call /bookings/<int:rid>/receipt.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "anon (below 'logged_in_user') received alice's data '2026-10-06 06:06:26' \u2014 no access check",
+    "request": {
+      "actor": "anon",
+      "method": "GET",
+      "url": "/bookings/1/receipt",
+      "need": "logged_in_user",
+      "result": "200"
+    }
+  },
+  {
+    "route": "POST /profile",
+    "rule_type": "csrf",
+    "rule": "POST /profile changes state, so a request forged from another website must be rejected (CSRF token).",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "a forged POST with no token changed table accounts (302 -> /profile)",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/profile",
+      "result": "302 -> /profile",
+      "changed": [
+        "table accounts"
+      ]
+    }
+  },
+  {
+    "route": "POST /profile",
+    "rule_type": "do_not_trust",
+    "rule": "credit_balance: The server must validate and sanitize the credit balance to prevent unauthorized changes.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the value reaches a sink this replay does not model; keep for a human",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/profile",
+      "value": "credit_balance",
+      "type": "do_not_trust"
+    }
+  },
+  {
+    "route": "POST /admin/members/<int:mid>/update",
+    "rule_type": "limits",
+    "rule": "credit_balance: The server must validate the credit balance to ensure it is a valid and non-negative number.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "value accepted but the stored effect could not be checked automatically",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/admin/members/1/update",
+      "value": "credit_balance",
+      "type": "limits",
+      "result": "302 -> /workshops/"
+    }
+  },
+  {
+    "route": "POST /workshops/create",
+    "rule_type": "limits",
+    "rule": "price_per_seat: The server must ensure that the price per seat is a non-negative number.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "value accepted but the stored effect could not be checked automatically",
+    "request": {
+      "actor": "admin",
+      "method": "POST",
+      "url": "/workshops/create",
+      "value": "price_per_seat",
+      "type": "limits",
+      "result": "302 -> /workshops/create"
+    }
+  },
+  {
+    "route": "GET /workshops/<int:wid>/edit",
+    "rule_type": "whose_data",
+    "rule": "Only the staff member who created the workshop can edit it.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /workshops/<int:wid>/edit",
+    "rule_type": "whose_data",
+    "rule": "The workshop record belongs to the user with the ID stored in the 'created_by' column.",
+    "from_finding": true,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /workshops/<int:wid>/edit",
+    "rule_type": "limits",
+    "rule": "capacity: The server must validate and sanitize the capacity to ensure it is a non-negative integer.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "value accepted but the stored effect could not be checked automatically",
+    "request": {
+      "actor": "admin",
+      "method": "POST",
+      "url": "/workshops/1/edit",
+      "value": "capacity",
+      "type": "limits",
+      "result": "302 -> /workshops/1/edit"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/edit",
+    "rule_type": "limits",
+    "rule": "price_per_seat: The server must validate and sanitize the price per seat to ensure it is a non-negative floating-point number.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "value accepted but the stored effect could not be checked automatically",
+    "request": {
+      "actor": "admin",
+      "method": "POST",
+      "url": "/workshops/1/edit",
+      "value": "price_per_seat",
+      "type": "limits",
+      "result": "302 -> /workshops/1/edit"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/book",
+    "rule_type": "whose_data",
+    "rule": "The reservations table stores records that belong to one particular user account, identified by the owner_id column.",
+    "from_finding": true,
+    "verdict": "dropped",
+    "why": "bob got 302 -> /bookings/ but alice's data was not disclosed",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/workshops/1/book",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/workshops.py",
+      "line": 159,
+      "result": "302 -> /bookings/"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/book",
+    "rule_type": "limits",
+    "rule": "seats: The server must ensure that the number of seats is a non-negative integer and does not exceed the available capacity of the workshop.",
+    "from_finding": true,
+    "verdict": "confirmed",
+    "why": "the server accepted seats=-5 and stored seats=-5",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/workshops/2/book",
+      "value": "seats",
+      "type": "limits",
+      "result": "302 -> /bookings/"
+    }
+  },
+  {
+    "route": "POST /workshops/<int:wid>/book",
+    "rule_type": "do_not_trust",
+    "rule": "total_cost: The server must calculate the total cost based on the number of seats and the workshop's price per seat.",
+    "from_finding": true,
+    "verdict": "uncertain",
+    "why": "the value reaches a sink this replay does not model; keep for a human",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/workshops/2/book",
+      "value": "total_cost",
+      "type": "do_not_trust"
+    }
+  },
+  {
+    "route": "GET /bookings/",
+    "rule_type": "whose_data",
+    "rule": "The route reads data that belongs to the logged-in user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /bookings/<int:rid>/note",
+    "rule_type": "whose_data",
+    "rule": "The reservation_id in the notes table must match the reservation_id in the reservations table where the owner_id matches the logged-in user's id.",
+    "from_finding": false,
+    "verdict": "dropped",
+    "why": "bob got 302 -> /bookings/1 but alice's data was not disclosed",
+    "request": {
+      "actor": "bob",
+      "method": "POST",
+      "url": "/bookings/1/note",
+      "targets": "alice's notes #1",
+      "file": "workshophub/bookings.py",
+      "line": 85,
+      "result": "302 -> /bookings/1"
+    }
+  },
+  {
+    "route": "GET /bookings/<int:rid>/receipt",
+    "rule_type": "whose_data",
+    "rule": "The route should only allow access to the receipt of bookings made by the logged-in user.",
+    "from_finding": false,
+    "verdict": "confirmed",
+    "why": "bob read alice's reservations #1; response shows owner-only data 'confirmed'",
+    "request": {
+      "actor": "bob",
+      "method": "GET",
+      "url": "/bookings/1/receipt",
+      "targets": "alice's reservations #1",
+      "file": "workshophub/bookings.py",
+      "line": 98,
+      "result": "200"
+    }
+  },
+  {
+    "route": "GET /profile",
+    "rule_type": "whose_data",
+    "rule": "The route reads and allows changes to a record where the 'id' column matches the 'account_id' in the session.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "POST /profile",
+    "rule_type": "whose_data",
+    "rule": "The route updates the 'accounts' table where the 'id' column matches the 'id' of the currently logged-in user.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "GET /admin/members/<int:mid>",
+    "rule_type": "whose_data",
+    "rule": "Only administrators should be able to access and view details of any member.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no accounts row owned by the victim to target",
+    "request": {}
+  },
+  {
+    "route": "POST /admin/members/<int:mid>/update",
+    "rule_type": "whose_data",
+    "rule": "The route updates a record in the 'accounts' table where the 'id' column matches the 'mid' parameter in the URL.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no accounts row owned by the victim to target",
+    "request": {}
+  },
+  {
+    "route": "POST /workshops/create",
+    "rule_type": "whose_data",
+    "rule": "The 'created_by' column in the 'workshops' table stores the user ID of the account that created the row.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  },
+  {
+    "route": "GET /workshops/manage",
+    "rule_type": "whose_data",
+    "rule": "The 'created_by' column in the 'workshops' table links each workshop to its creator, who is a user in the 'accounts' table.",
+    "from_finding": false,
+    "verdict": "not_applicable",
+    "why": "no record id in the URL, or the table has no per-user owner column",
+    "request": {}
+  }
+]

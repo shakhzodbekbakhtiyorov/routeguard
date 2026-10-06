@@ -1,0 +1,30 @@
+{
+  "label": "investigate",
+  "strict": false,
+  "n_findings": 8,
+  "n_vuln": 8,
+  "detected": 4,
+  "recall": 0.5,
+  "cwe_exact": 4,
+  "cwe_related": 4,
+  "tp_findings": 6,
+  "precision": 0.75,
+  "code_precision": 0.75,
+  "decoys_flagged": [],
+  "decoy_findings": 0,
+  "other": 2,
+  "real_unlabelled": 1,
+  "hand": true,
+  "missed": [
+    "V01",
+    "V04",
+    "V05",
+    "V06"
+  ],
+  "detected_ids": [
+    "V02",
+    "V03",
+    "V07",
+    "V08"
+  ]
+}

@@ -1,0 +1,1045 @@
+[
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /account.",
+    "file": "cakeshop/account.py",
+    "line": 13,
+    "snippet": "def account():",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "GET/POST /account",
+      "rule": "Only logged-in users may call /account.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:12 `@login_required`, but the cited line is not a check on the current user. Model: The @login_required decorator ensures that only logged-in users can access the /account route.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /account",
+        "result": "Redirects to login page"
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 12,
+        "reason": "The @login_required decorator ensures that only logged-in users can access the /account route.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /account",
+          "result": "Redirects to login page"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route updates the 'users' table where the 'id' matches the 'id' of the currently logged-in user (g.user['id']).",
+    "file": "cakeshop/account.py",
+    "line": 18,
+    "snippet": "db.execute(f\"UPDATE users SET {key} = ? WHERE id = ?\", (value, g.user[\"id\"]))",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET/POST /account",
+      "rule": "The route updates the 'users' table where the 'id' matches the 'id' of the currently logged-in user (g.user['id']).",
+      "rule_type": "whose_data",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:14 `@login_required`, but the cited line does not use the current user. Model: The @login_required decorator ensures that only authenticated users can access the route. If a user is not logged in, they are redirected to the login page.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /account",
+        "result": "The request is redirected to the login page."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 14,
+        "reason": "The @login_required decorator ensures that only authenticated users can access the route. If a user is not logged in, they are redirected to the login page.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /account",
+          "result": "The request is redirected to the login page."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/account.py",
+    "line": 13,
+    "snippet": "def account():",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "GET/POST /account",
+      "rule": "GET/POST /account changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include a CSRF token check, which is required to prevent cross-site request forgery attacks.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /account?email=hacked@example.com HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nemail=hacked@example.com",
+        "result": "The user's email is changed to 'hacked@example.com' without proper authentication."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "must_not_change",
+    "title": "Rule not enforced: is_admin: The server must not allow the client to set the is_admin field through this route.",
+    "file": "cakeshop/account.py",
+    "line": 17,
+    "snippet": "if key in USER_COLUMNS:",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-915"
+    ],
+    "extra": {
+      "route": "GET/POST /account",
+      "rule": "is_admin: The server must not allow the client to set the is_admin field through this route.",
+      "rule_type": "must_not_change",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not enforce the rule. The route allows the client to set the 'is_admin' field through the form, which is not allowed by the rule.",
+      "attack": {
+        "user": "a normal user",
+        "request": "POST /account is_admin=1",
+        "result": "The user's 'is_admin' field is set to 1, making them an admin."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only administrators may call /admin/orders.",
+    "file": "cakeshop/admin.py",
+    "line": 12,
+    "snippet": "def all_orders():",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-862"
+    ],
+    "extra": {
+      "route": "GET /admin/orders",
+      "rule": "Only administrators may call /admin/orders.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:39 `g.user['is_admin']`, but cakeshop/auth.py:25 is not part of the code that runs for this route. Model: The code checks if the user is an admin by verifying `g.user['is_admin']`. If this check is bypassed, an admin can call the /admin/orders route.",
+      "attack": {
+        "user": "a normal user",
+        "request": "GET /admin/orders",
+        "result": "The user will be able to see the admin orders page, which is not allowed."
+      },
+      "claimed": {
+        "code": "g.user['is_admin']",
+        "file": "cakeshop/auth.py",
+        "line": 39,
+        "reason": "The code checks if the user is an admin by verifying `g.user['is_admin']`. If this check is bypassed, an admin can call the /admin/orders route.",
+        "status": "enforced",
+        "attack": {
+          "user": "a normal user",
+          "request": "GET /admin/orders",
+          "result": "The user will be able to see the admin orders page, which is not allowed."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data that belongs to all users, not just the logged-in user.",
+    "file": "cakeshop/admin.py",
+    "line": 14,
+    "snippet": "\"SELECT orders.*, users.username, users.email, users.address \"",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET /admin/orders",
+      "rule": "The route reads data that belongs to all users, not just the logged-in user.",
+      "rule_type": "whose_data",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The route does not check if the logged-in user is an admin before fetching all orders. Any authenticated user can access this route and see all orders, not just their own.",
+      "attack": {
+        "user": "a normal user",
+        "request": "GET /admin/orders",
+        "result": "The normal user will see all orders, not just their own."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only administrators may call /admin/stats.",
+    "file": "cakeshop/admin.py",
+    "line": 22,
+    "snippet": "def stats():",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-862"
+    ],
+    "extra": {
+      "route": "GET /admin/stats",
+      "rule": "Only administrators may call /admin/stats.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:22 `@admin_required\n    22 |     @login_required\n    23 |     def wrapped(*args, **kwargs):`, but the copied line is not in the code. Model: The @admin_required decorator checks if the user is an admin before allowing access to the route. If the user is not an admin, a 403 Forbidden error is raised.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /admin/stats",
+        "result": "403 Forbidden"
+      },
+      "claimed": {
+        "code": "@admin_required\n    22 |     @login_required\n    23 |     def wrapped(*args, **kwargs):",
+        "file": "cakeshop/auth.py",
+        "line": 22,
+        "reason": "The @admin_required decorator checks if the user is an admin before allowing access to the route. If the user is not an admin, a 403 Forbidden error is raised.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /admin/stats",
+          "result": "403 Forbidden"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only administrators may call /admin/orders/<int:order_id>/status.",
+    "file": "cakeshop/admin.py",
+    "line": 29,
+    "snippet": "def set_status(order_id):",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-862"
+    ],
+    "extra": {
+      "route": "POST /admin/orders/<int:order_id>/status",
+      "rule": "Only administrators may call /admin/orders/<int:order_id>/status.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:25 `@admin_required`, but cakeshop/admin.py:24 is not part of the code that runs for this route. Model: The @admin_required decorator checks if the user is an admin before allowing access to the route.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /admin/orders/1/status?status=new",
+        "result": "403 Forbidden"
+      },
+      "claimed": {
+        "code": "@admin_required",
+        "file": "cakeshop/auth.py",
+        "line": 25,
+        "reason": "The @admin_required decorator checks if the user is an admin before allowing access to the route.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "POST /admin/orders/1/status?status=new",
+          "result": "403 Forbidden"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/admin.py",
+    "line": 29,
+    "snippet": "def set_status(order_id):",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "POST /admin/orders/<int:order_id>/status",
+      "rule": "POST /admin/orders/<int:order_id>/status changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include any CSRF token validation. An attacker can forge a POST request from another website to change the order status.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /admin/orders/123/status?status=delivered",
+        "result": "The order status is changed to 'delivered' without a CSRF token, allowing unauthorized changes."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route writes data to the 'users' table, which stores user information.",
+    "file": "cakeshop/auth.py",
+    "line": 52,
+    "snippet": "\"INSERT INTO users (username, password_hash, email, address) VALUES (?, ?, ?, ?)\",",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET/POST /register",
+      "rule": "The route writes data to the 'users' table, which stores user information.",
+      "rule_type": "whose_data",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The route writes data to the 'users' table, but there is no check to ensure that the data being written is valid or that the user has the necessary permissions to write to the table.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /register?username=admin&password=123456&email=test@example.com&address=123 Main St",
+        "result": "The user is able to register with the username 'admin', which could potentially be used to gain administrative privileges."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/auth.py",
+    "line": 42,
+    "snippet": "def register():",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "GET/POST /register",
+      "rule": "GET/POST /register changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include a CSRF token check, which is required to prevent cross-site request forgery attacks on the /register route.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /register HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nusername=admin&password=123456",
+        "result": "The request is processed, and an admin account is created."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/auth.py",
+    "line": 64,
+    "snippet": "def login():",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "GET/POST /login",
+      "rule": "GET/POST /login changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include a CSRF token check, which is required to prevent CSRF attacks on the /login route.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /login HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nusername=admin&password=123456",
+        "result": "The login is successful, and an attacker can log in as an admin without a valid CSRF token."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.",
+    "file": "cakeshop/auth.py",
+    "line": 72,
+    "snippet": "return redirect(request.args.get(\"next\") or url_for(\"shop.index\"))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-601"
+    ],
+    "extra": {
+      "route": "GET/POST /login",
+      "rule": "next: The server must validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.",
+      "rule_type": "do_not_trust",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not validate the 'next' URL to ensure it is safe and does not redirect to an unsafe location.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /login?next=http://maliciouswebsite.com",
+        "result": "The user is redirected to a malicious website."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /logout.",
+    "file": "cakeshop/auth.py",
+    "line": 78,
+    "snippet": "def logout():",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "GET /logout",
+      "rule": "Only logged-in users may call /logout.",
+      "rule_type": "who_may_call",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The /logout route does not check if the user is logged in before clearing the session. This means that anyone can call /logout, regardless of whether they are logged in or not.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /logout",
+        "result": "The user is logged out successfully, even though they were not logged in."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/auth.py",
+    "line": 78,
+    "snippet": "def logout():",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "GET /logout",
+      "rule": "GET /logout changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The /logout route does not include a CSRF token check, which is required to prevent CSRF attacks.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /logout",
+        "result": "The user is logged out successfully, even if the request is forged from another website."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /orders.",
+    "file": "cakeshop/orders.py",
+    "line": 14,
+    "snippet": "def my_orders():",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "GET /orders",
+      "rule": "Only logged-in users may call /orders.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:14 `@login_required`, but the cited line is not a check on the current user. Model: The @login_required decorator checks if the user is logged in by verifying if g.user is not None. If the user is not logged in, it redirects them to the login page.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /orders",
+        "result": "The user is redirected to the login page."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 14,
+        "reason": "The @login_required decorator checks if the user is logged in by verifying if g.user is not None. If the user is not logged in, it redirects them to the login page.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /orders",
+          "result": "The user is redirected to the login page."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data from the 'orders' table where the 'user_id' matches the logged-in user's ID.",
+    "file": "cakeshop/orders.py",
+    "line": 16,
+    "snippet": "\"SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC\", (g.user[\"id\"],)",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET /orders",
+      "rule": "The route reads data from the 'orders' table where the 'user_id' matches the logged-in user's ID.",
+      "rule_type": "whose_data",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:14 `@login_required`, but the cited line does not use the current user. Model: The @login_required decorator ensures that only authenticated users can access the route. It checks if `g.user` is None and redirects to the login page if it is, preventing unauthenticated users from accessing the route.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /orders",
+        "result": "The request is redirected to the login page because the user is not authenticated."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 14,
+        "reason": "The @login_required decorator ensures that only authenticated users can access the route. It checks if `g.user` is None and redirects to the login page if it is, preventing unauthenticated users from accessing the route.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /orders",
+          "result": "The request is redirected to the login page because the user is not authenticated."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /orders/<int:order_id>.",
+    "file": "cakeshop/orders.py",
+    "line": 23,
+    "snippet": "def order_detail(order_id):",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "GET /orders/<int:order_id>",
+      "rule": "Only logged-in users may call /orders/<int:order_id>.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:11 `@login_required`, but the cited line is not a check on the current user. Model: The @login_required decorator ensures that only logged-in users can access the route.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /orders/1",
+        "result": "Redirects to the login page"
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 11,
+        "reason": "The @login_required decorator ensures that only logged-in users can access the route.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /orders/1",
+          "result": "Redirects to the login page"
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route should only allow access to orders where the 'user_id' matches the current logged-in user's ID.",
+    "file": "cakeshop/orders.py",
+    "line": 24,
+    "snippet": "order = get_db().execute(\"SELECT * FROM orders WHERE id = ?\", (order_id,)).fetchone()",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET /orders/<int:order_id>",
+      "rule": "The route should only allow access to orders where the 'user_id' matches the current logged-in user's ID.",
+      "rule_type": "whose_data",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The @login_required decorator ensures that only authenticated users can access the route. However, it does not check if the order belongs to the logged-in user.",
+      "attack": {
+        "user": "a normal user",
+        "request": "GET /orders/1",
+        "result": "The user can access the order even if it does not belong to them."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /orders/<int:order_id>/invoice.",
+    "file": "cakeshop/orders.py",
+    "line": 37,
+    "snippet": "def invoice(order_id):",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "GET /orders/<int:order_id>/invoice",
+      "rule": "Only logged-in users may call /orders/<int:order_id>/invoice.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:11 `@login_required`, but the cited line is not a check on the current user. Model: The @login_required decorator checks if a user is logged in by verifying `g.user is not None`. If a user is not logged in, it redirects them to the login page. This ensures that only logged-in users can access the /orders/<int:order_id>/invoice route.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /orders/1/invoice",
+        "result": "The request is redirected to the login page."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 11,
+        "reason": "The @login_required decorator checks if a user is logged in by verifying `g.user is not None`. If a user is not logged in, it redirects them to the login page. This ensures that only logged-in users can access the /orders/<int:order_id>/invoice route.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /orders/1/invoice",
+          "result": "The request is redirected to the login page."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The route reads data from the 'orders' table where the order_id matches and the user_id matches the current user's id.",
+    "file": "cakeshop/orders.py",
+    "line": 39,
+    "snippet": "\"SELECT * FROM orders WHERE id = ? AND user_id = ?\", (order_id, g.user[\"id\"])",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "GET /orders/<int:order_id>/invoice",
+      "rule": "The route reads data from the 'orders' table where the order_id matches and the user_id matches the current user's id.",
+      "rule_type": "whose_data",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:14 `@login_required`, but the cited line does not use the current user. Model: The @login_required decorator ensures that only authenticated users can access the route. It checks if g.user is None and redirects to the login page if it is, preventing unauthorized access.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /orders/123/invoice",
+        "result": "The request is redirected to the login page because the user is not authenticated."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 14,
+        "reason": "The @login_required decorator ensures that only authenticated users can access the route. It checks if g.user is None and redirects to the login page if it is, preventing unauthorized access.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "GET /orders/123/invoice",
+          "result": "The request is redirected to the login page because the user is not authenticated."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: format: The server must validate and sanitize the format to prevent malicious file format injection.",
+    "file": "cakeshop/orders.py",
+    "line": 45,
+    "snippet": "os.system(f\"echo 'Order {order_id} | total {order['total']} UZS | {invoice_date()}' > {path}\")",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-78"
+    ],
+    "extra": {
+      "route": "GET /orders/<int:order_id>/invoice",
+      "rule": "format: The server must validate and sanitize the format to prevent malicious file format injection.",
+      "rule_type": "do_not_trust",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not validate or sanitize the 'format' parameter, allowing attackers to inject malicious file formats.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /orders/1/invoice?format=../../etc/passwd",
+        "result": "The server will create a file at /path/to/invoice_dir/order_1..etc/passwd.txt containing sensitive information."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /product/<int:product_id>/review.",
+    "file": "cakeshop/shop.py",
+    "line": 52,
+    "snippet": "def add_review(product_id):",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "POST /product/<int:product_id>/review",
+      "rule": "Only logged-in users may call /product/<int:product_id>/review.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:11 `@login_required`, but the cited line is not a check on the current user. Model: The @login_required decorator checks if a user is logged in by verifying that g.user is not None. If a user is not logged in, they are redirected to the login page.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /product/1/review HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 10\r\n\r\nbody=This+is+a+review",
+        "result": "The request is redirected to the login page because the user is not logged in."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 11,
+        "reason": "The @login_required decorator checks if a user is logged in by verifying that g.user is not None. If a user is not logged in, they are redirected to the login page.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "POST /product/1/review HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 10\r\n\r\nbody=This+is+a+review",
+          "result": "The request is redirected to the login page because the user is not logged in."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/shop.py",
+    "line": 52,
+    "snippet": "def add_review(product_id):",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "POST /product/<int:product_id>/review",
+      "rule": "POST /product/<int:product_id>/review changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include any CSRF token validation. A malicious website could forge a POST request to this endpoint.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /product/1/review HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nbody=This+is+a+malicious+review",
+        "result": "The review is added to the database without any CSRF protection, allowing the malicious website to post a review on behalf of a user."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks.",
+    "file": "cakeshop/shop.py",
+    "line": 65,
+    "snippet": "return send_file(os.path.join(current_app.config[\"IMAGE_DIR\"], filename))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-22"
+    ],
+    "extra": {
+      "route": "GET /image",
+      "rule": "name: The server must validate and sanitize the 'name' parameter to prevent directory traversal attacks.",
+      "rule_type": "do_not_trust",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code directly uses the 'name' parameter from the request to construct a file path, which can be exploited for directory traversal attacks.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /image?name=../../etc/passwd",
+        "result": "The server will return the contents of the /etc/passwd file, exposing sensitive information."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /cart.",
+    "file": "cakeshop/shop.py",
+    "line": 99,
+    "snippet": "def view_cart():",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "GET /cart",
+      "rule": "Only logged-in users may call /cart.",
+      "rule_type": "who_may_call",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "This line sets g.user to None if no user is logged in, allowing unauthenticated users to access the /cart route.",
+      "attack": {
+        "user": "nobody",
+        "request": "GET /cart",
+        "result": "The user is shown the cart page without being logged in."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /cart/add.",
+    "file": "cakeshop/shop.py",
+    "line": 111,
+    "snippet": "def add_to_cart():",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "Only logged-in users may call /cart/add.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:36 `g.user = None`, but the cited line is not a check on the current user. Model: The code checks if a user is logged in by looking for a 'user_id' in the session. If 'user_id' is not found, it sets 'g.user' to None. This means that if a user is not logged in, 'g.user' will be None.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /cart/add",
+        "result": "The request is rejected because 'g.user' is None."
+      },
+      "claimed": {
+        "code": "g.user = None",
+        "file": "cakeshop/auth.py",
+        "line": 36,
+        "reason": "The code checks if a user is logged in by looking for a 'user_id' in the session. If 'user_id' is not found, it sets 'g.user' to None. This means that if a user is not logged in, 'g.user' will be None.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "POST /cart/add",
+          "result": "The request is rejected because 'g.user' is None."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The cart table should have a user_id column to ensure that each cart belongs to a specific user.",
+    "file": "cakeshop/shop.py",
+    "line": 111,
+    "snippet": "def add_to_cart():",
+    "severity": "HIGH",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "The cart table should have a user_id column to ensure that each cart belongs to a specific user.",
+      "rule_type": "whose_data",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not enforce the rule. The cart table does not have a user_id column, and there is no check to ensure that each cart belongs to a specific user.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /cart/add?product_id=1",
+        "result": "The cart is added without a user_id, potentially allowing unauthorized access to the cart."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/shop.py",
+    "line": 111,
+    "snippet": "def add_to_cart():",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "POST /cart/add changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include any CSRF token validation. A malicious website could forge a POST request to /cart/add and add items to the cart without a valid CSRF token.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /cart/add?product_id=1",
+        "result": "The item with product_id=1 is added to the cart without a CSRF token, allowing unauthorized access."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "do_not_trust",
+    "title": "Rule not enforced: cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities.",
+    "file": "cakeshop/shop.py",
+    "line": 91,
+    "snippet": "return pickle.loads(base64.b64decode(raw))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-502"
+    ],
+    "extra": {
+      "route": "POST /cart/add",
+      "rule": "cart: The server must ensure that the cart data is properly sanitized and validated before deserializing it to prevent deserialization vulnerabilities.",
+      "rule_type": "do_not_trust",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code uses pickle to deserialize data from a cookie, which is not safe and can lead to deserialization vulnerabilities.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /cart/add?product_id=1",
+        "result": "An attacker can inject malicious data into the cart cookie, which will be deserialized by the server and potentially lead to arbitrary code execution."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "who_may_call",
+    "title": "Rule not enforced: Only logged-in users may call /checkout.",
+    "file": "cakeshop/shop.py",
+    "line": 122,
+    "snippet": "def checkout():",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-306"
+    ],
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "Only logged-in users may call /checkout.",
+      "rule_type": "who_may_call",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:14 `@login_required`, but the cited line is not a check on the current user. Model: The @login_required decorator checks if g.user is None and redirects to the login page if it is, ensuring only logged-in users can access the /checkout route.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /checkout HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nproduct_id=1&quantity=1&price=10",
+        "result": "The request is redirected to the login page because g.user is None."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 14,
+        "reason": "The @login_required decorator checks if g.user is None and redirects to the login page if it is, ensuring only logged-in users can access the /checkout route.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "POST /checkout HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nproduct_id=1&quantity=1&price=10",
+          "result": "The request is redirected to the login page because g.user is None."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "whose_data",
+    "title": "Rule not enforced: The 'user_id' column in the 'orders' table should match the ID of the logged-in user.",
+    "file": "cakeshop/shop.py",
+    "line": 129,
+    "snippet": "\"INSERT INTO orders (user_id, product_id, quantity, total, message, note) VALUES (?, ?, ?, ?, ?, ?)\",",
+    "severity": "LOW",
+    "cwe": [
+      "CWE-639"
+    ],
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "The 'user_id' column in the 'orders' table should match the ID of the logged-in user.",
+      "rule_type": "whose_data",
+      "verdict": "uncertain",
+      "decided_by": "model",
+      "reason": "the model says enforced by cakeshop/auth.py:14 `@login_required`, but the cited line does not use the current user. Model: The @login_required decorator ensures that only authenticated users can access the route. It checks if g.user is None and redirects to the login page if it is, preventing unauthenticated users from placing orders.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /checkout?product_id=1&quantity=1&price=10",
+        "result": "The request is redirected to the login page because the user is not authenticated."
+      },
+      "claimed": {
+        "code": "@login_required",
+        "file": "cakeshop/auth.py",
+        "line": 14,
+        "reason": "The @login_required decorator ensures that only authenticated users can access the route. It checks if g.user is None and redirects to the login page if it is, preventing unauthenticated users from placing orders.",
+        "status": "enforced",
+        "attack": {
+          "user": "nobody",
+          "request": "POST /checkout?product_id=1&quantity=1&price=10",
+          "result": "The request is redirected to the login page because the user is not authenticated."
+        }
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "csrf",
+    "title": "Rule not enforced: POST /checkout changes state, so a request forged from another website must be rejected (CSRF token).",
+    "file": "cakeshop/shop.py",
+    "line": 122,
+    "snippet": "def checkout():",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-352"
+    ],
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "POST /checkout changes state, so a request forged from another website must be rejected (CSRF token).",
+      "rule_type": "csrf",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code does not include any CSRF token validation. A malicious website could forge a POST request to /checkout, changing the state of the application without proper authentication.",
+      "attack": {
+        "user": "nobody",
+        "request": "POST /checkout?product_id=1&quantity=1&price=10 HTTP/1.1\r\nHost: example.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nproduct_id=1&quantity=1&price=10",
+        "result": "The request is processed, and an order is created in the database."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: quantity: quantity must be a positive integer.",
+    "file": "cakeshop/shop.py",
+    "line": 124,
+    "snippet": "quantity = int(request.form.get(\"quantity\", 1))",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "quantity: quantity must be a positive integer.",
+      "rule_type": "limits",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code converts the 'quantity' form value to an integer, but it allows a default value of 1 if the value is not provided. This means that a quantity of 0 or negative numbers can be submitted without being caught.",
+      "attack": {
+        "user": "a normal user",
+        "request": "POST /checkout?product_id=1&quantity=0",
+        "result": "The order is processed with a quantity of 0, which is not a positive integer."
+      }
+    }
+  },
+  {
+    "tool": "rule-check",
+    "rule_id": "limits",
+    "title": "Rule not enforced: price: price must be a positive integer.",
+    "file": "cakeshop/shop.py",
+    "line": 125,
+    "snippet": "price = int(request.form[\"price\"])",
+    "severity": "MEDIUM",
+    "cwe": [
+      "CWE-1284"
+    ],
+    "extra": {
+      "route": "POST /checkout",
+      "rule": "price: price must be a positive integer.",
+      "rule_type": "limits",
+      "verdict": "not_enforced",
+      "decided_by": "model",
+      "reason": "The code converts the 'price' value to an integer, but it does not check if the value is a positive integer.",
+      "attack": {
+        "user": "a normal user",
+        "request": "POST /checkout?product_id=1&quantity=1&price=-10",
+        "result": "The order is created with a negative price, which could lead to incorrect calculations or other issues."
+      }
+    }
+  }
+]
